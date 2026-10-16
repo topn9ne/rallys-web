@@ -311,7 +311,7 @@ function mapSubscriptionStatus(
 
 async function getWaiverText(): Promise<string> {
   const template = await prisma.waiverTemplate.findFirst({
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
   });
   return template?.body ?? "Liability waiver text not configured.";
 }
