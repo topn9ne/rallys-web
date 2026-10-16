@@ -33,12 +33,18 @@ export async function getWaiverTemplate(): Promise<string> {
   return template?.body ?? FALLBACK_WAIVER_TEXT;
 }
 
-const FALLBACK_WAIVER_TEXT = `RAILSIDE RIDES — PARTICIPANT WAIVER AND RELEASE OF LIABILITY
+const FALLBACK_WAIVER_TEXT = `RALLY'S INDOOR TRAINING — PARTICIPANT WAIVER AND RELEASE OF LIABILITY
 
-By signing this waiver, I acknowledge that participating in a Railside Rides pedal bike experience involves inherent risks including but not limited to physical injury, property damage, and other unforeseen circumstances. I voluntarily assume all such risks.
+By signing this waiver, I acknowledge that using batting cage facilities at Rally's Indoor Training involves inherent risks including but not limited to physical injury from pitched baseballs, bat vibration, and other unforeseen circumstances. I voluntarily assume all such risks.
 
-I hereby release, waive, discharge, and covenant not to sue Railside Rides, its owners, operators, employees, and agents from any and all claims, damages, or causes of action arising from my participation in this activity.
+I hereby release, waive, discharge, and covenant not to sue Rally's Indoor Training LLC, its owners, operators, and agents from any and all claims, damages, or causes of action arising from my use of the batting cage facilities.
 
-I confirm that I am in good physical health and capable of participating. I agree to follow all safety instructions provided by Railside Rides staff.
+I confirm that I will follow all posted safety rules and use provided safety equipment, including a batting helmet, at all times while in the cage. I understand that the facility is self-service and unstaffed, and I accept full responsibility for my safety and the safety of any minors under my supervision.
 
-This waiver is binding upon me and my heirs, executors, administrators, and assigns.`;
+For participants under 18: A parent or legal guardian must sign this waiver on behalf of the minor participant. The signing adult assumes all responsibility for the minor's safety and compliance with facility rules.
+
+This waiver is binding upon me and my heirs, executors, administrators, and assigns.
+
+Rally's Indoor Training LLC
+203 S Woodland Ave, Bay 5
+Hastings, NE 68901`;

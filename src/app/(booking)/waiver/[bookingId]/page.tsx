@@ -15,7 +15,7 @@ export default async function WaiverPage({ params }: Props) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      slot: { include: { theme: true } },
+      slotA: true,
       waiver: true,
     },
   });
@@ -24,13 +24,13 @@ export default async function WaiverPage({ params }: Props) {
 
   if (booking.waiver?.status === "SIGNED") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
         <div className="text-center">
-          <div className="mb-4 text-5xl">✅</div>
+          <div className="mb-4 text-5xl">&#10003;</div>
           <h1 className="text-2xl font-bold text-gray-900">Waiver Already Signed</h1>
           <p className="mt-2 text-gray-500">
             Your waiver was signed on{" "}
-            {booking.waiver.signedAt?.toLocaleDateString()}. You're all set!
+            {booking.waiver.signedAt?.toLocaleDateString()}. You&apos;re all set!
           </p>
         </div>
       </div>
@@ -38,23 +38,21 @@ export default async function WaiverPage({ params }: Props) {
   }
 
   const waiverText = booking.waiver?.agreementTextSnapshot ?? "";
+  const lane = booking.bookingType === "BOTH_LANES"
+    ? "Both Lanes"
+    : `Lane ${booking.slotA.lane}`;
 
   return (
-    <div className="page-wrapper">
+    <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-2xl px-4 py-8">
-        {/* Header */}
-        <div className="mb-6 text-white">
-          <h1 className="text-2xl font-bold drop-shadow">Liability Waiver</h1>
-          <p className="mt-1 text-white/80 drop-shadow text-sm">
-            {booking.slot.rideType === "THEME"
-              ? booking.slot.theme?.name
-              : "Group Ride"}{" "}
-            · {formatDate(booking.slot.date)} at{" "}
-            {formatTime(booking.slot.startTime)}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Liability Waiver</h1>
+          <p className="mt-1 text-gray-500 text-sm">
+            {lane} &middot; {formatDate(booking.slotA.date)} at{" "}
+            {formatTime(booking.slotA.startTime)}
           </p>
         </div>
 
-        {/* Waiver text */}
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="mb-3 font-semibold text-gray-900">
             Participant Waiver and Release of Liability
@@ -65,12 +63,12 @@ export default async function WaiverPage({ params }: Props) {
             </div>
           ) : (
             <p className="text-sm text-amber-700 bg-amber-50 rounded-lg p-3 border border-amber-200">
-              Waiver text not yet configured. Please set up a waiver template in the admin panel before going live.
+              Waiver text not yet configured. Please set up a waiver template in
+              the admin panel before going live.
             </p>
           )}
         </div>
 
-        {/* Signature form */}
         <WaiverForm bookingId={bookingId} />
       </div>
     </div>

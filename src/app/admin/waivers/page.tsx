@@ -31,8 +31,8 @@ export default async function WaiversPage() {
       include: {
         booking: {
           include: {
-            customer: { select: { name: true, email: true } },
-            slot: { select: { date: true, rideType: true, theme: { select: { name: true } } } },
+            member: { select: { name: true, email: true } },
+            slotA: { select: { date: true, lane: true } },
           },
         },
       },
@@ -40,15 +40,14 @@ export default async function WaiversPage() {
     getWaiverTemplate(),
   ]);
 
-  const signed = waivers.filter((w) => w.status === "SIGNED").length;
-  const pending = waivers.filter((w) => w.status === "PENDING").length;
+  const signed = waivers.filter((w: any) => w.status === "SIGNED").length;
+  const pending = waivers.filter((w: any) => w.status === "PENDING").length;
 
   return (
     <div>
       <SettingsTabs />
 
       <div className="grid gap-6 lg:grid-cols-2 items-start">
-        {/* Waivers list */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -64,57 +63,67 @@ export default async function WaiversPage() {
           </CardHeader>
           <CardBody className="p-0">
             <ul className="divide-y divide-gray-100">
-              {waivers.map((waiver) => (
-                <li key={waiver.id} className="px-6 py-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-medium text-gray-900 truncate">
-                          {waiver.booking.customer.name}
-                        </p>
-                        <Badge variant={waiver.status === "SIGNED" ? "green" : "amber"}>
-                          {waiver.status === "SIGNED" ? "Signed" : "Pending"}
-                        </Badge>
-                      </div>
-                      <p className="mt-0.5 text-sm text-gray-500 truncate">
-                        {waiver.booking.customer.email}
-                      </p>
-                      <p className="mt-0.5 text-xs text-gray-400">
-                        {waiver.booking.slot.rideType === "THEME" && waiver.booking.slot.theme
-                          ? waiver.booking.slot.theme.name
-                          : "Group Ride"}{" "}
-                        · {formatDate(new Date(waiver.booking.slot.date))}
-                      </p>
-                      {waiver.status === "SIGNED" && waiver.signerName && (
-                        <p className="mt-0.5 text-xs text-gray-500">
-                          Signed by <span className="font-medium">{waiver.signerName}</span>
-                          {waiver.signedAt && <> · {formatDateTime(new Date(waiver.signedAt))}</>}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+              {waivers.map((waiver: any) => {
+                const name = waiver.booking?.member?.name ?? waiver.booking?.guestName ?? "Guest";
+                const email = waiver.booking?.member?.email ?? waiver.booking?.guestEmail ?? "";
+                const lane = waiver.booking?.bookingType === "BOTH_LANES"
+                  ? "Both Lanes"
+                  : `Lane ${waiver.booking?.slotA?.lane ?? "?"}`;
 
-                  {/* Expandable snapshot */}
-                  {waiver.status === "SIGNED" && (
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-xs font-medium text-brand-blue hover:underline select-none">
-                        View signed agreement
-                      </summary>
-                      <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                        <pre className="whitespace-pre-wrap text-xs text-gray-600 font-sans leading-relaxed">
-                          {waiver.agreementTextSnapshot}
-                        </pre>
-                        {waiver.ipAddress && (
-                          <p className="mt-2 text-xs text-gray-400 border-t border-gray-200 pt-2">
-                            IP: {waiver.ipAddress}
-                            {waiver.signerDob && <> · DOB: {waiver.signerDob}</>}
+                return (
+                  <li key={waiver.id} className="px-6 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-gray-900 truncate">{name}</p>
+                          <Badge variant={waiver.status === "SIGNED" ? "green" : "amber"}>
+                            {waiver.status === "SIGNED" ? "Signed" : "Pending"}
+                          </Badge>
+                          {waiver.isMinor && (
+                            <Badge variant="blue">Minor</Badge>
+                          )}
+                        </div>
+                        {email && (
+                          <p className="mt-0.5 text-sm text-gray-500 truncate">{email}</p>
+                        )}
+                        <p className="mt-0.5 text-xs text-gray-400">
+                          {lane} &middot;{" "}
+                          {waiver.booking?.slotA?.date
+                            ? formatDate(new Date(waiver.booking.slotA.date))
+                            : "—"}
+                        </p>
+                        {waiver.status === "SIGNED" && waiver.signerName && (
+                          <p className="mt-0.5 text-xs text-gray-500">
+                            Signed by <span className="font-medium">{waiver.signerName}</span>
+                            {waiver.guardianName && (
+                              <> (guardian: {waiver.guardianName})</>
+                            )}
+                            {waiver.signedAt && <> &middot; {formatDateTime(new Date(waiver.signedAt))}</>}
                           </p>
                         )}
                       </div>
-                    </details>
-                  )}
-                </li>
-              ))}
+                    </div>
+
+                    {waiver.status === "SIGNED" && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-xs font-medium text-brand-blue hover:underline select-none">
+                          View signed agreement
+                        </summary>
+                        <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                          <pre className="whitespace-pre-wrap text-xs text-gray-600 font-sans leading-relaxed">
+                            {waiver.agreementTextSnapshot}
+                          </pre>
+                          {waiver.ipAddress && (
+                            <p className="mt-2 text-xs text-gray-400 border-t border-gray-200 pt-2">
+                              IP: {waiver.ipAddress}
+                            </p>
+                          )}
+                        </div>
+                      </details>
+                    )}
+                  </li>
+                );
+              })}
               {waivers.length === 0 && (
                 <li className="px-6 py-8 text-center text-sm text-gray-500">
                   No waivers yet.
@@ -124,7 +133,6 @@ export default async function WaiversPage() {
           </CardBody>
         </Card>
 
-        {/* Template editor */}
         <Card>
           <CardHeader>
             <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
