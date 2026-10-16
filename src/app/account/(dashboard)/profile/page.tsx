@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { updateCustomerProfile } from "@/server/actions/customer";
+import { updateMemberProfile } from "@/server/actions/member";
 
 export default async function AccountProfilePage() {
   const user = await requireUser();
@@ -18,7 +18,7 @@ export default async function AccountProfilePage() {
       <h1 className="mb-6 text-2xl font-bold text-gray-900">Profile</h1>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <form action={updateCustomerProfile} className="space-y-4">
+        <form action={updateMemberProfile} className="space-y-4">
           <Input
             label="Full Name"
             name="name"

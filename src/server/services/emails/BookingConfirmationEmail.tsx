@@ -13,11 +13,11 @@ import {
 } from "@react-email/components";
 
 interface BookingConfirmationEmailProps {
-  customerName: string;
-  rideName: string;
-  rideDate: string;
-  rideTime: string;
-  pickupLocation: string;
+  name: string;
+  lane: string;
+  sessionDate: string;
+  sessionTime: string;
+  doorCode: string;
   totalPaid: string;
   bookingId: string;
   waiverUrl: string;
@@ -25,11 +25,11 @@ interface BookingConfirmationEmailProps {
 }
 
 export function BookingConfirmationEmail({
-  customerName,
-  rideName,
-  rideDate,
-  rideTime,
-  pickupLocation,
+  name,
+  lane,
+  sessionDate,
+  sessionTime,
+  doorCode,
   totalPaid,
   bookingId,
   waiverUrl,
@@ -38,40 +38,34 @@ export function BookingConfirmationEmail({
   return (
     <Html>
       <Head />
-      <Preview>Your Railside Rides booking is confirmed! Sign your waiver to complete check-in.</Preview>
+      <Preview>Your Rally&apos;s session is confirmed! Your door code: {doorCode}</Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header */}
           <Section style={header}>
-            <Heading style={headerTitle}>Railside Rides</Heading>
-            <Text style={headerTagline}>#RailsideGetsRowdy</Text>
+            <Heading style={headerTitle}>Rally&apos;s Indoor Training</Heading>
+            <Text style={headerTagline}>Hastings, NE</Text>
           </Section>
 
           <Section style={content}>
             <Heading as="h2" style={h2}>
-              You're booked, {customerName}! 🎉
+              You&apos;re booked, {name}!
             </Heading>
             <Text style={text}>
-              Your reservation is confirmed. Here are your ride details:
+              Your cage session is confirmed. Here are your details:
             </Text>
 
-            {/* Booking details box */}
             <Section style={detailsBox}>
               <Row>
-                <Text style={detailLabel}>Ride</Text>
-                <Text style={detailValue}>{rideName}</Text>
+                <Text style={detailLabel}>Lane</Text>
+                <Text style={detailValue}>{lane}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Date</Text>
-                <Text style={detailValue}>{rideDate}</Text>
+                <Text style={detailValue}>{sessionDate}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Time</Text>
-                <Text style={detailValue}>{rideTime}</Text>
-              </Row>
-              <Row>
-                <Text style={detailLabel}>Pick-up</Text>
-                <Text style={detailValue}>{pickupLocation}</Text>
+                <Text style={detailValue}>{sessionTime}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Total Paid</Text>
@@ -81,16 +75,23 @@ export function BookingConfirmationEmail({
               </Row>
             </Section>
 
+            <Section style={codeBox}>
+              <Text style={codeLabel}>Your Door Code</Text>
+              <Text style={codeValue}>{doorCode}</Text>
+              <Text style={codeHint}>
+                Active 5 min before your session &mdash; expires 5 min after.
+              </Text>
+            </Section>
+
             <Hr style={hr} />
 
-            {/* Waiver CTA */}
             <Section style={waiverSection}>
               <Heading as="h3" style={h3}>
-                ⚠️ Action Required: Sign Your Waiver
+                Action Required: Sign Your Waiver
               </Heading>
               <Text style={text}>
-                You must sign the liability waiver before your ride begins.
-                Click the button below to complete it now — it only takes 30 seconds.
+                You must sign the liability waiver before your session.
+                Click below to complete it — takes 30 seconds.
               </Text>
               <Button href={waiverUrl} style={ctaButton}>
                 Sign Waiver Now
@@ -107,13 +108,12 @@ export function BookingConfirmationEmail({
             </Text>
           </Section>
 
-          {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              Railside Rides · Grand Island, NE
+              Rally&apos;s Indoor Training &middot; Hastings, NE
             </Text>
             <Text style={footerText}>
-              You're receiving this because you booked a ride with us.
+              You&apos;re receiving this because you booked a cage session.
             </Text>
           </Section>
         </Container>
@@ -135,6 +135,10 @@ const smallText = { fontSize: "12px", color: "#9ca3af", margin: "4px 0" };
 const detailsBox = { backgroundColor: "#f9fafb", borderRadius: "8px", padding: "20px 24px", marginBottom: "24px" };
 const detailLabel = { fontSize: "12px", color: "#6b7280", margin: "4px 0 0", textTransform: "uppercase" as const, letterSpacing: "0.05em" };
 const detailValue = { fontSize: "15px", color: "#111827", margin: "0 0 12px", fontWeight: "500" };
+const codeBox = { backgroundColor: "#eef2ff", borderRadius: "8px", padding: "24px", marginBottom: "24px", textAlign: "center" as const, border: "2px dashed #4a7bff" };
+const codeLabel = { fontSize: "11px", color: "#6b7280", margin: "0 0 4px", textTransform: "uppercase" as const, letterSpacing: "0.1em" };
+const codeValue = { fontSize: "36px", color: "#2B5CE6", fontWeight: "800", margin: "0", letterSpacing: "6px", fontFamily: "ui-monospace, 'SF Mono', Menlo, monospace" };
+const codeHint = { fontSize: "12px", color: "#6b7280", margin: "8px 0 0" };
 const hr = { borderColor: "#e5e7eb", margin: "24px 0" };
 const waiverSection = { backgroundColor: "#fffbeb", borderRadius: "8px", padding: "20px 24px", marginBottom: "24px", border: "1px solid #fcd34d" };
 const ctaButton = { backgroundColor: "#E8722A", borderRadius: "8px", color: "#ffffff", fontSize: "15px", fontWeight: "600", padding: "12px 24px", textDecoration: "none", display: "inline-block" };

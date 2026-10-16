@@ -8,7 +8,7 @@ export function FooterCta() {
     >
       <h2 className="m-0 font-display leading-[0.9] tracking-[-2px] text-[56px] sm:text-[72px] lg:text-[96px]">
         READY TO{" "}
-        <span style={{ color: "var(--color-landing-primary)" }}>ROLL?</span>
+        <span style={{ color: "var(--color-landing-primary)" }}>SWING?</span>
       </h2>
 
       <div className="mt-10 flex flex-wrap items-end justify-between gap-6">
@@ -27,22 +27,20 @@ export function FooterCta() {
         </Link>
 
         <div className="text-right text-[13px] leading-[1.8] opacity-60">
-          2824 Goldenrod Drive, Grand Island, NE 68801
+          Hastings, NE
           <br />
-          Thu–Sun · 4pm–midnight
+          Self-service · Open during scheduled hours
           <br />
-          308-850-4752 · hello@railsiderides.com
+          rallysindoortraining.com
         </div>
       </div>
 
-      {/* Credits bar */}
       <div
         className="mt-10 flex flex-wrap items-center justify-between gap-4 pt-6 text-[11px]"
         style={{ borderTop: "1px solid rgba(255,255,255,0.06)", opacity: 0.45 }}
       >
-        <span>© {new Date().getFullYear()} Railside Rides. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Rally&apos;s Indoor Training LLC. All rights reserved.</span>
         <div className="flex gap-5">
-          <Link href="/sms" className="hover:opacity-80 transition-opacity">SMS Alerts</Link>
           <Link href="/privacy" className="hover:opacity-80 transition-opacity">Privacy Policy</Link>
           <Link href="/terms" className="hover:opacity-80 transition-opacity">Terms &amp; Conditions</Link>
         </div>

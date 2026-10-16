@@ -11,11 +11,11 @@ export function PasswordResetEmail({ name, resetUrl }: PasswordResetEmailProps) 
   return (
     <Html>
       <Head />
-      <Preview>Reset your Railside Rides password — link expires in 1 hour.</Preview>
+      <Preview>Reset your Rally&apos;s Indoor Training password — link expires in 1 hour.</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
-            <Heading style={headerTitle}>Railside Rides</Heading>
+            <Heading style={headerTitle}>Rally&apos;s Indoor Training</Heading>
             <Text style={headerTagline}>Password Reset</Text>
           </Section>
           <Section style={content}>
@@ -27,10 +27,10 @@ export function PasswordResetEmail({ name, resetUrl }: PasswordResetEmailProps) 
               <Button href={resetUrl} style={ctaButton}>Reset Password</Button>
             </Section>
             <Hr style={hr} />
-            <Text style={smallText}>This link expires in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email.</Text>
+            <Text style={smallText}>This link expires in <strong>1 hour</strong>. If you didn&apos;t request a password reset, you can safely ignore this email.</Text>
           </Section>
           <Section style={footer}>
-            <Text style={footerText}>Railside Rides · Grand Island, NE</Text>
+            <Text style={footerText}>Rally&apos;s Indoor Training &middot; Hastings, NE</Text>
           </Section>
         </Container>
       </Body>

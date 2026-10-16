@@ -37,6 +37,11 @@ function formatTime(date: Date | string): string {
   }).format(new Date(date));
 }
 
+function laneLabel(bookingType: string, slotA: { lane: string }): string {
+  if (bookingType === "BOTH_LANES") return "Both Lanes (A & B)";
+  return `Lane ${slotA.lane}`;
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ bookingId: string }> }
@@ -51,10 +56,8 @@ export async function GET(
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: {
-      customer: true,
-      slot: { include: { theme: true, bike: true } },
-      bookingAddons: { include: { addon: true } },
-      discountCode: true,
+      member: true,
+      slotA: true,
     },
   });
 
@@ -62,13 +65,12 @@ export async function GET(
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }
 
-  const isOwner = booking.customerId === user.id;
+  const isOwner = booking.memberId === user.id;
   const admin = await isAdmin();
   if (!isOwner && !admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Attempt to fetch card last4 from Stripe
   let cardLast4: string | null = null;
   if (booking.stripePaymentIntentId) {
     try {
@@ -79,51 +81,27 @@ export async function GET(
         (pi.latest_charge as any)?.payment_method_details?.card?.last4 ??
         null;
 
-      // If latest_charge is just an ID string, expand it
       if (!cardLast4 && typeof pi.latest_charge === "string") {
         const charge = await stripe.charges.retrieve(pi.latest_charge);
         cardLast4 = charge.payment_method_details?.card?.last4 ?? null;
       }
     } catch {
-      // Stripe lookup failed — proceed without card info
       cardLast4 = null;
     }
   }
 
-  const rideName =
-    booking.slot.rideType === "THEME"
-      ? (booking.slot.theme?.name ?? "Theme Ride")
-      : "Group Ride";
-
+  const lane = laneLabel(booking.bookingType, booking.slotA);
+  const customerName = booking.member?.name ?? booking.guestName ?? "";
   const shortId = booking.id.slice(-8);
-  const rideDate = formatDate(booking.slot.date);
-  const timeWindow = `${formatTime(booking.slot.startTime)} - ${formatTime(booking.slot.endTime)}`;
+  const sessionDate = formatDate(booking.slotA.date);
+  const timeWindow = `${formatTime(booking.slotA.startTime)} - ${formatTime(booking.slotA.endTime)}`;
 
-  // Build line items
-  const lineItems: { label: string; amount: string; bold?: boolean; negative?: boolean }[] = [];
+  const lineItems: { label: string; amount: string; bold?: boolean }[] = [];
 
   lineItems.push({
-    label: `${rideName} (${booking.seats} seat${booking.seats > 1 ? "s" : ""})`,
+    label: `Cage Session — ${lane}`,
     amount: formatCents(booking.baseAmountCents),
   });
-
-  for (const ba of booking.bookingAddons) {
-    lineItems.push({
-      label: ba.addon.name,
-      amount: formatCents(ba.priceCentsAtPurchase),
-    });
-  }
-
-  if (booking.discountAmountCents > 0) {
-    const discountLabel = booking.discountCode
-      ? `Discount (${booking.discountCode.code})`
-      : "Discount";
-    lineItems.push({
-      label: discountLabel,
-      amount: `\u2212${formatCents(booking.discountAmountCents)}`,
-      negative: true,
-    });
-  }
 
   lineItems.push({
     label: "Tax",
@@ -140,8 +118,8 @@ export async function GET(
     .map(
       (item) => `
       <tr style="${item.bold ? "font-weight:700;border-top:2px solid #333;" : ""}">
-        <td style="padding:8px 0;${item.negative ? "color:#b91c1c;" : ""}">${escapeHtml(item.label)}</td>
-        <td style="padding:8px 0;text-align:right;${item.negative ? "color:#b91c1c;" : ""}">${escapeHtml(item.amount)}</td>
+        <td style="padding:8px 0;">${escapeHtml(item.label)}</td>
+        <td style="padding:8px 0;text-align:right;">${escapeHtml(item.amount)}</td>
       </tr>`
     )
     .join("");
@@ -151,7 +129,7 @@ export async function GET(
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Railside Rides — Receipt</title>
+  <title>Rally's Indoor Training — Receipt</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -220,8 +198,8 @@ export async function GET(
 <body>
   <div class="receipt">
     <div class="header">
-      <h1>Railside Rides, LLC</h1>
-      <p>Dallas, TX</p>
+      <h1>Rally's Indoor Training LLC</h1>
+      <p>Hastings, NE</p>
     </div>
 
     <div class="details">
@@ -231,12 +209,12 @@ export async function GET(
           <td>...${escapeHtml(shortId)}</td>
         </tr>
         <tr>
-          <td>Date of Ride</td>
-          <td>${escapeHtml(rideDate)}</td>
+          <td>Date of Session</td>
+          <td>${escapeHtml(sessionDate)}</td>
         </tr>
         <tr>
-          <td>Ride</td>
-          <td>${escapeHtml(rideName)}</td>
+          <td>Lane</td>
+          <td>${escapeHtml(lane)}</td>
         </tr>
         <tr>
           <td>Time</td>
@@ -244,7 +222,7 @@ export async function GET(
         </tr>
         <tr>
           <td>Customer</td>
-          <td>${escapeHtml(booking.customer.name ?? "")}</td>
+          <td>${escapeHtml(customerName)}</td>
         </tr>
       </table>
     </div>
@@ -258,7 +236,7 @@ export async function GET(
     ${cardLast4 ? `<p class="payment">Paid via card ending in ${escapeHtml(cardLast4)}</p>` : ""}
 
     <div class="footer">
-      Thank you for riding with us!
+      Thank you for choosing Rally's Indoor Training!
     </div>
   </div>
 </body>

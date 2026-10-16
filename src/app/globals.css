@@ -12,7 +12,7 @@
   --font-display: var(--font-archivo-black);
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Railside Rides brand (light-mode primary) */
+  /* Rally's brand (light-mode primary) */
   --color-brand-blue: #2B5CE6;
   --color-brand-blue-dark: #1e47c8;
   --color-brand-orange: #E8722A;
@@ -66,8 +66,8 @@ body {
   background: transparent;
 }
 
-/* Landing page ticker (Groups & Events types) — slow horizontal scroll */
-@keyframes railside-ticker {
+/* Landing page ticker — slow horizontal scroll */
+@keyframes landing-ticker {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }

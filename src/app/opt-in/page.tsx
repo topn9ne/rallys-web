@@ -3,8 +3,8 @@ import { FooterCta } from "@/components/landing/FooterCta";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "SMS Opt-In — Railside Rides",
-  description: "How customers opt in to SMS text message alerts from Railside Rides during the booking process.",
+  title: "SMS Opt-In — Rally's Indoor Training",
+  description: "How customers opt in to SMS text message alerts from Rally's Indoor Training during the booking process.",
 };
 
 export default function OptInPage() {
@@ -15,113 +15,74 @@ export default function OptInPage() {
     >
       <Nav />
 
-      <section className="px-6 py-16 md:px-14 max-w-2xl">
+      <section className="px-6 py-16 md:px-14 max-w-3xl">
         <p
           className="mb-4 font-display text-xs uppercase tracking-[3px]"
           style={{ color: "var(--color-landing-primary)" }}
         >
-          SMS Opt-In
+          SMS Opt-In Documentation
         </p>
-        <h1 className="mb-4 font-display text-4xl tracking-[-1px]">HOW CUSTOMERS OPT IN</h1>
-        <p className="mb-10 text-sm" style={{ opacity: 0.6 }}>
-          This page documents the SMS opt-in process for Railside Rides. The opt-in is collected
-          during the online booking process at <strong>railsiderides.com</strong>.
+        <h1 className="mb-6 font-display text-5xl tracking-[-1px]">SMS OPT-IN PROCESS</h1>
+
+        <p className="mb-10 text-sm leading-relaxed" style={{ opacity: 0.7 }}>
+          This page documents the SMS opt-in process for Rally&apos;s Indoor Training. The opt-in is collected
+          during the online booking process at <strong>rallysindoortraining.com</strong>.
         </p>
 
-        <div className="space-y-8 text-sm" style={{ opacity: 0.9 }}>
+        <div className="space-y-8 text-sm leading-relaxed" style={{ opacity: 0.85 }}>
 
-          {/* Step-by-step flow */}
           <div>
-            <h2 className="mb-4 font-semibold text-base">Opt-In Flow</h2>
-            <ol className="space-y-3 list-none">
+            <h2 className="mb-3 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>User Flow</h2>
+            <ol className="list-decimal pl-5 space-y-2">
               {[
-                "Customer selects an available ride at railsiderides.com/book",
-                "Customer enters their Full Name and Email address",
-                "Customer optionally enters their Phone Number",
-                "Customer is presented with an unchecked SMS opt-in checkbox (shown below)",
-                "Customer checks the box to consent — this step is entirely optional and not required to complete the booking",
-                "Customer clicks \"Continue to Payment\" and is redirected to Stripe",
+                "Customer selects an available cage slot at rallysindoortraining.com/book",
+                "Customer enters name, email, and phone number",
+                "Customer is presented with an unchecked SMS consent checkbox (see below)",
+                "Customer checks the box and submits the booking form",
+                "System records opt-in timestamp and sends booking confirmation + door code via SMS",
               ].map((step, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-                    style={{ background: "var(--color-landing-primary)", color: "#fff" }}
-                  >
-                    {i + 1}
-                  </span>
-                  <span style={{ opacity: 0.85 }}>{step}</span>
-                </li>
+                <li key={i}>{step}</li>
               ))}
             </ol>
           </div>
 
-          {/* Actual form fields as they appear */}
           <div>
-            <h2 className="mb-4 font-semibold text-base">Opt-In Form (as shown to customers)</h2>
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 space-y-4">
-
-              {/* Name field */}
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>Full Name</label>
-                <div className="rounded-lg border border-white/15 bg-white/[0.04] px-3 py-2 text-sm" style={{ opacity: 0.4 }}>Jane Smith</div>
-              </div>
-
-              {/* Email field */}
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>Email</label>
-                <div className="rounded-lg border border-white/15 bg-white/[0.04] px-3 py-2 text-sm" style={{ opacity: 0.4 }}>you@example.com</div>
-                <p className="mt-1 text-xs" style={{ opacity: 0.4 }}>We&apos;ll send your confirmation here.</p>
-              </div>
-
-              {/* Phone field */}
-              <div>
-                <label className="block text-xs font-semibold mb-1" style={{ opacity: 0.6 }}>Phone <span style={{ opacity: 0.5 }}>(optional)</span></label>
-                <div className="rounded-lg border border-white/15 bg-white/[0.04] px-3 py-2 text-sm" style={{ opacity: 0.4 }}>(308) 555-0100</div>
-                <p className="mt-1 text-xs" style={{ opacity: 0.4 }}>Optional — needed for text reminders.</p>
-              </div>
-
-              {/* The actual SMS opt-in checkbox */}
-              <div className="rounded-lg border border-white/20 bg-white/[0.06] p-4">
-                <label className="flex items-start gap-3 cursor-default select-none">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border border-white/40 bg-white/5" aria-hidden="true">
-                    {/* unchecked by default */}
-                  </span>
-                  <span className="text-sm leading-relaxed">
-                    Send me text message reminders about my booking. Msg &amp; data rates may apply.{" "}
-                    <a href="/privacy" className="underline" style={{ color: "var(--color-landing-primary)" }}>Privacy policy</a>{" "}
-                    &amp;{" "}
-                    <a href="/terms" className="underline" style={{ color: "var(--color-landing-primary)" }}>Terms</a>.
-                  </span>
-                </label>
-                <p className="mt-2 text-xs" style={{ opacity: 0.45 }}>
-                  ☐ Unchecked by default. Checking this box constitutes explicit opt-in consent to receive SMS messages from Railside Rides.
-                  Consent is not required to complete a booking.
+            <h2 className="mb-3 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Consent Checkbox</h2>
+            <div
+              className="rounded-lg p-5"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+            >
+              <div className="flex items-start gap-3">
+                <div
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2"
+                  style={{ borderColor: "rgba(255,255,255,0.4)" }}
+                />
+                <p className="text-sm leading-relaxed">
+                  I agree to receive SMS booking confirmations, door codes, and reminders from Rally&apos;s Indoor Training.
+                  Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to cancel, HELP for help.
                 </p>
               </div>
-
+              <p className="mt-3 text-[10px] uppercase tracking-[1px] opacity-40">
+                Unchecked by default. Checking this box constitutes explicit opt-in consent to receive SMS messages from Rally&apos;s Indoor Training.
+              </p>
             </div>
           </div>
 
-          {/* Program disclosures */}
           <div>
-            <h2 className="mb-4 font-semibold text-base">Required Disclosures</h2>
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5 space-y-2 text-sm">
-              <p><strong>Business name:</strong> Railside Rides</p>
-              <p><strong>Message types:</strong> Booking confirmations, ride reminders, waiver alerts, post-ride review request</p>
-              <p><strong>Message frequency:</strong> Up to 4 messages per booking</p>
-              <p><strong>Msg &amp; data rates may apply</strong></p>
-              <p><strong>Opt-out:</strong> Reply STOP at any time</p>
-              <p><strong>Help:</strong> Reply HELP or call 308-850-4752</p>
-              <p><strong>Privacy Policy:</strong> <a href="/privacy" className="underline" style={{ color: "var(--color-landing-primary)" }}>railsiderides.com/privacy</a></p>
-              <p><strong>Terms &amp; Conditions:</strong> <a href="/terms" className="underline" style={{ color: "var(--color-landing-primary)" }}>railsiderides.com/terms</a></p>
-              <p><strong>SMS Program details:</strong> <a href="/sms" className="underline" style={{ color: "var(--color-landing-primary)" }}>railsiderides.com/sms</a></p>
+            <h2 className="mb-3 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Business Information</h2>
+            <div className="space-y-1">
+              <p><strong>Business name:</strong> Rally&apos;s Indoor Training LLC</p>
+              <p><strong>Location:</strong> Hastings, NE</p>
+              <p><strong>Contact:</strong> <a href="mailto:info@rallysindoortraining.com" className="underline">info@rallysindoortraining.com</a></p>
+              <p><strong>Privacy Policy:</strong> <a href="/privacy" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoortraining.com/privacy</a></p>
+              <p><strong>Terms &amp; Conditions:</strong> <a href="/terms" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoortraining.com/terms</a></p>
+              <p><strong>SMS Program details:</strong> <a href="/sms" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoortraining.com/sms</a></p>
             </div>
           </div>
 
-          <p className="text-xs" style={{ opacity: 0.4 }}>
-            Railside Rides · 2824 Goldenrod Drive, Grand Island, NE 68801 · 308-850-4752 · hello@railsiderides.com
+          <p className="text-xs text-center pt-4" style={{ opacity: 0.4 }}>
+            Rally&apos;s Indoor Training &middot; Hastings, NE &middot; info@rallysindoortraining.com
           </p>
-
         </div>
       </section>
 

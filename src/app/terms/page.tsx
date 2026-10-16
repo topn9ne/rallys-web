@@ -3,8 +3,8 @@ import { FooterCta } from "@/components/landing/FooterCta";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions — Railside Rides",
-  description: "Terms and conditions for booking and riding with Railside Rides in Grand Island, Nebraska.",
+  title: "Terms & Conditions — Rally's Indoor Training",
+  description: "Terms and conditions for booking and using the batting cages at Rally's Indoor Training in Hastings, Nebraska.",
 };
 
 export default function TermsPage() {
@@ -28,79 +28,53 @@ export default function TermsPage() {
 
           <div>
             <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Agreement</h2>
-            <p>By booking a ride with Railside Rides ("we", "us", "our"), you agree to these terms and conditions in full. If you do not agree, please do not complete your booking.</p>
+            <p>By booking a session with Rally&apos;s Indoor Training LLC (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;), you agree to these terms and conditions in full. If you do not agree, please do not complete your booking.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Eligibility</h2>
-            <p>All riders must be 21 years of age or older. Valid photo ID is required at check-in. Railside Rides reserves the right to refuse service to any individual who cannot provide valid ID, appears intoxicated prior to boarding, or poses a safety risk to other riders or staff.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Eligibility &amp; Waivers</h2>
+            <p>All users are welcome. Participants under 18 years of age must have a waiver signed by a parent or legal guardian before using the facility. The digital waiver can be completed during the booking process.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Reservations &amp; Payment</h2>
-            <p>Full payment is required at the time of booking. Reservations are not confirmed until payment is received. We accept all major credit cards processed securely through Stripe. Payment may be split across multiple cards — contact us in advance to arrange.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Bookings &amp; Cancellations</h2>
+            <p>All sessions are 30 minutes. Bookings are confirmed upon payment (drop-ins) or slot reservation (members). Cancellation policies and any applicable refund terms are displayed during checkout.</p>
+            <p className="mt-3">If Rally&apos;s Indoor Training must cancel a session due to equipment failure or circumstances beyond our control, we will work with you to reschedule or issue a refund.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Cancellation &amp; Refunds</h2>
-            <p>Cancellations made more than 7 days prior to your ride date are eligible for a full refund minus the booking fee. Cancellations made within 7 days of the ride will receive a rain check to be used later in the season. Cancellations within 48 hours of the scheduled ride are not eligible for a refund or transfer of any kind.</p>
-            <p className="mt-3">If Railside Rides must cancel a ride due to severe weather or other circumstances beyond our control, we will work with you to reschedule at no additional charge.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Facility Access</h2>
+            <p>Each booking generates a unique, time-bound door code delivered via SMS. This code is active from 5 minutes before your session starts until 5 minutes after it ends. Do not share your code with others. Unauthorized access or remaining past your session time may result in account suspension.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Group Size</h2>
-            <p>Private rides require a minimum of 8 riders and accommodate a maximum of 14. The booking price is the same regardless of group size within that range. Riders beyond 14 cannot be accommodated on a single ride for safety reasons.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Conduct &amp; Safety</h2>
+            <p>Users are expected to use the facility responsibly and follow all posted safety guidelines. Rally&apos;s Indoor Training reserves the right to revoke access for any individual who damages equipment, behaves unsafely, or violates these terms.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Alcohol Policy</h2>
-            <p>Riders may bring their own beer or malt beverages in aluminum cans or plastic containers. No glass bottles or hard liquor are permitted on the vehicle at any time. Railside Rides is not a licensed alcohol retailer and does not sell or provide alcohol. All consumption is the sole responsibility of the rider.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Assumption of Risk</h2>
+            <p>Use of batting cages involves inherent physical risk. By booking, you acknowledge these risks and agree that Rally&apos;s Indoor Training LLC, its owners and agents are not liable for any injury, loss, or damage arising from your use of the facility, except in cases of gross negligence or willful misconduct.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Waiver Requirement</h2>
-            <p>All riders are required to sign a liability waiver before boarding. Failure to sign the waiver will result in denial of boarding with no refund. Waivers may be signed in advance via the link provided in your booking confirmation.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>SMS Communications</h2>
+            <p>By providing your phone number and opting in during the booking process, you consent to receive text messages from Rally&apos;s Indoor Training related to your booking, including confirmations, door access codes, and session reminders.</p>
+            <p className="mt-3">Rally&apos;s Indoor Training does not sell, share, or transfer mobile phone numbers or opt-in data to third parties for marketing purposes.</p>
+            <p className="mt-3">To opt out at any time, reply <strong>STOP</strong> to any message. For help, reply <strong>HELP</strong> or contact us at <a href="mailto:info@rallysindoortraining.com" className="underline">info@rallysindoortraining.com</a>.</p>
           </div>
 
           <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Conduct &amp; Right to Refuse Service</h2>
-            <p>Railside Rides reserves the right to refuse service or remove any rider from the vehicle at any time for disruptive, unsafe, or abusive behavior — including toward staff, other riders, or members of the public. No refund will be issued in cases of removal for cause.</p>
-          </div>
-
-          <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Weather</h2>
-            <p>Rides operate in most weather conditions including light rain. The vehicle is equipped with a roof. Rides will only be cancelled in cases of severe weather such as thunderstorms, lightning, or conditions deemed unsafe by our staff. We do not cancel for cold temperatures or light precipitation alone.</p>
-          </div>
-
-          <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Liability</h2>
-            <p>Participation in a Railside Rides experience involves inherent physical risk. By booking, you acknowledge these risks and agree that Railside Rides, its owners, employees, and agents are not liable for any injury, loss, or damage arising from your participation, except in cases of gross negligence or willful misconduct.</p>
-          </div>
-
-          <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Photography &amp; Media</h2>
-            <p>Railside Rides may photograph or video rides for promotional purposes. By participating, you grant us permission to use such images or footage on our website and social media. If you object, please notify us before your ride.</p>
-          </div>
-
-          <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>SMS Text Messaging</h2>
-            <p>By providing your phone number and checking the SMS opt-in checkbox during the booking process, you consent to receive text messages from Railside Rides related to your booking. This includes booking confirmations, ride reminders, waiver alerts, and a single post-ride review request.</p>
-            <p className="mt-3">Consent to receive SMS messages is not required to complete a booking or purchase. Message frequency varies — typically 2–4 messages per booking. Message and data rates may apply.</p>
-            <p className="mt-3">Railside Rides collects SMS opt-in consent directly from customers and does not share, sell, or transfer mobile opt-in data or phone numbers to third parties for marketing purposes.</p>
-            <p className="mt-3">To opt out at any time, reply <strong>STOP</strong> to any message. For help, reply <strong>HELP</strong> or contact us at <a href="mailto:hello@railsiderides.com" className="underline">hello@railsiderides.com</a> or 308-850-4752. Full details at <a href="/sms" className="underline">railsiderides.com/sms</a>.</p>
-          </div>
-
-          <div>
-            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Changes to These Terms</h2>
-            <p>We may update these terms from time to time. The version in effect at the time of your booking governs your ride. Continued use of our services constitutes acceptance of any updated terms.</p>
+            <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Changes to Terms</h2>
+            <p>We may update these terms from time to time. Continued use of our service after changes constitutes acceptance of the updated terms.</p>
           </div>
 
           <div>
             <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Contact</h2>
-            <p>Questions? Email us at <a href="mailto:hello@railsiderides.com" className="underline">hello@railsiderides.com</a> or call 308-850-4752.</p>
+            <p>Questions? Email us at <a href="mailto:info@rallysindoortraining.com" className="underline">info@rallysindoortraining.com</a>.</p>
           </div>
 
-          <p className="text-xs" style={{ opacity: 0.5 }}>Last updated: May 2025</p>
+          <p className="text-xs" style={{ opacity: 0.5 }}>Last updated: October 2026</p>
         </div>
       </section>
 

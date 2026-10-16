@@ -1,12 +1,11 @@
 import { FooterCta } from "@/components/landing/FooterCta";
-import { Gallery } from "@/components/landing/Gallery";
-import { Groups } from "@/components/landing/Groups";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Nav } from "@/components/landing/Nav";
-import { Routes as ThemeRides } from "@/components/landing/Routes";
+import { Pricing } from "@/components/landing/Pricing";
 import { Ticker } from "@/components/landing/Ticker";
-import { Sponsors } from "@/components/landing/Sponsors";
+import { Teams } from "@/components/landing/Teams";
+import { Faq } from "@/components/landing/Faq";
 
 export default function Home() {
   return (
@@ -21,10 +20,9 @@ export default function Home() {
       <Hero />
       <Ticker />
       <HowItWorks />
-      <ThemeRides />
-      <Gallery />
-      <Groups />
-      <Sponsors />
+      <Pricing />
+      <Teams />
+      <Faq />
       <FooterCta />
     </div>
   );

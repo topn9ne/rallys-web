@@ -1,14 +1,13 @@
 const ITEMS = [
-  "Bachelor & bachelorette",
-  "Birthdays",
-  "Team offsites",
-  "Date nights",
-  "Wedding parties",
-  "Just because",
+  "Solo practice",
+  "Family sessions",
+  "Team training",
+  "Birthday parties",
+  "Weekend warriors",
+  "Off-season reps",
 ];
 
 export function Ticker() {
-  // Content is duplicated inline so the -50% translate loop is seamless.
   const sequence = [...ITEMS, ...ITEMS];
 
   return (
@@ -21,7 +20,7 @@ export function Ticker() {
     >
       <div
         className="flex w-max gap-14 whitespace-nowrap font-display text-base uppercase tracking-[3px] opacity-70"
-        style={{ animation: "railside-ticker 60s linear infinite" }}
+        style={{ animation: "landing-ticker 60s linear infinite" }}
       >
         {sequence.map((item, i) => (
           <span key={i} className="inline-flex items-center gap-14">

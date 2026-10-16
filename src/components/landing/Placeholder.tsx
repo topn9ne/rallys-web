@@ -16,8 +16,8 @@ type PlaceholderProps = {
  * Used everywhere the real imagery hasn't landed yet. Keep until the client
  * provides final photos — the labels describe what each real photo should be.
  *
- * See /tmp/railside-design/design_handoff_railside_landing/shared.jsx for the
- * original spec.
+ * Keep until the client provides final photos — the labels describe what each
+ * real photo should be.
  */
 export function Placeholder({
   label,

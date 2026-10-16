@@ -3,6 +3,11 @@ import { getUser, isAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatCents, formatDate, formatTime } from "@/lib/utils";
 
+function laneLabel(bookingType: string, slotA: { lane: string }): string {
+  if (bookingType === "BOTH_LANES") return "Both Lanes (A & B)";
+  return `Lane ${slotA.lane}`;
+}
+
 export async function GET(req: NextRequest) {
   const user = await getUser();
   if (!user || !(await isAdmin())) {
@@ -15,66 +20,55 @@ export async function GET(req: NextRequest) {
 
   const bookings = await prisma.booking.findMany({
     where: {
-      status: { in: ["CONFIRMED", "COMPLETED", "REFUNDED"] },
+      status: { in: ["CONFIRMED", "COMPLETED", "CANCELLED"] },
       ...(from || to ? { createdAt: { gte: from, lte: to } } : {}),
     },
     include: {
-      customer: true,
-      slot: { include: { theme: true } },
-      bookingAddons: { include: { addon: true } },
-      discountCode: true,
+      member: true,
+      slotA: true,
     },
     orderBy: { createdAt: "desc" },
   });
 
-  // Build CSV
   const headers = [
     "Booking ID",
     "Status",
-    "Customer Name",
-    "Customer Email",
-    "Ride",
-    "Ride Type",
+    "Name",
+    "Email",
+    "Phone",
+    "Booking Type",
+    "Lane",
     "Date",
     "Time",
-    "Seats",
-    "Pick-up Location",
     "Base Amount",
-    "Addons Amount",
-    "Discount Amount",
+    "Tax",
     "Total",
-    "Add-ons",
-    "Discount Code",
     "Created At",
   ];
 
-  const rows = bookings.map((b) => [
+  const rows = bookings.map((b: any) => [
     b.id,
     b.status,
-    b.customer.name,
-    b.customer.email,
-    b.slot.rideType === "THEME" ? b.slot.theme?.name ?? "Theme Ride" : "Group Ride",
-    b.slot.rideType,
-    formatDate(b.slot.date),
-    formatTime(b.slot.startTime),
-    b.seats,
-    b.pickupLocation,
+    b.member?.name ?? b.guestName ?? "",
+    b.member?.email ?? b.guestEmail ?? "",
+    b.member?.phone ?? b.guestPhone ?? "",
+    b.bookingType,
+    laneLabel(b.bookingType, b.slotA),
+    formatDate(b.slotA.date),
+    formatTime(b.slotA.startTime),
     formatCents(b.baseAmountCents),
-    formatCents(b.addonsAmountCents),
-    formatCents(b.discountAmountCents),
+    formatCents(b.taxAmountCents),
     formatCents(b.totalAmountCents),
-    b.bookingAddons.map((ba) => ba.addon.name).join("; "),
-    b.discountCode?.code ?? "",
     b.createdAt.toISOString(),
   ]);
 
   const csv = [headers, ...rows]
     .map((row) =>
-      row.map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")
+      row.map((cell: unknown) => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(",")
     )
     .join("\n");
 
-  const filename = `railside-rides-bookings-${from?.toISOString().split("T")[0] ?? "all"}.csv`;
+  const filename = `rallys-bookings-${from?.toISOString().split("T")[0] ?? "all"}.csv`;
 
   return new NextResponse(csv, {
     headers: {

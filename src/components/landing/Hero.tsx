@@ -10,7 +10,6 @@ export async function Hero() {
   return (
     <section className="relative px-6 pb-12 pt-[72px] md:px-14">
       <div className="grid gap-14 items-end lg:grid-cols-[1.1fr_0.9fr]">
-        {/* Left column */}
         <div>
           <div
             className="inline-flex items-center gap-[10px] rounded-full px-[14px] py-[7px] text-xs font-semibold uppercase tracking-[1.5px]"
@@ -24,21 +23,20 @@ export async function Hero() {
               className="h-[7px] w-[7px] rounded-full"
               style={{ background: "var(--color-landing-accent)" }}
             />
-            Now rolling downtown
+            Now open in Hastings
           </div>
 
           <h1 className="mt-7 font-display leading-[0.9] tracking-[-2px] text-[64px] sm:text-[96px] lg:text-[128px]">
-            PEDAL.
+            BOOK.
             <br />
-            <span style={{ color: "var(--color-landing-primary)" }}>PARTY.</span>
+            <span style={{ color: "var(--color-landing-primary)" }}>SWING.</span>
             <br />
             REPEAT.
           </h1>
 
           <p className="mt-8 max-w-[520px] text-lg leading-[1.5] opacity-80 sm:text-xl">
-            A 14-seat bar on wheels. You bring the crew &amp; the drinks — we bring
-            the route, the tunes, and a professional driver who actually knows
-            where the good stops are.
+            Self-service batting cages. Book a 30-minute slot online, get a door
+            code on your phone, let yourself in, and hit. No staff, no waiting.
           </p>
 
           <div className="mt-10 flex items-center gap-[14px]">
@@ -51,33 +49,32 @@ export async function Hero() {
                 borderRadius: 6,
               }}
             >
-              BOOK THE BIKE →
+              BOOK A CAGE →
             </Link>
           </div>
 
           <div className="mt-12 flex gap-10 text-[13px] uppercase tracking-[1px]">
             <div>
-              <div className="font-display text-[32px]" style={{ color: "var(--color-landing-accent)" }}>14</div>
-              seats
+              <div className="font-display text-[32px]" style={{ color: "var(--color-landing-accent)" }}>2</div>
+              lanes
             </div>
             <div>
-              <div className="font-display text-[32px]" style={{ color: "var(--color-landing-accent)" }}>2HR</div>
-              tours
+              <div className="font-display text-[32px]" style={{ color: "var(--color-landing-accent)" }}>30</div>
+              min slots
             </div>
             <div>
-              <div className="font-display text-[32px]" style={{ color: "var(--color-landing-accent)" }}>BYOB</div>
-              welcome
+              <div className="font-display text-[32px]" style={{ color: "var(--color-landing-accent)" }}>24/7</div>
+              access
             </div>
           </div>
         </div>
 
-        {/* Right column — hero photo */}
         <div className="relative">
           {heroPhoto ? (
             <div className="relative w-full overflow-hidden rounded-lg" style={{ aspectRatio: "3/4" }}>
               <NextImage
                 src={heroPhoto}
-                alt="Railside Rides — rolling through Grand Island"
+                alt="Rally's Indoor Training — batting cages in Hastings, NE"
                 fill
                 sizes="(max-width: 1024px) 100vw, 45vw"
                 className="object-cover"
@@ -86,7 +83,7 @@ export async function Hero() {
             </div>
           ) : (
             <Placeholder
-              label="hero photo — pedal bike rolling down main street at dusk, string lights, cheering riders"
+              label="hero photo — batter mid-swing in cage, dramatic lighting, net in background"
               ratio="3/4"
               bg="rgba(255,255,255,0.08)"
               stripe="rgba(74,123,255,0.20)"
@@ -109,9 +106,9 @@ export async function Hero() {
               boxShadow: "0 8px 0 var(--color-landing-primary)",
             }}
           >
-            SAT NIGHTS
+            PRIME TIME
             <br />
-            SELL OUT FAST
+            BOOKS FAST
           </div>
         </div>
       </div>

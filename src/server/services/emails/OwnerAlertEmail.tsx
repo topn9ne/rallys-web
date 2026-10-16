@@ -13,11 +13,12 @@ import {
 
 interface OwnerAlertEmailProps {
   eventType: "confirmed" | "cancelled";
-  customerName: string;
-  customerEmail: string;
-  rideName: string;
-  rideDate: string;
-  rideTime: string;
+  name: string;
+  email: string;
+  phone: string;
+  lane: string;
+  sessionDate: string;
+  sessionTime: string;
   bookingId: string;
   totalPaid: string;
   refundAmount?: string;
@@ -27,11 +28,12 @@ interface OwnerAlertEmailProps {
 
 export function OwnerAlertEmail({
   eventType,
-  customerName,
-  customerEmail,
-  rideName,
-  rideDate,
-  rideTime,
+  name,
+  email,
+  phone,
+  lane,
+  sessionDate,
+  sessionTime,
   bookingId,
   totalPaid,
   refundAmount,
@@ -45,14 +47,13 @@ export function OwnerAlertEmail({
       <Head />
       <Preview>
         {isConfirmed
-          ? `New booking: ${customerName} — ${rideName} on ${rideDate}`
-          : `Booking cancelled: ${customerName} — ${rideName} on ${rideDate}`}
+          ? `New booking: ${name} — ${lane} on ${sessionDate}`
+          : `Booking cancelled: ${name} — ${lane} on ${sessionDate}`}
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          {/* Header */}
           <Section style={header}>
-            <Heading style={headerTitle}>Railside Rides</Heading>
+            <Heading style={headerTitle}>Rally&apos;s Indoor Training</Heading>
             <Text style={headerTagline}>Owner Alert</Text>
           </Section>
 
@@ -61,27 +62,30 @@ export function OwnerAlertEmail({
               {isConfirmed ? "New Booking Confirmed" : "Booking Cancelled"}
             </Heading>
 
-            {/* Details box */}
             <Section style={detailsBox}>
               <Row>
-                <Text style={detailLabel}>Customer</Text>
-                <Text style={detailValue}>{customerName}</Text>
+                <Text style={detailLabel}>Name</Text>
+                <Text style={detailValue}>{name}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Email</Text>
-                <Text style={detailValue}>{customerEmail}</Text>
+                <Text style={detailValue}>{email}</Text>
               </Row>
               <Row>
-                <Text style={detailLabel}>Ride</Text>
-                <Text style={detailValue}>{rideName}</Text>
+                <Text style={detailLabel}>Phone</Text>
+                <Text style={detailValue}>{phone}</Text>
+              </Row>
+              <Row>
+                <Text style={detailLabel}>Lane</Text>
+                <Text style={detailValue}>{lane}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Date</Text>
-                <Text style={detailValue}>{rideDate}</Text>
+                <Text style={detailValue}>{sessionDate}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Time</Text>
-                <Text style={detailValue}>{rideTime}</Text>
+                <Text style={detailValue}>{sessionTime}</Text>
               </Row>
               <Row>
                 <Text style={detailLabel}>Total Paid</Text>
@@ -110,11 +114,12 @@ export function OwnerAlertEmail({
             <Text style={smallText}>Booking ID: {bookingId}</Text>
           </Section>
 
-          {/* Footer */}
           <Section style={footer}>
-            <Text style={footerText}>Railside Rides · Grand Island, NE</Text>
             <Text style={footerText}>
-              You're receiving this because you are an admin for Railside Rides.
+              Rally&apos;s Indoor Training &middot; Hastings, NE
+            </Text>
+            <Text style={footerText}>
+              You&apos;re receiving this because you are an admin for Rally&apos;s Indoor Training.
             </Text>
           </Section>
         </Container>
@@ -130,7 +135,6 @@ const headerTitle = { color: "#ffffff", fontSize: "24px", fontWeight: "700", mar
 const headerTagline = { color: "#93c5fd", fontSize: "14px", margin: "4px 0 0" };
 const content = { padding: "32px 40px" };
 const h2 = { fontSize: "22px", color: "#111827", fontWeight: "700", margin: "0 0 16px" };
-const text = { fontSize: "15px", color: "#374151", lineHeight: "1.6", margin: "0 0 16px" };
 const smallText = { fontSize: "12px", color: "#9ca3af", margin: "16px 0 0" };
 const detailsBox = { backgroundColor: "#f9fafb", borderRadius: "8px", padding: "20px 24px", marginBottom: "24px" };
 const detailLabel = { fontSize: "12px", color: "#6b7280", margin: "4px 0 0", textTransform: "uppercase" as const, letterSpacing: "0.05em" };

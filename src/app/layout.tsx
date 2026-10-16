@@ -21,15 +21,15 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Railside Rides — Pedal. Party. Repeat.",
+  title: "Rally's Indoor Training — Book. Swing. Repeat.",
   description:
-    "A 14-seat bar on wheels in Grand Island. Private 2-hour tours — BYOB, bring the crew, we bring the route.",
+    "Self-service batting cages in Hastings, NE. Book a 30-minute cage online, get a door code, and hit.",
   openGraph: {
-    title: "Railside Rides — Pedal. Party. Repeat.",
+    title: "Rally's Indoor Training — Book. Swing. Repeat.",
     description:
-      "A 14-seat bar on wheels in Grand Island. Private 2-hour tours — BYOB, bring the crew, we bring the route.",
+      "Self-service batting cages in Hastings, NE. Book a 30-minute cage online, get a door code, and hit.",
     type: "website",
-    siteName: "Railside Rides",
+    siteName: "Rally's Indoor Training",
   },
 };
 

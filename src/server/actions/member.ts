@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function updateCustomerProfile(formData: FormData): Promise<void> {
+export async function updateMemberProfile(formData: FormData): Promise<void> {
   const user = await getUser();
   if (!user) {
     throw new Error("Unauthorized");

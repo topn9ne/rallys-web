@@ -1,23 +1,23 @@
 const STEPS = [
   {
     n: "01",
-    t: "Book your slot",
-    d: "Pick a 2-hour window. Private vehicle = your crew only. No strangers, ever.",
+    t: "Book online",
+    d: "Pick your lane, date, and time. 30-minute slots, booked in seconds.",
   },
   {
     n: "02",
-    t: "BYO everything",
-    d: "Bring your drinks, your playlist, your questionable outfits. Coolers on board.",
+    t: "Get your code",
+    d: "A unique door code hits your phone via text. It works only for your time slot.",
   },
   {
     n: "03",
-    t: "We pedal, you party",
-    d: "Your driver steers & brakes. You pedal (or fake it). Three bar stops included.",
+    t: "Let yourself in",
+    d: "Punch the code, walk in, and the cage is yours. No staff. No waiting around.",
   },
   {
     n: "04",
-    t: "Memories made",
-    d: "We drop you back at HQ. You rave to your group chat for a week.",
+    t: "Swing away",
+    d: "30 minutes of cage time. When your slot ends, the code expires. Easy.",
   },
 ];
 
@@ -26,10 +26,10 @@ export function HowItWorks() {
     <section className="px-6 py-24 md:px-14">
       <div className="mb-12 flex flex-wrap items-baseline justify-between gap-4">
         <h2 className="m-0 font-display text-5xl tracking-[-1px] sm:text-6xl lg:text-[72px] lg:leading-[0.95]">
-          HOW IT <span style={{ color: "var(--color-landing-accent)" }}>ROLLS</span>
+          HOW IT <span style={{ color: "var(--color-landing-accent)" }}>WORKS</span>
         </h2>
         <div className="text-sm uppercase tracking-[1px] opacity-60">
-          Four steps. Two hours. One great night.
+          Four steps. Thirty minutes. All yours.
         </div>
       </div>
 
