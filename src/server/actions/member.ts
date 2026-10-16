@@ -11,7 +11,7 @@ export async function updateMemberProfile(formData: FormData): Promise<void> {
   }
 
   const name = (formData.get("name") as string)?.trim();
-  const phone = (formData.get("phone") as string)?.trim() || null;
+  const phone = (formData.get("phone") as string)?.trim() || "";
 
   if (!name) throw new Error("Name is required.");
 
