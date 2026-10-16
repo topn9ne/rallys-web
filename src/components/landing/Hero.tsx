@@ -28,7 +28,7 @@ export function Hero() {
         <div className="mt-14 flex items-center justify-center gap-4 text-[13px] font-semibold uppercase tracking-[1.5px] text-white/60">
           <span>2 lanes</span>
           <span className="text-gold">&middot;</span>
-          <span>1-hour slots</span>
+          <span>1-hour sessions</span>
           <span className="text-gold">&middot;</span>
           <span>6 AM &ndash; 10 PM daily</span>
         </div>

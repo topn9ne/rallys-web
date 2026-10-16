@@ -20,7 +20,7 @@ export async function Pricing() {
           Simple <span className="text-gold">Pricing</span>
         </h2>
         <div className="text-sm font-medium uppercase tracking-[1px] text-white/50">
-          No contracts. Cancel anytime.
+          No contracts. Cancel anytime. Annual saves two months.
         </div>
       </div>
 
