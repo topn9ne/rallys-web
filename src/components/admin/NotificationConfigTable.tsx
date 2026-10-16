@@ -161,7 +161,7 @@ export function NotificationConfigTable({ configs: initial }: Props) {
                           className="flex items-center justify-between gap-4 px-6 py-3 bg-gray-50/50 border-t border-gray-100 first:border-t-0"
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <Badge variant="amber" className="shrink-0 text-[10px]">Staff</Badge>
+                            <Badge variant="amber" className="shrink-0 text-[10px]">System</Badge>
                             <span className="flex items-center gap-1 text-xs text-gray-500 shrink-0">
                               {row.channel === "EMAIL"
                                 ? <Envelope size={13} weight="duotone" />
@@ -184,7 +184,7 @@ export function NotificationConfigTable({ configs: initial }: Props) {
                       {def.rows.map((row) => (
                         <div key={`${row.channel}:${row.audience}`} className="rounded-lg border border-gray-200 bg-white p-3">
                           <p className="text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
-                            {row.channel === "EMAIL" ? "Email" : "SMS"} — Staff
+                            {row.channel === "EMAIL" ? "Email" : "SMS"} — System
                           </p>
                           {row.channel === "EMAIL" && row.subjectPreview && (
                             <p className="text-xs text-gray-500 mb-1.5">

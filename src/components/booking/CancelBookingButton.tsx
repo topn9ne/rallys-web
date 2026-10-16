@@ -40,7 +40,7 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900">Cancel booking?</h2>
             <p className="mt-2 text-sm text-gray-600">
-              This will cancel your ride and issue a full refund. This cannot be undone.
+              This will cancel your session and issue a full refund. This cannot be undone.
             </p>
 
             {error && (

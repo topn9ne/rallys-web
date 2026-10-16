@@ -8,7 +8,6 @@ const statusVariant: Record<string, "green" | "gray" | "red" | "amber"> = {
   CONFIRMED: "green",
   COMPLETED: "gray",
   CANCELLED: "red",
-  REFUNDED: "red",
   PENDING: "amber",
 };
 
@@ -16,23 +15,26 @@ const statusLabel: Record<string, string> = {
   CONFIRMED: "Confirmed",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
-  REFUNDED: "Refunded",
   PENDING: "Pending",
 };
 
+function laneLabel(bookingType: string, slotLane: string): string {
+  if (bookingType === "BOTH_LANES") return "Both Lanes (A & B)";
+  return `Lane ${slotLane}`;
+}
+
 export default async function AccountBookingsPage() {
   const user = await requireUser();
-  const customerId = user.id;
 
   const bookings = await prisma.booking.findMany({
     where: {
-      customerId,
-      status: { in: ["CONFIRMED", "COMPLETED", "CANCELLED", "REFUNDED"] },
+      memberId: user.id,
+      status: { in: ["CONFIRMED", "COMPLETED", "CANCELLED"] },
     },
     include: {
-      slot: { include: { theme: true, bike: true } },
+      slotA: true,
       waiver: { select: { id: true, signedAt: true } },
-      bookingAddons: { select: { addonId: true } },
+      accessCode: { select: { pin: true, status: true } },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -41,22 +43,22 @@ export default async function AccountBookingsPage() {
   today.setHours(0, 0, 0, 0);
 
   const upcoming = bookings.filter(
-    (b) => b.status === "CONFIRMED" && new Date(b.slot.date) >= today
+    (b: any) => b.status === "CONFIRMED" && new Date(b.slotA.date) >= today
   );
   const past = bookings.filter(
-    (b) => b.status !== "CONFIRMED" || new Date(b.slot.date) < today
+    (b: any) => b.status !== "CONFIRMED" || new Date(b.slotA.date) < today
   );
 
   if (bookings.length === 0) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
         <p className="text-lg font-medium text-gray-900">No bookings yet</p>
-        <p className="mt-1 text-sm text-gray-500">Ready to ride?</p>
+        <p className="mt-1 text-sm text-gray-500">Ready to swing?</p>
         <a
           href="/book"
           className="mt-4 inline-block rounded-lg bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
         >
-          Book a Ride
+          Book a Session
         </a>
       </div>
     );
@@ -68,7 +70,7 @@ export default async function AccountBookingsPage() {
         <section>
           <h2 className="mb-3 text-lg font-bold text-gray-900">Upcoming</h2>
           <ul className="space-y-3">
-            {upcoming.map((booking) => (
+            {upcoming.map((booking: any) => (
               <BookingCard key={booking.id} booking={booking} />
             ))}
           </ul>
@@ -79,7 +81,7 @@ export default async function AccountBookingsPage() {
         <section>
           <h2 className="mb-3 text-lg font-bold text-gray-900">Past</h2>
           <ul className="space-y-3">
-            {past.map((booking) => (
+            {past.map((booking: any) => (
               <BookingCard key={booking.id} booking={booking} />
             ))}
           </ul>
@@ -91,7 +93,7 @@ export default async function AccountBookingsPage() {
           href="/book"
           className="inline-block rounded-lg border border-brand-blue px-5 py-2.5 text-sm font-semibold text-brand-blue hover:bg-blue-50 transition-colors"
         >
-          Book another ride
+          Book another session
         </a>
       </div>
     </div>
@@ -103,50 +105,50 @@ function BookingCard({
 }: {
   booking: {
     id: string;
-    seats: number;
+    bookingType: string;
     status: string;
     totalAmountCents: number;
-    slot: {
+    accessCodePin: string | null;
+    slotA: {
+      lane: string;
       date: Date;
       startTime: Date;
       endTime: Date;
-      rideType: string;
-      theme: { name: string } | null;
-      bike: { name: string };
     };
     waiver: { id: string; signedAt: Date | null } | null;
-    bookingAddons: { addonId: string }[];
+    accessCode: { pin: string; status: string } | null;
   };
 }) {
-  const rideName =
-    booking.slot.rideType === "THEME"
-      ? booking.slot.theme?.name ?? "Theme Ride"
-      : "Group Ride";
-
+  const lane = laneLabel(booking.bookingType, booking.slotA.lane);
   const waiverSigned = !!booking.waiver?.signedAt;
-  const showWaiver = booking.status === "CONFIRMED";
+  const showActions = booking.status === "CONFIRMED";
+  const doorCode = booking.accessCode?.pin ?? booking.accessCodePin;
 
   return (
     <li className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold text-gray-900">{rideName}</p>
+            <p className="font-semibold text-gray-900">{lane}</p>
             <Badge variant={statusVariant[booking.status] ?? "gray"}>
               {statusLabel[booking.status] ?? booking.status}
             </Badge>
           </div>
           <p className="mt-1 text-sm text-gray-600">
-            {formatDate(booking.slot.date)} · {formatTime(booking.slot.startTime)}–{formatTime(booking.slot.endTime)}
+            {formatDate(booking.slotA.date)} · {formatTime(booking.slotA.startTime)}–{formatTime(booking.slotA.endTime)}
           </p>
-          <p className="text-sm text-gray-500">{booking.slot.bike.name}</p>
+          {doorCode && booking.status === "CONFIRMED" && (
+            <p className="mt-1 text-sm font-mono font-bold text-brand-blue tracking-wider">
+              Door code: {doorCode}
+            </p>
+          )}
         </div>
         <p className="text-sm font-semibold text-gray-900 shrink-0">
           {formatCents(booking.totalAmountCents)}
         </p>
       </div>
 
-      {showWaiver && (
+      {showActions && (
         <div className="mt-3 border-t border-gray-100 pt-3 flex items-center justify-between gap-3">
           <div>
             {waiverSigned ? (
@@ -173,10 +175,10 @@ function BookingCard({
         </div>
       )}
 
-      {(booking.status === "COMPLETED" || booking.status === "CANCELLED" || booking.status === "REFUNDED") && (
+      {(booking.status === "COMPLETED" || booking.status === "CANCELLED") && (
         <div className="mt-3 border-t border-gray-100 pt-3 flex items-center gap-4">
           <a
-            href={`/book?seats=${booking.seats}${booking.bookingAddons.length ? `&addons=${booking.bookingAddons.map((a) => a.addonId).join(",")}` : ""}`}
+            href="/book"
             className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue hover:underline"
           >
             Book again →

@@ -55,14 +55,3 @@ export function generateDateRange(
   return dates;
 }
 
-/** Apply a discount code to a base amount (in cents). Returns discount amount in cents. */
-export function calcDiscount(
-  baseAmountCents: number,
-  type: "PERCENT_OFF" | "FIXED_OFF",
-  value: number
-): number {
-  if (type === "PERCENT_OFF") {
-    return Math.round((baseAmountCents * value) / 100);
-  }
-  return Math.min(value, baseAmountCents);
-}

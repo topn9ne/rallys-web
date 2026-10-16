@@ -21,8 +21,8 @@ export default async function NotificationsPage() {
                 Notification Channels
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Toggle email and SMS notifications per event. Transactional staff
-                notifications (invites, password resets, shift alerts) are always sent.
+                Toggle email and SMS notifications per event. Transactional
+                notifications (password resets) are always sent.
               </p>
             </CardHeader>
             <CardBody className="p-0">

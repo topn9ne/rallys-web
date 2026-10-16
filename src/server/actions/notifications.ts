@@ -12,34 +12,35 @@ import {
   type ConfigKey,
 } from "@/lib/notificationDefinitions";
 
-/**
- * Returns a flat map of all defined notification rows → enabled boolean.
- * Rows with no DB record default to true (all enabled by default).
- */
+const SETTING_KEY = "notification_config";
+
+async function loadConfigFromDb(): Promise<Record<string, boolean>> {
+  const row = await prisma.siteSetting.findUnique({
+    where: { key: SETTING_KEY },
+  });
+  if (!row) return {};
+  try {
+    return JSON.parse(row.value) as Record<string, boolean>;
+  } catch {
+    return {};
+  }
+}
+
 export async function getNotificationConfigs(): Promise<NotificationConfigMap> {
   await requireAdmin();
-  const rows = await prisma.notificationConfig.findMany();
-
-  const dbMap = new Map<string, boolean>();
-  for (const row of rows) {
-    dbMap.set(`${row.trigger}:${row.channel}:${row.audience}`, row.enabled);
-  }
+  const dbMap = await loadConfigFromDb();
 
   const result = {} as NotificationConfigMap;
   for (const def of NOTIFICATION_DEFINITIONS) {
     for (const row of def.rows) {
       const key = `${def.trigger}:${row.channel}:${row.audience}` as ConfigKey;
-      result[key] = dbMap.get(key) ?? true;
+      result[key] = dbMap[key] ?? true;
     }
   }
 
   return result;
 }
 
-/**
- * Upserts a single notification config row.
- * Validates trigger/channel/audience against NOTIFICATION_DEFINITIONS.
- */
 export async function setNotificationEnabled(
   trigger: NotificationTrigger,
   channel: NotificationChannel,
@@ -52,10 +53,14 @@ export async function setNotificationEnabled(
   const rowDef = def.rows.find((r) => r.channel === channel && r.audience === audience);
   if (!rowDef) return { error: "Unknown channel/audience combination for this trigger" };
 
-  await prisma.notificationConfig.upsert({
-    where: { trigger_channel_audience: { trigger, channel, audience } },
-    update: { enabled },
-    create: { trigger, channel, audience, enabled },
+  const key = `${trigger}:${channel}:${audience}`;
+  const existing = await loadConfigFromDb();
+  existing[key] = enabled;
+
+  await prisma.siteSetting.upsert({
+    where: { key: SETTING_KEY },
+    update: { value: JSON.stringify(existing) },
+    create: { key: SETTING_KEY, value: JSON.stringify(existing) },
   });
 
   revalidatePath("/admin/notifications");

@@ -31,8 +31,8 @@ export function SlotDeleteButton({ slotId }: { slotId: string }) {
 
       {open && (
         <ConfirmModal
-          title="Delete Ride"
-          message="Permanently delete this ride? This cannot be undone."
+          title="Delete Slot"
+          message="Permanently delete this slot? This cannot be undone."
           confirmLabel="Delete"
           onConfirm={handleConfirm}
           onCancel={() => setOpen(false)}
