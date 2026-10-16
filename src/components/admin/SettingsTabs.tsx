@@ -4,25 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  Bicycle,
-  Star,
-  Tag,
   CurrencyDollar,
-  MapPin,
   Bell,
   Signature,
-  ShoppingCart,
   Gear,
 } from "@phosphor-icons/react";
 import { AdminPageHeader } from "./AdminPageHeader";
 
 const tabs = [
-  { label: "Fleet",          href: "/admin/fleet",          Icon: Bicycle },
-  { label: "Add-ons",        href: "/admin/addons",         Icon: Star },
-  { label: "In-Ride Items",  href: "/admin/upsells",        Icon: ShoppingCart },
-  { label: "Discounts",      href: "/admin/discounts",      Icon: Tag },
   { label: "Pricing",        href: "/admin/pricing",        Icon: CurrencyDollar },
-  { label: "Locations",      href: "/admin/locations",      Icon: MapPin },
   { label: "Notifications",  href: "/admin/notifications",  Icon: Bell },
   { label: "Waivers",        href: "/admin/waivers",        Icon: Signature },
 ];
@@ -39,7 +29,6 @@ export function SettingsTabs() {
         icon={<Gear size={18} weight="regular" color="#ffffff" />}
       />
 
-      {/* Underline tab rail — matches handoff's uppercase Inter bold style */}
       <div className="-mx-4 overflow-x-auto px-4 scrollbar-none md:-mx-6 md:px-6">
         <div className="flex min-w-max items-end gap-1 border-b border-white/10">
           {tabs.map(({ label, href, Icon }) => {

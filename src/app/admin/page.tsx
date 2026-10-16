@@ -1,15 +1,15 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  Bicycle,
+  BaseballCap,
   CalendarBlank,
   CalendarPlus,
   ChartBar,
   CurrencyDollar,
   Signature,
-  Sparkle,
   Ticket,
   User,
+  UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { getUser } from "@/lib/auth";
@@ -27,13 +27,13 @@ async function getDashboardData() {
   const [
     totalBookings,
     todayBookings,
-    activeSlots,
+    activeMembers,
     totalRevenue,
     monthRevenue,
     todaySlots,
     recentBookings,
     pendingWaivers,
-    upcomingWeekSlots,
+    upcomingWeekBookings,
   ] = await Promise.all([
     prisma.booking.count({
       where: { status: { in: ["CONFIRMED", "COMPLETED"] } },
@@ -44,8 +44,8 @@ async function getDashboardData() {
         status: { in: ["CONFIRMED", "COMPLETED"] },
       },
     }),
-    prisma.rideSlot.count({
-      where: { date: { gte: today }, status: { in: ["FILLING", "FULL"] } },
+    prisma.member.count({
+      where: { subscriptionStatus: "ACTIVE" },
     }),
     prisma.booking.aggregate({
       _sum: { totalAmountCents: true },
@@ -58,38 +58,44 @@ async function getDashboardData() {
         status: { in: ["CONFIRMED", "COMPLETED"] },
       },
     }),
-    prisma.rideSlot.findMany({
+    prisma.cageSlot.findMany({
       where: {
         date: { gte: today, lt: tomorrow },
-        status: { in: ["FILLING", "FULL"] },
+        status: "BOOKED",
       },
       include: {
-        theme: true,
-        bike: true,
-        bookings: { where: { status: { in: ["CONFIRMED"] } } },
+        bookingsA: {
+          where: { status: "CONFIRMED" },
+          include: { member: { select: { name: true } } },
+        },
       },
       orderBy: { startTime: "asc" },
     }),
     prisma.booking.findMany({
       where: { status: { in: ["CONFIRMED", "COMPLETED"] } },
-      include: { slot: { include: { theme: true } }, customer: true },
+      include: {
+        slotA: true,
+        member: { select: { name: true, email: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 5,
     }),
     prisma.booking.count({
       where: {
-        status: { in: ["CONFIRMED"] },
+        status: "CONFIRMED",
         waiver: { status: { not: "SIGNED" } },
-        slot: { date: { gte: today } },
+        slotA: { date: { gte: today } },
       },
     }),
-    prisma.rideSlot.count({
+    prisma.booking.count({
       where: {
-        date: {
-          gte: today,
-          lt: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
+        status: "CONFIRMED",
+        slotA: {
+          date: {
+            gte: today,
+            lt: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
+          },
         },
-        status: { in: ["FILLING", "FULL"] },
       },
     }),
   ]);
@@ -97,13 +103,13 @@ async function getDashboardData() {
   return {
     totalBookings,
     todayBookings,
-    activeSlots,
+    activeMembers,
     totalRevenue: totalRevenue._sum.totalAmountCents ?? 0,
     monthRevenue: monthRevenue._sum.totalAmountCents ?? 0,
     todaySlots,
     recentBookings,
     pendingWaivers,
-    upcomingWeekSlots,
+    upcomingWeekBookings,
   };
 }
 
@@ -152,27 +158,26 @@ export default async function AdminDashboard() {
       Icon: Ticket,
     },
     {
-      label: "Booked Rides",
-      value: data.activeSlots.toString(),
-      sub: `${data.todaySlots.length} rides today`,
-      Icon: CalendarBlank,
+      label: "Active Members",
+      value: data.activeMembers.toString(),
+      sub: "Subscribed members",
+      Icon: UsersThree,
     },
     {
       label: "Pending Waivers",
       value: data.pendingWaivers.toString(),
-      sub: "Unsigned before ride",
+      sub: "Unsigned before session",
       Icon: Signature,
     },
   ];
 
   const quickLinks = [
-    { label: "Manage Fleet", href: "/admin/fleet", Icon: Bicycle, desc: "Vehicles & status" },
+    { label: "Members", href: "/admin/members", Icon: UsersThree, desc: "View & manage" },
     { label: "Pricing", href: "/admin/pricing", Icon: CurrencyDollar, desc: "Rates & tax" },
-    { label: "Add-ons", href: "/admin/addons", Icon: Sparkle, desc: "Upsell items" },
+    { label: "Waivers", href: "/admin/waivers", Icon: Signature, desc: "Templates & signed" },
     { label: "Reports", href: "/admin/reports", Icon: ChartBar, desc: "Revenue & exports" },
   ];
 
-  // Card shadow matches handoff: soft 8px ambient + crisp 1px rim.
   const cardShadow =
     "shadow-[0_1px_2px_rgba(11,18,50,0.08),_0_8px_24px_rgba(11,18,50,0.12)]";
   const darkCardShadow =
@@ -187,14 +192,12 @@ export default async function AdminDashboard() {
             <h1 className="font-display text-[30px] leading-none tracking-[-0.5px]">
               {greeting}, {firstName}.
             </h1>
-            <span
-              className="rounded-full border border-admin-accent/40 bg-admin-accent/15 px-2 py-[3px] font-mono text-[11px] uppercase tracking-[1px] text-admin-accent"
-            >
+            <span className="rounded-full border border-admin-accent/40 bg-admin-accent/15 px-2 py-[3px] font-mono text-[11px] uppercase tracking-[1px] text-admin-accent">
               Live
             </span>
           </div>
           <p className="mt-1.5 font-mono text-[11px] uppercase tracking-[2px] text-white/55">
-            {dateStr} · {data.upcomingWeekSlots} ride{data.upcomingWeekSlots === 1 ? "" : "s"} ahead this week
+            {dateStr} &middot; {data.upcomingWeekBookings} session{data.upcomingWeekBookings === 1 ? "" : "s"} booked this week
           </p>
         </div>
         <Link
@@ -202,7 +205,7 @@ export default async function AdminDashboard() {
           className="inline-flex items-center justify-center gap-2 self-start rounded-[10px] bg-admin-accent px-5 py-3 font-display text-[13px] uppercase tracking-[1px] text-white shadow-[0_6px_16px_rgba(255,46,136,0.35)] transition-[filter] hover:brightness-110 md:self-auto"
         >
           <CalendarPlus size={15} weight="bold" color="white" />
-          Add New Ride
+          Manage Schedule
         </Link>
       </div>
 
@@ -244,11 +247,6 @@ export default async function AdminDashboard() {
                 {card.sub}
               </div>
             </div>
-            {card.highlight && (
-              <div className="absolute right-2.5 top-2.5 rounded-full bg-admin-accent px-2 py-[3px] font-mono text-[10px] uppercase tracking-[1px] text-white">
-                Primary
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -256,12 +254,7 @@ export default async function AdminDashboard() {
       {/* TWO PANELS */}
       <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-2">
         {/* Today's Schedule */}
-        <div
-          className={cn(
-            "rounded-[14px] bg-white px-[22px] py-5 text-admin-ink",
-            cardShadow
-          )}
-        >
+        <div className={cn("rounded-[14px] bg-white px-[22px] py-5 text-admin-ink", cardShadow)}>
           <div className="flex items-center justify-between">
             <h2 className="text-[13px] font-bold uppercase tracking-[0.8px]">
               Today&apos;s Schedule
@@ -270,7 +263,7 @@ export default async function AdminDashboard() {
               href="/admin/schedule"
               className="text-xs font-semibold text-admin-primary hover:underline"
             >
-              View all →
+              View all &rarr;
             </Link>
           </div>
 
@@ -279,62 +272,48 @@ export default async function AdminDashboard() {
               <div className="mx-auto mb-3 grid h-[42px] w-[42px] place-items-center rounded-[10px] bg-[#f2f4fb]">
                 <CalendarBlank size={20} weight="regular" color="#2B5CE6" />
               </div>
-              No rides scheduled today.
+              No booked sessions today.
               <br />
               <Link
                 href="/admin/schedule"
                 className="font-semibold text-admin-primary hover:underline"
               >
-                Schedule one →
+                View schedule &rarr;
               </Link>
             </div>
           ) : (
             <ul className="mt-[18px]">
-              {data.todaySlots.map((slot, i) => (
-                <li
-                  key={slot.id}
-                  className={cn(
-                    "flex items-center gap-3 py-[11px]",
-                    i < data.todaySlots.length - 1 && "border-b border-admin-line"
-                  )}
-                >
-                  <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef1fb]">
-                    <Bicycle size={16} weight="regular" color="#2B5CE6" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold tracking-[-0.1px] text-admin-ink">
-                      {slot.rideType === "THEME" ? slot.theme?.name ?? "Theme Ride" : "Group Ride"}
+              {data.todaySlots.map((slot: any, i: number) => {
+                const booking = slot.bookingsA?.[0];
+                const name = booking?.member?.name ?? booking?.guestName ?? "Drop-in";
+                return (
+                  <li
+                    key={slot.id}
+                    className={cn(
+                      "flex items-center gap-3 py-[11px]",
+                      i < data.todaySlots.length - 1 && "border-b border-admin-line"
+                    )}
+                  >
+                    <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef1fb]">
+                      <BaseballCap size={16} weight="regular" color="#2B5CE6" />
                     </div>
-                    <div className="mt-[1px] text-xs text-admin-text-sub">
-                      {formatTime(slot.startTime)} · {slot.bike.name}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold tracking-[-0.1px] text-admin-ink">
+                        Lane {slot.lane} &middot; {name}
+                      </div>
+                      <div className="mt-[1px] text-xs text-admin-text-sub">
+                        {formatTime(slot.startTime)} &ndash; {formatTime(slot.endTime)}
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="text-sm font-bold tracking-[-0.1px] text-admin-primary">
-                      {slot.bookings.length}
-                      {slot.rideType === "THEME" && `/${slot.seatsTotal}`}
-                    </div>
-                    <div className="mt-0.5 font-mono text-[11px] uppercase text-admin-text-sub">
-                      {slot.status === "FILLING"
-                        ? "Filling"
-                        : slot.status === "FULL"
-                        ? "Full"
-                        : "Open"}
-                    </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
 
         {/* Recent Bookings */}
-        <div
-          className={cn(
-            "rounded-[14px] bg-white px-[22px] py-5 text-admin-ink",
-            cardShadow
-          )}
-        >
+        <div className={cn("rounded-[14px] bg-white px-[22px] py-5 text-admin-ink", cardShadow)}>
           <div className="flex items-center justify-between">
             <h2 className="text-[13px] font-bold uppercase tracking-[0.8px]">
               Recent Bookings
@@ -343,7 +322,7 @@ export default async function AdminDashboard() {
               href="/admin/bookings"
               className="text-xs font-semibold text-admin-primary hover:underline"
             >
-              View all →
+              View all &rarr;
             </Link>
           </div>
 
@@ -353,39 +332,45 @@ export default async function AdminDashboard() {
             </div>
           ) : (
             <ul className="mt-1.5">
-              {data.recentBookings.map((booking, i) => (
-                <li
-                  key={booking.id}
-                  className={cn(
-                    "flex items-center gap-3 py-[11px]",
-                    i < data.recentBookings.length - 1 && "border-b border-admin-line"
-                  )}
-                >
-                  <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef1fb]">
-                    <User size={16} weight="regular" color="#2B5CE6" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold tracking-[-0.1px] text-admin-ink">
-                      {booking.customer.name}
+              {data.recentBookings.map((booking: any, i: number) => {
+                const name = booking.member?.name ?? booking.guestName ?? "Guest";
+                const lane = booking.bookingType === "BOTH_LANES"
+                  ? "Both Lanes"
+                  : `Lane ${booking.slotA?.lane ?? "?"}`;
+                return (
+                  <li
+                    key={booking.id}
+                    className={cn(
+                      "flex items-center gap-3 py-[11px]",
+                      i < data.recentBookings.length - 1 && "border-b border-admin-line"
+                    )}
+                  >
+                    <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef1fb]">
+                      <User size={16} weight="regular" color="#2B5CE6" />
                     </div>
-                    <div className="mt-[1px] truncate text-xs text-admin-text-sub">
-                      {booking.slot.rideType === "THEME"
-                        ? booking.slot.theme?.name ?? "Theme Ride"
-                        : "Group Ride"}
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold tracking-[-0.1px] text-admin-ink">
+                        {name}
+                      </div>
+                      <div className="mt-[1px] truncate text-xs text-admin-text-sub">
+                        {lane}
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <div className="text-sm font-bold tracking-[-0.1px] text-admin-primary">
-                      {formatCents(booking.totalAmountCents)}
+                    <div className="shrink-0 text-right">
+                      <div className="text-sm font-bold tracking-[-0.1px] text-admin-primary">
+                        {booking.totalAmountCents > 0
+                          ? formatCents(booking.totalAmountCents)
+                          : "Member"}
+                      </div>
+                      <div className="mt-0.5 font-mono text-[11px] uppercase text-admin-text-sub">
+                        {new Date(booking.createdAt)
+                          .toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                          .toUpperCase()}
+                      </div>
                     </div>
-                    <div className="mt-0.5 font-mono text-[11px] uppercase text-admin-text-sub">
-                      {new Date(booking.createdAt)
-                        .toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                        .toUpperCase()}
-                    </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

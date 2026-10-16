@@ -1,15 +1,16 @@
 "use client";
 
 import { useTransition } from "react";
-import { restoreSlot } from "@/server/actions/slots";
-import { Button } from "@/components/ui/Button";
+import { unblockSlot } from "@/server/actions/slots";
 import { ArrowCounterClockwise } from "@phosphor-icons/react";
 
 export function SlotRestoreButton({ slotId }: { slotId: string }) {
   const [pending, startTransition] = useTransition();
 
   function handleRestore() {
-    startTransition(async () => { await restoreSlot(slotId); });
+    startTransition(async () => {
+      await unblockSlot(slotId);
+    });
   }
 
   return (
@@ -20,7 +21,7 @@ export function SlotRestoreButton({ slotId }: { slotId: string }) {
     >
       <ArrowCounterClockwise size={18} weight="duotone" className="shrink-0" />
       <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-200 group-hover:max-w-[60px]">
-        Restore
+        Unblock
       </span>
     </button>
   );

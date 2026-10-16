@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { cancelSlot } from "@/server/actions/slots";
-import { Button } from "@/components/ui/Button";
+import { blockSlot } from "@/server/actions/slots";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { XCircle } from "@phosphor-icons/react";
 
@@ -12,7 +11,7 @@ export function SlotCancelButton({ slotId }: { slotId: string }) {
 
   function handleConfirm() {
     startTransition(async () => {
-      await cancelSlot(slotId);
+      await blockSlot(slotId, "Blocked by admin");
       setOpen(false);
     });
   }
@@ -26,15 +25,15 @@ export function SlotCancelButton({ slotId }: { slotId: string }) {
       >
         <XCircle size={18} weight="duotone" className="shrink-0" />
         <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-200 group-hover:max-w-[60px]">
-          Cancel
+          Block
         </span>
       </button>
 
       {open && (
         <ConfirmModal
-          title="Cancel Ride"
-          message="Cancel this ride? All customers with bookings will be notified."
-          confirmLabel="Cancel Ride"
+          title="Block Slot"
+          message="Block this slot? It will not be available for booking."
+          confirmLabel="Block Slot"
           confirmIcon="cancel"
           confirmVariant="restore-ghost"
           cancelLabel="Back"

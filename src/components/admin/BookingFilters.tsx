@@ -6,13 +6,13 @@ import { MagnifyingGlass, X } from "@phosphor-icons/react/dist/ssr";
 
 interface Props {
   status?: string;
-  rideType?: string;
+  bookingType?: string;
   dateFrom?: string;
   dateTo?: string;
   q?: string;
 }
 
-export function BookingFilters({ status, rideType, dateFrom, dateTo, q }: Props) {
+export function BookingFilters({ status, bookingType, dateFrom, dateTo, q }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -36,11 +36,10 @@ export function BookingFilters({ status, rideType, dateFrom, dateTo, q }: Props)
     debounceRef.current = setTimeout(() => update("q", value), 400);
   };
 
-  const hasFilters = status || rideType || dateFrom || dateTo || q;
+  const hasFilters = status || bookingType || dateFrom || dateTo || q;
 
   return (
     <div className="mb-4 flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/[0.04] p-4 sm:flex-row sm:flex-wrap sm:items-end">
-      {/* Search — full width on mobile */}
       <div className="relative w-full sm:w-auto">
         <MagnifyingGlass size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
@@ -50,7 +49,6 @@ export function BookingFilters({ status, rideType, dateFrom, dateTo, q }: Props)
           className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-8 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
         />
       </div>
-      {/* Two filters side-by-side (50% each) on mobile */}
       <div className="flex gap-3 sm:contents">
         <select
           value={status ?? ""}
@@ -58,21 +56,20 @@ export function BookingFilters({ status, rideType, dateFrom, dateTo, q }: Props)
           className="w-1/2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue sm:w-auto"
         >
           <option value="">All statuses</option>
-          {["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED", "REFUNDED"].map((s) => (
+          {["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map((s) => (
             <option key={s} value={s}>{s.replace("_", " ")}</option>
           ))}
         </select>
         <select
-          value={rideType ?? ""}
-          onChange={(e) => update("rideType", e.target.value)}
+          value={bookingType ?? ""}
+          onChange={(e) => update("bookingType", e.target.value)}
           className="w-1/2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue sm:w-auto"
         >
-          <option value="">All ride types</option>
-          <option value="THEME">Theme Rides</option>
-          <option value="GENERAL">Group Rides</option>
+          <option value="">All types</option>
+          <option value="SINGLE_LANE">Single Lane</option>
+          <option value="BOTH_LANES">Both Lanes</option>
         </select>
       </div>
-      {/* Date range — two fields full width on mobile, inline on desktop */}
       <div className="flex gap-3 sm:contents">
         <label className="flex w-1/2 flex-col gap-1 sm:w-auto">
           <span className="pl-1 text-[10px] font-semibold uppercase tracking-wide text-white/60">From</span>

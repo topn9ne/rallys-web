@@ -1,19 +1,14 @@
 "use client";
 
-import { useState, useTransition, useMemo, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { createBulkSlots } from "@/server/actions/slots";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
-import { generateDateRange } from "@/lib/utils";
-import type { Bike, Theme } from "@prisma/client";
+import { cn } from "@/lib/utils";
 
-interface BulkSlotFormProps {
-  bikes: Bike[];
-  themes: Theme[];
-}
+const initialState = { error: undefined as any, success: false, created: 0, skipped: 0 };
 
-const DAYS = [
+const DAYS_OF_WEEK = [
   { label: "Sun", value: 0 },
   { label: "Mon", value: 1 },
   { label: "Tue", value: 2 },
@@ -23,164 +18,81 @@ const DAYS = [
   { label: "Sat", value: 6 },
 ];
 
-export function BulkSlotForm({ bikes, themes }: BulkSlotFormProps) {
-  const [rideType, setRideType] = useState<"THEME" | "GENERAL">("THEME");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedDays, setSelectedDays] = useState<number[]>([6, 0]); // Sat + Sun default
-  const [result, setResult] = useState<{ created?: number; skipped?: { date: string; reason: string }[]; error?: string } | null>(null);
-  const [pending, startTransition] = useTransition();
+export function BulkSlotForm() {
   const formRef = useRef<HTMLFormElement>(null);
+  const [state, action, pending] = useActionState(
+    async (_prev: typeof initialState, formData: FormData) => {
+      return createBulkSlots(formData) as Promise<typeof initialState>;
+    },
+    initialState
+  );
 
   useEffect(() => {
-    if (result?.created !== undefined && !result.error) {
-      formRef.current?.reset();
-      setRideType("THEME");
-      setStartDate("");
-      setEndDate("");
-      setSelectedDays([6, 0]);
-    }
-  }, [result]);
-
-  const previewDates = useMemo(() => {
-    if (!startDate || !endDate) return [];
-    return generateDateRange(new Date(startDate), new Date(endDate), selectedDays);
-  }, [startDate, endDate, selectedDays]);
-
-  function toggleDay(day: number) {
-    setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
-    );
-  }
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    selectedDays.forEach((d) => formData.append("daysOfWeek", String(d)));
-    setResult(null);
-    startTransition(async () => {
-      const res = await createBulkSlots(formData);
-      setResult(res);
-    });
-  }
+    if (state.success) formRef.current?.reset();
+  }, [state.success]);
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
-      <Select
-        label="Ride Type"
-        name="rideType"
-        value={rideType}
-        onChange={(e) => setRideType(e.target.value as "THEME" | "GENERAL")}
-        required
-      >
-        <option value="THEME">Theme Ride (per seat)</option>
-        <option value="GENERAL">Group Ride (full vehicle)</option>
-      </Select>
-
-      {rideType === "THEME" && (
-        <Select label="Theme" name="themeId">
-          <option value="">Select theme...</option>
-          {themes.map((t) => (
-            <option key={t.id} value={t.id}>{t.name}</option>
+    <form ref={formRef} action={action} className="space-y-4">
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-gray-700">Lanes</legend>
+        <div className="flex gap-2">
+          {(["A", "B"] as const).map((lane) => (
+            <label
+              key={lane}
+              className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 cursor-pointer hover:bg-gray-50"
+            >
+              <input
+                type="checkbox"
+                name="lanes"
+                value={lane}
+                defaultChecked
+                className="h-4 w-4 rounded border-gray-300 accent-brand-blue"
+              />
+              <span className="text-sm font-semibold">Lane {lane}</span>
+            </label>
           ))}
-        </Select>
-      )}
-
-      <Select label="Vehicle" name="bikeId" required>
-        <option value="">Select vehicle...</option>
-        {bikes.map((b) => (
-          <option key={b.id} value={b.id}>{b.name}</option>
-        ))}
-      </Select>
-
-      <Input
-        label="Start Time"
-        name="startTime"
-        type="time"
-        required
-        hint="Ride is 2 hrs. 1-hr buffer auto-added."
-      />
+        </div>
+      </fieldset>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input
-          label="Start Date"
-          name="startDate"
-          type="date"
-          required
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-        <Input
-          label="End Date"
-          name="endDate"
-          type="date"
-          required
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
+        <Input label="Start Date" name="startDate" type="date" required />
+        <Input label="End Date" name="endDate" type="date" required />
       </div>
 
-      {/* Day of week selector */}
-      <div>
-        <p className="mb-1.5 text-sm font-medium text-gray-700">Days of Week</p>
-        <div className="flex gap-1.5">
-          {DAYS.map((day) => (
-            <button
-              key={day.value}
-              type="button"
-              onClick={() => toggleDay(day.value)}
-              className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition-colors cursor-pointer ${
-                selectedDays.includes(day.value)
-                  ? "bg-brand-blue text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="First Slot" name="startTime" type="time" required hint="e.g. 09:00" />
+        <Input label="Last Slot Ends" name="endTime" type="time" required hint="e.g. 21:00" />
+      </div>
+
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-gray-700">Days of Week</legend>
+        <div className="flex flex-wrap gap-1.5">
+          {DAYS_OF_WEEK.map(({ label, value }) => (
+            <label
+              key={value}
+              className={cn(
+                "flex h-9 w-11 cursor-pointer items-center justify-center rounded-lg border text-xs font-bold uppercase transition-colors",
+                "border-gray-200 hover:bg-gray-50 has-[:checked]:border-brand-blue has-[:checked]:bg-brand-blue has-[:checked]:text-white"
+              )}
             >
-              {day.label}
-            </button>
+              <input type="checkbox" name="daysOfWeek" value={value} className="sr-only" defaultChecked={value >= 1 && value <= 5} />
+              {label}
+            </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
-      {/* Preview */}
-      {previewDates.length > 0 && (
-        <div className="rounded-lg bg-brand-blue/5 border border-brand-blue/20 px-3 py-2">
-          <p className="text-xs font-bold text-brand-blue uppercase tracking-wide">
-            {previewDates.length} ride{previewDates.length !== 1 ? "s" : ""} will be created
-          </p>
-          <p className="mt-0.5 text-xs text-gray-500">
-            {previewDates
-              .slice(0, 5)
-              .map((d) => d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }))
-              .join(", ")}
-            {previewDates.length > 5 && ` +${previewDates.length - 5} more`}
-          </p>
-        </div>
+      {typeof state.error === "string" && (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
       )}
-
-      {/* Result */}
-      {result?.error && (
-        <p className="text-sm text-red-600">{result.error}</p>
+      {state.success && (
+        <p className="text-sm text-green-600">
+          Created {state.created} slot{state.created !== 1 ? "s" : ""}
+          {state.skipped > 0 && `, skipped ${state.skipped} conflict${state.skipped !== 1 ? "s" : ""}`}.
+        </p>
       )}
-      {result?.created !== undefined && (
-        <div className="rounded-lg bg-green-50 border border-green-200 px-3 py-2 space-y-1">
-          <p className="text-sm font-bold text-green-700">
-            {result.created} ride{result.created !== 1 ? "s" : ""} created
-          </p>
-          {result.skipped && result.skipped.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-amber-600">{result.skipped.length} skipped (conflicts):</p>
-              <ul className="text-xs text-amber-600 list-disc list-inside">
-                {result.skipped.map((s) => (
-                  <li key={s.date}>{s.date}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      <Button type="submit" loading={pending} className="w-full" disabled={previewDates.length === 0}>
-        Create {previewDates.length > 0 ? previewDates.length : ""} Ride{previewDates.length !== 1 ? "s" : ""}
+      <Button type="submit" loading={pending} className="w-full">
+        Generate Slots
       </Button>
     </form>
   );

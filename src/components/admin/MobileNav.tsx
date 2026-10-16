@@ -10,8 +10,7 @@ import {
   CalendarBlank,
   Ticket,
   ChartBar,
-  Users,
-  Confetti,
+  UsersThree,
   Gear,
   SignOut,
   List,
@@ -19,11 +18,9 @@ import {
 } from "@phosphor-icons/react";
 
 const SETTINGS_PATHS = [
-  "/admin/fleet",
-  "/admin/addons",
-  "/admin/discounts",
   "/admin/pricing",
-  "/admin/locations",
+  "/admin/notifications",
+  "/admin/waivers",
 ];
 
 const bottomItems = [
@@ -34,13 +31,12 @@ const bottomItems = [
 ];
 
 const sheetItems = [
-  { label: "Dashboard",    href: "/admin",          Icon: SquaresFour,  activePaths: undefined },
-  { label: "Schedule",     href: "/admin/schedule", Icon: CalendarBlank, activePaths: undefined },
-  { label: "Bookings",     href: "/admin/bookings", Icon: Ticket,        activePaths: undefined },
-  { label: "Staff",        href: "/admin/staff",    Icon: Users,         activePaths: undefined },
-  { label: "Themed Rides", href: "/admin/themes",   Icon: Confetti,      activePaths: undefined },
-  { label: "Reports",      href: "/admin/reports",  Icon: ChartBar,      activePaths: undefined },
-  { label: "Settings",     href: "/admin/fleet",    Icon: Gear,          activePaths: SETTINGS_PATHS },
+  { label: "Dashboard", href: "/admin",           Icon: SquaresFour,  activePaths: undefined },
+  { label: "Schedule",  href: "/admin/schedule",  Icon: CalendarBlank, activePaths: undefined },
+  { label: "Bookings",  href: "/admin/bookings",  Icon: Ticket,        activePaths: undefined },
+  { label: "Members",   href: "/admin/members",   Icon: UsersThree,    activePaths: undefined },
+  { label: "Reports",   href: "/admin/reports",    Icon: ChartBar,      activePaths: undefined },
+  { label: "Settings",  href: "/admin/pricing",    Icon: Gear,          activePaths: SETTINGS_PATHS },
 ] as const;
 
 function isActive(pathname: string, href: string, activePaths?: readonly string[]) {
@@ -55,7 +51,6 @@ export function MobileNav() {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={cn(
           "fixed inset-0 z-40 bg-black/40 transition-opacity duration-200 md:hidden",
@@ -64,7 +59,6 @@ export function MobileNav() {
         onClick={() => setOpen(false)}
       />
 
-      {/* Slide-up sheet */}
       <div
         className="fixed bottom-14 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl transition-[translate] duration-300 ease-out md:hidden"
         style={{ translate: open ? "0 0" : "0 calc(100% + 3.5rem)" }}
@@ -122,7 +116,6 @@ export function MobileNav() {
         </nav>
       </div>
 
-      {/* Bottom bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-40 h-14 bg-white border-t border-gray-200 shadow-[0_-8px_24px_rgba(0,0,0,0.18)] flex items-stretch md:hidden">
         {bottomItems.map(({ label, href, Icon }) => {
           const active = isActive(pathname, href);

@@ -8,7 +8,7 @@ import { Ticket } from "@phosphor-icons/react/dist/ssr";
 interface Props {
   searchParams: Promise<{
     status?: string;
-    rideType?: string;
+    bookingType?: string;
     dateFrom?: string;
     dateTo?: string;
     q?: string;
@@ -21,8 +21,8 @@ interface Props {
 const PAGE_SIZE = 25;
 
 const orderByMap: Record<string, any> = {
-  customer: { customer: { name: "asc" } },
-  date: { slot: { date: "asc" } },
+  name: { member: { name: "asc" } },
+  date: { slotA: { date: "asc" } },
   status: { status: "asc" },
   total: { totalAmountCents: "asc" },
 };
@@ -36,32 +36,32 @@ export default async function BookingsPage({ searchParams }: Props) {
 
   const where: any = {};
   if (params.status) where.status = params.status;
-  if (params.rideType) where.slot = { rideType: params.rideType };
+  if (params.bookingType) where.bookingType = params.bookingType;
   if (params.dateFrom || params.dateTo) {
     const dateFilter: any = {};
     if (params.dateFrom) dateFilter.gte = new Date(params.dateFrom);
     if (params.dateTo) dateFilter.lte = new Date(params.dateTo);
-    where.slot = { ...where.slot, date: dateFilter };
+    where.slotA = { date: dateFilter };
   }
   if (params.q) {
-    where.customer = {
-      OR: [
-        { name: { contains: params.q, mode: "insensitive" } },
-        { email: { contains: params.q, mode: "insensitive" } },
-      ],
-    };
+    where.OR = [
+      { member: { name: { contains: params.q, mode: "insensitive" } } },
+      { member: { email: { contains: params.q, mode: "insensitive" } } },
+      { guestName: { contains: params.q, mode: "insensitive" } },
+      { guestEmail: { contains: params.q, mode: "insensitive" } },
+    ];
   }
 
-  // Build orderBy with direction
-  const baseOrder = orderByMap[sortKey] ?? { slot: { date: "desc" } };
+  const baseOrder = orderByMap[sortKey] ?? { slotA: { date: "desc" } };
   const orderBy = applyDir(baseOrder, sortDir);
 
   const [bookings, total] = await Promise.all([
     prisma.booking.findMany({
       where,
       include: {
-        customer: true,
-        slot: { include: { theme: true } },
+        member: { select: { name: true, email: true } },
+        slotA: true,
+        slotB: true,
         waiver: true,
       },
       orderBy,
@@ -81,7 +81,13 @@ export default async function BookingsPage({ searchParams }: Props) {
         icon={<Ticket size={18} weight="regular" color="#ffffff" />}
       />
 
-      <BookingFilters status={params.status} rideType={params.rideType} dateFrom={params.dateFrom} dateTo={params.dateTo} q={params.q} />
+      <BookingFilters
+        status={params.status}
+        bookingType={params.bookingType}
+        dateFrom={params.dateFrom}
+        dateTo={params.dateTo}
+        q={params.q}
+      />
 
       <Card>
         <CardBody className="p-0">
@@ -118,7 +124,6 @@ export default async function BookingsPage({ searchParams }: Props) {
   );
 }
 
-// Recursively replace all "asc"/"desc" leaf values with the given direction
 function applyDir(obj: any, dir: "asc" | "desc"): any {
   if (typeof obj === "string") return dir;
   return Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, applyDir(v, dir)]));

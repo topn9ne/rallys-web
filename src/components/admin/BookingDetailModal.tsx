@@ -4,20 +4,15 @@ import { useEffect, useState } from "react";
 import { getBookingDetail } from "@/server/actions/adminBookings";
 import { formatDate, formatTime, formatCents } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { BookingActions } from "@/components/admin/BookingActions";
 import {
   X,
   User,
-  Train,
+  BaseballCap,
   CalendarBlank,
-  MapPin,
   CurrencyDollar,
   Signature,
-  ShoppingBag,
-  Tag,
-  UserPlus,
-  NoteBlank,
+  Key,
 } from "@phosphor-icons/react/dist/ssr";
 
 type BookingDetail = NonNullable<Awaited<ReturnType<typeof getBookingDetail>>>;
@@ -27,7 +22,6 @@ const statusVariant: Record<string, "green" | "amber" | "blue" | "gray" | "red">
   CONFIRMED: "green",
   COMPLETED: "gray",
   CANCELLED: "gray",
-  REFUNDED: "red",
 };
 
 function toTitleCase(str: string) {
@@ -74,12 +68,10 @@ export function BookingDetailModal({ bookingId, onClose }: Props) {
     });
   }, [bookingId]);
 
-
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-3">
             <h2 className="font-extrabold text-gray-900">Booking Details</h2>
@@ -100,89 +92,56 @@ export function BookingDetailModal({ bookingId, onClose }: Props) {
           <div className="flex flex-1 items-center justify-center text-sm text-gray-400">Booking not found.</div>
         ) : (
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-            {/* Customer */}
-            <Section icon={<User size={13} weight="duotone" />} title="Customer">
-              <Row label="Name" value={booking.customer.name} />
-              <Row label="Email" value={booking.customer.email} />
-              <Row label="Phone" value={booking.customer.phone || <span className="text-gray-400 italic">Not on file</span>} />
+            <Section icon={<User size={13} weight="duotone" />} title={booking.memberId ? "Member" : "Guest"}>
+              <Row label="Name" value={booking.member?.name ?? booking.guestName ?? "—"} />
+              <Row label="Email" value={booking.member?.email ?? booking.guestEmail ?? "—"} />
+              <Row label="Phone" value={booking.member?.phone ?? booking.guestPhone ?? <span className="text-gray-400 italic">Not on file</span>} />
+              {booking.memberId && (
+                <Row label="Type" value={<Badge variant="blue">Member</Badge>} />
+              )}
             </Section>
 
-            {/* Ride */}
-            <Section icon={<Train size={13} weight="duotone" />} title="Ride">
-              <Row label="Type" value={booking.slot.rideType === "THEME" ? booking.slot.theme?.name ?? "Theme Ride" : "Group Ride"} />
-              <Row label="Vehicle" value={booking.slot.bike.name} />
-              <Row label="Date" value={formatDate(booking.slot.date)} />
-              <Row label="Time" value={`${formatTime(booking.slot.startTime)} – ${formatTime(booking.slot.endTime)}`} />
-              <Row label="Booking type" value={booking.bookingType === "THEME_SEAT" ? `${booking.seats} seat${booking.seats > 1 ? "s" : ""}` : "Full vehicle"} />
-              {booking.passengerCount != null && <Row label="Passengers" value={booking.passengerCount} />}
+            <Section icon={<BaseballCap size={13} weight="duotone" />} title="Session">
+              <Row
+                label="Lane"
+                value={booking.bookingType === "BOTH_LANES" ? "Both Lanes" : `Lane ${booking.slotA.lane}`}
+              />
+              <Row label="Date" value={formatDate(booking.slotA.date)} />
+              <Row label="Time" value={`${formatTime(booking.slotA.startTime)} – ${formatTime(booking.slotA.endTime)}`} />
+              <Row label="Booking type" value={toTitleCase(booking.bookingType)} />
             </Section>
 
+            {booking.accessCode && (
+              <Section icon={<Key size={13} weight="duotone" />} title="Access Code">
+                <Row label="PIN" value={<span className="font-mono font-bold">{booking.accessCodePin ?? "—"}</span>} />
+                <Row label="Status" value={toTitleCase(booking.accessCode.status)} />
+              </Section>
+            )}
 
-            {/* Pickup */}
-            <Section icon={<MapPin size={13} weight="duotone" />} title="Pickup">
-              <Row label="Location" value={booking.pickupLocation} />
-              {booking.pickupAddress && <Row label="Address" value={booking.pickupAddress} />}
-            </Section>
-
-            {/* Payment */}
             <Section icon={<CurrencyDollar size={13} weight="duotone" />} title="Payment">
               <Row label="Base" value={formatCents(booking.baseAmountCents)} />
-              {booking.addonsAmountCents > 0 && <Row label="Add-ons" value={formatCents(booking.addonsAmountCents)} />}
-              {booking.discountAmountCents > 0 && <Row label="Discount" value={`–${formatCents(booking.discountAmountCents)}`} />}
               {booking.taxAmountCents > 0 && <Row label="Tax" value={formatCents(booking.taxAmountCents)} />}
               <div className="border-t border-gray-200 pt-1.5">
-                <Row label="Total" value={<span className="text-base font-extrabold text-gray-900">{formatCents(booking.totalAmountCents)}</span>} />
+                <Row label="Total" value={<span className="text-base font-extrabold text-gray-900">{booking.totalAmountCents > 0 ? formatCents(booking.totalAmountCents) : "Member"}</span>} />
               </div>
               {booking.stripePaymentIntentId && (
                 <Row label="Stripe PI" value={<span className="font-mono text-xs text-gray-500">{booking.stripePaymentIntentId}</span>} />
               )}
             </Section>
 
-            {/* Discount Code */}
-            {booking.discountCode && (
-              <Section icon={<Tag size={13} weight="duotone" />} title="Discount Code">
-                <Row label="Code" value={<span className="font-mono">{booking.discountCode.code}</span>} />
-                <Row label="Value" value={booking.discountCode.type === "PERCENT_OFF" ? `${booking.discountCode.value}% off` : formatCents(booking.discountCode.value)} />
-              </Section>
-            )}
-
-            {/* Notes */}
             {booking.notes && (
-              <Section icon={<NoteBlank size={13} weight="duotone" />} title="Special Requests">
+              <Section icon={<CalendarBlank size={13} weight="duotone" />} title="Notes">
                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{booking.notes}</p>
               </Section>
             )}
 
-            {/* Add-ons */}
-            {booking.bookingAddons.length > 0 && (
-              <Section icon={<ShoppingBag size={13} weight="duotone" />} title="Add-ons">
-                {booking.bookingAddons.map((a) => (
-                  <Row key={a.id} label={a.addon.name} value={formatCents(a.priceCentsAtPurchase)} />
-                ))}
-              </Section>
-            )}
-
-
-            {/* Manual booking badge */}
-            {booking.isManual && (
-              <Section icon={<UserPlus size={13} weight="duotone" />} title="Manual Booking">
-                <Row label="Entered by" value="Admin" />
-                {booking.paymentReference && (
-                  <Row label="Payment ref" value={<span className="font-mono text-xs">{booking.paymentReference}</span>} />
-                )}
-                {booking.waiverSignedOffline && (
-                  <Row label="Waiver" value={<span className="text-green-700 font-semibold">Signed offline</span>} />
-                )}
-              </Section>
-            )}
-
-            {/* Waiver */}
             <Section icon={<Signature size={13} weight="duotone" />} title="Waiver">
               {booking.waiver ? (
                 <>
                   <Row label="Status" value={<Badge variant={booking.waiver.status === "SIGNED" ? "green" : "amber"}>{toTitleCase(booking.waiver.status)}</Badge>} />
                   <Row label="Signer" value={booking.waiver.signerName} />
-                  {booking.waiver.signerDob && <Row label="Date of birth" value={booking.waiver.signerDob} />}
+                  {booking.waiver.isMinor && <Row label="Minor" value="Yes" />}
+                  {booking.waiver.guardianName && <Row label="Guardian" value={booking.waiver.guardianName} />}
                   {booking.waiver.signedAt && <Row label="Signed at" value={new Date(booking.waiver.signedAt).toLocaleString()} />}
                 </>
               ) : (
@@ -190,7 +149,6 @@ export function BookingDetailModal({ bookingId, onClose }: Props) {
               )}
             </Section>
 
-            {/* Booking meta */}
             <p className="text-center text-xs text-gray-400">
               Booking ID: <span className="font-mono">{booking.id}</span><br />
               Created {new Date(booking.createdAt).toLocaleString()}
@@ -198,7 +156,6 @@ export function BookingDetailModal({ bookingId, onClose }: Props) {
           </div>
         )}
 
-        {/* Footer actions */}
         {booking && (
           <div className="border-t border-gray-100 px-6 py-4">
             <BookingActions

@@ -3,14 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { RideType } from "@prisma/client";
 import { requireAdmin } from "@/lib/authGuard";
 
 const PricingSchema = z.object({
-  rideType: z.nativeEnum(RideType),
-  baseAmountDollars: z.coerce.number().positive("Price must be positive"),
+  tier: z.enum(["MEMBER", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"]),
+  amountDollars: z.coerce.number().positive("Price must be positive"),
   taxRatePercent: z.coerce.number().min(0).max(100),
-  bookingFeeDollars: z.coerce.number().min(0),
 });
 
 export async function updatePricing(formData: FormData) {
@@ -18,13 +16,12 @@ export async function updatePricing(formData: FormData) {
   const result = PricingSchema.safeParse(Object.fromEntries(formData));
   if (!result.success) return { error: result.error.flatten().fieldErrors };
 
-  const { rideType, baseAmountDollars, taxRatePercent, bookingFeeDollars } = result.data;
+  const { tier, amountDollars, taxRatePercent } = result.data;
   await prisma.pricingConfig.create({
     data: {
-      rideType,
-      baseAmountCents: Math.round(baseAmountDollars * 100),
+      tier: tier as any,
+      amountCents: Math.round(amountDollars * 100),
       taxRatePercent,
-      bookingFeeCents: Math.round(bookingFeeDollars * 100),
       effectiveFrom: new Date(),
     },
   });
@@ -34,15 +31,19 @@ export async function updatePricing(formData: FormData) {
 }
 
 export async function getCurrentPricing() {
-  const [theme, general] = await Promise.all([
-    prisma.pricingConfig.findFirst({
-      where: { rideType: "THEME" },
-      orderBy: { effectiveFrom: "desc" },
-    }),
-    prisma.pricingConfig.findFirst({
-      where: { rideType: "GENERAL" },
-      orderBy: { effectiveFrom: "desc" },
-    }),
-  ]);
-  return { theme, general };
+  const tiers = ["MEMBER", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"] as const;
+  const configs = await Promise.all(
+    tiers.map((tier) =>
+      prisma.pricingConfig.findFirst({
+        where: { tier: tier as any },
+        orderBy: { effectiveFrom: "desc" },
+      })
+    )
+  );
+  return {
+    member: configs[0],
+    team: configs[1],
+    dropinSingle: configs[2],
+    dropinBoth: configs[3],
+  };
 }

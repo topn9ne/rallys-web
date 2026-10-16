@@ -3,103 +3,100 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authGuard";
+import { createAccessCode } from "@/server/services/seam";
+import { notifyBookingConfirmed } from "@/server/services/notify";
 
 interface ManualBookingInput {
   slotId: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string;
-  bookingType: "THEME_SEAT" | "GENERAL_FULL";
-  seats: number;
-  pickupLocation: string;
+  bookingType: "SINGLE_LANE" | "BOTH_LANES";
+  memberEmail?: string;
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
   totalAmountCents: number;
-  paymentReference?: string;
   waiverSignedOffline: boolean;
   notes?: string;
 }
 
 export async function createManualBooking(input: ManualBookingInput) {
   await requireAdmin();
-  const {
-    slotId,
-    customerName,
-    customerEmail,
-    customerPhone,
-    bookingType,
-    seats,
-    pickupLocation,
-    totalAmountCents,
-    paymentReference,
-    waiverSignedOffline,
-  } = input;
 
-  // Validate slot exists and is bookable
-  const slot = await prisma.rideSlot.findUnique({ where: { id: slotId } });
-  if (!slot) return { error: "Ride slot not found." };
-  if (slot.status === "CANCELLED" || slot.status === "BLOCKED") {
-    return { error: "Cannot book a cancelled or blocked slot." };
+  const slot = await prisma.cageSlot.findUnique({ where: { id: input.slotId } });
+  if (!slot) return { error: "Cage slot not found." };
+  if (slot.status === "BLOCKED") return { error: "Cannot book a blocked slot." };
+  if (slot.status === "BOOKED") return { error: "Slot is already booked." };
+
+  let memberId: string | null = null;
+  if (input.memberEmail) {
+    const member = await prisma.member.findUnique({
+      where: { email: input.memberEmail.toLowerCase().trim() },
+    });
+    if (!member) return { error: "Member not found with that email." };
+    memberId = member.id;
   }
 
-  // Upsert customer by email
-  const customer = await prisma.customer.upsert({
-    where: { email: customerEmail.toLowerCase().trim() },
-    update: {
-      name: customerName.trim(),
-      ...(customerPhone ? { phone: customerPhone.trim() } : {}),
-    },
-    create: {
-      name: customerName.trim(),
-      email: customerEmail.toLowerCase().trim(),
-      phone: customerPhone?.trim() ?? null,
-    },
-  });
+  let slotIdB: string | null = null;
+  if (input.bookingType === "BOTH_LANES") {
+    const otherLane = slot.lane === "A" ? "B" : "A";
+    const paired = await prisma.cageSlot.findFirst({
+      where: {
+        lane: otherLane as any,
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        status: "AVAILABLE",
+      },
+    });
+    if (!paired) return { error: `No available ${otherLane} lane slot at this time.` };
+    slotIdB = paired.id;
+  }
 
-  // Create the booking
   const booking = await prisma.booking.create({
     data: {
-      customerId: customer.id,
-      slotId,
-      bookingType,
-      seats,
-      pickupLocation,
+      memberId,
+      guestName: memberId ? null : input.guestName?.trim() || null,
+      guestEmail: memberId ? null : input.guestEmail?.toLowerCase().trim() || null,
+      guestPhone: memberId ? null : input.guestPhone?.trim() || null,
+      bookingType: input.bookingType as any,
+      slotIdA: input.slotId,
+      slotIdB,
       status: "CONFIRMED",
-      totalAmountCents,
-      baseAmountCents: totalAmountCents,
+      totalAmountCents: input.totalAmountCents,
+      baseAmountCents: input.totalAmountCents,
       taxAmountCents: 0,
-      addonsAmountCents: 0,
-      discountAmountCents: 0,
-      isManual: true,
-      paymentReference: paymentReference?.trim() || null,
-      waiverSignedOffline,
+      notes: input.notes?.trim() || null,
     },
   });
 
-  // Update seatsBooked if theme seat
-  if (bookingType === "THEME_SEAT") {
-    await prisma.rideSlot.update({
-      where: { id: slotId },
-      data: { seatsBooked: { increment: seats } },
-    });
-  } else {
-    // General full-bike booking — mark as filling
-    await prisma.rideSlot.update({
-      where: { id: slotId },
-      data: { seatsBooked: slot.seatsTotal },
+  await prisma.cageSlot.update({
+    where: { id: input.slotId },
+    data: { status: "BOOKED" },
+  });
+  if (slotIdB) {
+    await prisma.cageSlot.update({
+      where: { id: slotIdB },
+      data: { status: "BOOKED" },
     });
   }
 
-  // Create signed waiver record if waiver was signed offline
-  if (waiverSignedOffline) {
+  if (input.waiverSignedOffline) {
     await prisma.waiver.create({
       data: {
         bookingId: booking.id,
-        signerName: customerName.trim(),
+        memberId,
+        signerName: input.guestName?.trim() || "Admin entry",
         signedAt: new Date(),
         agreementTextSnapshot: "Waiver signed offline — recorded by admin.",
-        status: "SIGNED",
+        status: "SIGNED" as any,
+        isMinor: false,
       },
     });
   }
+
+  try {
+    const code = await createAccessCode(booking.id);
+    await notifyBookingConfirmed(booking.id, code.pin);
+  } catch {}
 
   revalidatePath("/admin/schedule");
   revalidatePath("/admin/bookings");
@@ -108,19 +105,15 @@ export async function createManualBooking(input: ManualBookingInput) {
 
 export async function getSlotForManualBooking(slotId: string) {
   await requireAdmin();
-  return prisma.rideSlot.findUnique({
+  return prisma.cageSlot.findUnique({
     where: { id: slotId },
     select: {
       id: true,
-      rideType: true,
-      seatsTotal: true,
-      seatsBooked: true,
+      lane: true,
       status: true,
       date: true,
       startTime: true,
       endTime: true,
-      theme: { select: { name: true } },
-      bike: { select: { name: true } },
     },
   });
 }

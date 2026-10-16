@@ -6,14 +6,8 @@ import { BulkSlotForm } from "@/components/admin/BulkSlotForm";
 import { CardHeader, CardBody } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { CalendarPlus, CalendarDots, CalendarBlank } from "@phosphor-icons/react";
-import type { Bike, Theme } from "@prisma/client";
 
-interface SlotFormTabsProps {
-  bikes: Bike[];
-  themes: Theme[];
-}
-
-export function SlotFormTabs({ bikes, themes }: SlotFormTabsProps) {
+export function SlotFormTabs() {
   const [tab, setTab] = useState<"single" | "bulk">("bulk");
 
   return (
@@ -22,7 +16,7 @@ export function SlotFormTabs({ bikes, themes }: SlotFormTabsProps) {
         <div className="flex flex-col gap-3">
           <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
             <CalendarPlus size={22} weight="duotone" color="#2B5CE6" />
-            Create Rides
+            Create Slots
           </h2>
 
           <div className="flex rounded-xl overflow-hidden border-2 border-gray-200 self-start">
@@ -54,11 +48,7 @@ export function SlotFormTabs({ bikes, themes }: SlotFormTabsProps) {
         </div>
       </CardHeader>
       <CardBody className="px-8 pt-6 pb-8">
-        {tab === "single" ? (
-          <SlotForm bikes={bikes} themes={themes} />
-        ) : (
-          <BulkSlotForm bikes={bikes} themes={themes} />
-        )}
+        {tab === "single" ? <SlotForm /> : <BulkSlotForm />}
       </CardBody>
     </>
   );

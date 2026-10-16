@@ -9,16 +9,17 @@ export default async function SchedulePage() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [bikes, themes, slots] = await Promise.all([
-    prisma.bike.findMany({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } }),
-    prisma.theme.findMany({ orderBy: { name: "asc" } }),
-    prisma.rideSlot.findMany({
-      where: { date: { gte: today } },
-      include: { bike: true, theme: true, staffAssignments: { include: { staff: true } }, _count: { select: { bookings: true } } },
-      orderBy: [{ date: "asc" }, { startTime: "asc" }],
-      take: 50,
-    }),
-  ]);
+  const slots = await prisma.cageSlot.findMany({
+    where: { date: { gte: today } },
+    include: {
+      bookingsA: {
+        where: { status: { in: ["CONFIRMED", "PENDING"] } },
+        include: { member: { select: { name: true } } },
+      },
+    },
+    orderBy: [{ date: "asc" }, { startTime: "asc" }, { lane: "asc" }],
+    take: 100,
+  });
 
   return (
     <div>
@@ -29,14 +30,12 @@ export default async function SchedulePage() {
       />
 
       <div className="grid gap-6 lg:grid-cols-3 items-start">
-        {/* Upcoming slots */}
         <div className="lg:col-span-2">
           <ScheduleView slots={slots} />
         </div>
 
-        {/* Create ride */}
         <Card>
-          <SlotFormTabs bikes={bikes} themes={themes} />
+          <SlotFormTabs />
         </Card>
       </div>
     </div>

@@ -3,47 +3,34 @@
 import { useState, useMemo } from "react";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { formatDate, formatTime, cn } from "@/lib/utils";
-import { SlotCancelButton } from "@/components/admin/SlotCancelButton";
-import { SlotDeleteButton } from "@/components/admin/SlotDeleteButton";
-import { SlotRestoreButton } from "@/components/admin/SlotRestoreButton";
+import { formatTime, cn } from "@/lib/utils";
 import { SlotBlockButton } from "@/components/admin/SlotBlockButton";
 import { SlotUnblockButton } from "@/components/admin/SlotUnblockButton";
+import { SlotDeleteButton } from "@/components/admin/SlotDeleteButton";
 import { ManualBookingModal } from "@/components/admin/ManualBookingModal";
-import { List, CalendarBlank, CaretLeft, CaretRight, ArrowFatLinesDown, Bicycle, UserPlus, SteeringWheel } from "@phosphor-icons/react";
+import { List, CalendarBlank, CaretLeft, CaretRight, ArrowFatLinesDown, BaseballCap, UserPlus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
 
 type Slot = {
   id: string;
+  lane: string;
   date: string | Date;
   startTime: string | Date;
   endTime: string | Date;
   status: string;
-  rideType: string;
-  seatsBooked: number;
-  seatsTotal: number;
   blockReason?: string | null;
-  bike: { name: string };
-  theme: { name: string } | null;
-  staffAssignments: { id: string; staff: { id: string; name: string; role: string } }[];
-  _count: { bookings: number };
+  bookingsA: { id: string; member?: { name: string } | null; guestName?: string | null }[];
 };
 
 const statusVariant: Record<string, "green" | "amber" | "red" | "gray" | "blue" | "purple"> = {
   AVAILABLE: "green",
-  FILLING: "amber",
-  FULL: "red",
-  COMPLETED: "gray",
-  CANCELLED: "gray",
+  BOOKED: "amber",
   BLOCKED: "purple",
 };
 
 const statusDot: Record<string, string> = {
   AVAILABLE: "bg-green-400",
-  FILLING: "bg-amber-400",
-  FULL: "bg-red-400",
-  COMPLETED: "bg-gray-300",
-  CANCELLED: "bg-gray-300",
+  BOOKED: "bg-amber-400",
   BLOCKED: "bg-purple-400",
 };
 
@@ -82,31 +69,22 @@ function formatTimeShort(date: string | Date) {
 
 export function ScheduleView({ slots }: { slots: Slot[] }) {
   const [view, setView] = useState<"list" | "calendar">("list");
-  const [listLimit, setListLimit] = useState(6);
-  const [needsDriverFilter, setNeedsDriverFilter] = useState(false);
+  const [listLimit, setListLimit] = useState(10);
 
   const now = new Date();
   const [calMonth, setCalMonth] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const slotHasNoDriver = (slot: Slot) =>
-    !slot.staffAssignments.some((a) => a.staff.role === "DRIVER");
-
-  const filteredSlots = useMemo(
-    () => (needsDriverFilter ? slots.filter(slotHasNoDriver) : slots),
-    [slots, needsDriverFilter]
-  );
-
   const slotsByDate = useMemo(() => {
     const map = new Map<string, Slot[]>();
-    for (const slot of filteredSlots) {
+    for (const slot of slots) {
       const key = toUTCKey(slot.date);
       const arr = map.get(key) ?? [];
       arr.push(slot);
       map.set(key, arr);
     }
     return map;
-  }, [filteredSlots]);
+  }, [slots]);
 
   const calendarDays = useMemo(() => {
     const { year, month } = calMonth;
@@ -140,24 +118,12 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
-            <Bicycle size={22} weight="duotone" color="#2B5CE6" />
-            Upcoming Rides
+            <BaseballCap size={22} weight="duotone" color="#2B5CE6" />
+            Upcoming Sessions
           </h2>
-          <button
-            onClick={() => { setNeedsDriverFilter((f) => !f); setListLimit(6); }}
-            className={cn(
-              "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium border transition-colors",
-              needsDriverFilter
-                ? "border-amber-400 bg-amber-50 text-amber-700"
-                : "border-gray-200 text-gray-500 hover:bg-gray-50"
-            )}
-          >
-            <SteeringWheel size={15} weight="duotone" />
-            Needs Driver
-          </button>
           <div className="flex w-full overflow-hidden rounded-lg border border-gray-200 sm:w-auto">
             <button
-              onClick={() => { setView("list"); setListLimit(6); }}
+              onClick={() => { setView("list"); setListLimit(10); }}
               className={cn(
                 "flex flex-1 items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors",
                 view === "list" ? "bg-brand-blue text-white" : "text-gray-500 hover:bg-gray-50"
@@ -183,66 +149,53 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
       {view === "list" ? (
         <CardBody className="p-0">
           <ul className="divide-y divide-gray-100">
-            {filteredSlots.slice(0, listLimit).map((slot) => (
+            {slots.slice(0, listLimit).map((slot) => (
               <SlotRow key={slot.id} slot={slot} showDate />
             ))}
-            {filteredSlots.length === 0 && (
+            {slots.length === 0 && (
               <li className="px-6 py-8 text-center text-sm text-gray-500">
-                No upcoming rides. Create one below.
+                No upcoming sessions. Create slots below.
               </li>
             )}
           </ul>
-          {filteredSlots.length > listLimit && (
+          {slots.length > listLimit && (
             <div className="flex justify-center border-t border-gray-100 px-6 py-4">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setListLimit((n) => n + 6)}
+                onClick={() => setListLimit((n) => n + 10)}
                 className="border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white"
               >
                 <ArrowFatLinesDown size={15} weight="fill" />
                 <span className="font-bold tracking-wide">SHOW MORE</span>
-                <span className="text-xs opacity-70">({filteredSlots.length - listLimit})</span>
+                <span className="text-xs opacity-70">({slots.length - listLimit})</span>
               </Button>
             </div>
           )}
         </CardBody>
       ) : (
         <CardBody>
-          {/* Month nav */}
           <div className="mb-3 flex items-center justify-between">
-            <button
-              onClick={prevMonth}
-              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
-            >
+            <button onClick={prevMonth} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100">
               <CaretLeft size={17} />
             </button>
             <span className="font-semibold text-gray-900">
               {MONTHS[calMonth.month]} {calMonth.year}
             </span>
-            <button
-              onClick={nextMonth}
-              className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
-            >
+            <button onClick={nextMonth} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100">
               <CaretRight size={17} />
             </button>
           </div>
 
-          {/* Day-of-week headers */}
           <div className="mb-1 grid grid-cols-7">
             {DAYS.map((d) => (
-              <div key={d} className="py-1 text-center text-xs font-medium text-gray-400">
-                {d}
-              </div>
+              <div key={d} className="py-1 text-center text-xs font-medium text-gray-400">{d}</div>
             ))}
           </div>
 
-          {/* Grid */}
           <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg border border-gray-100 bg-gray-100">
             {calendarDays.map((day, i) => {
-              if (day === null) {
-                return <div key={`empty-${i}`} className="min-h-16 bg-white" />;
-              }
+              if (day === null) return <div key={`empty-${i}`} className="min-h-16 bg-white" />;
               const key = localDayKey(calMonth.year, calMonth.month, day);
               const daySlots = slotsByDate.get(key) ?? [];
               const isToday = key === todayKey;
@@ -258,25 +211,18 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
                     !isSelected && daySlots.length > 0 && "hover:bg-gray-50"
                   )}
                 >
-                  <span
-                    className={cn(
-                      "inline-flex h-6 w-6 items-center justify-center rounded-full text-sm",
-                      isToday ? "bg-brand-blue font-bold text-white" : "text-gray-700"
-                    )}
-                  >
+                  <span className={cn(
+                    "inline-flex h-6 w-6 items-center justify-center rounded-full text-sm",
+                    isToday ? "bg-brand-blue font-bold text-white" : "text-gray-700"
+                  )}>
                     {day}
                   </span>
                   <div className="mt-1 flex flex-wrap gap-0.5">
                     {daySlots.slice(0, 4).map((s) => (
-                      <span
-                        key={s.id}
-                        className={cn("h-1.5 w-1.5 rounded-full", statusDot[s.status] ?? "bg-gray-300")}
-                      />
+                      <span key={s.id} className={cn("h-1.5 w-1.5 rounded-full", statusDot[s.status] ?? "bg-gray-300")} />
                     ))}
                     {daySlots.length > 4 && (
-                      <span className="text-xs leading-none text-gray-400">
-                        +{daySlots.length - 4}
-                      </span>
+                      <span className="text-xs leading-none text-gray-400">+{daySlots.length - 4}</span>
                     )}
                   </div>
                 </button>
@@ -284,23 +230,17 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
             })}
           </div>
 
-          {/* Selected day detail */}
           {selectedDay && (
             <div className="mt-4 border-t border-gray-100 pt-4">
               <p className="mb-3 text-sm font-semibold text-gray-700">
-                {new Intl.DateTimeFormat("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                }).format(new Date(`${selectedDay}T12:00:00`))}
+                {new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric" })
+                  .format(new Date(`${selectedDay}T12:00:00`))}
               </p>
               {selectedSlots.length === 0 ? (
-                <p className="text-sm text-gray-400">No rides scheduled.</p>
+                <p className="text-sm text-gray-400">No sessions scheduled.</p>
               ) : (
                 <ul className="-mx-4 divide-y divide-gray-100">
-                  {selectedSlots.map((slot) => (
-                    <SlotRow key={slot.id} slot={slot} showDate={false} />
-                  ))}
+                  {selectedSlots.map((slot) => <SlotRow key={slot.id} slot={slot} showDate={false} />)}
                 </ul>
               )}
             </div>
@@ -313,24 +253,19 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
 
 function SlotRow({ slot, showDate }: { slot: Slot; showDate: boolean }) {
   const [manualOpen, setManualOpen] = useState(false);
+  const isAvailable = slot.status === "AVAILABLE";
+  const booking = slot.bookingsA?.[0];
+  const bookerName = booking?.member?.name ?? booking?.guestName ?? null;
 
-  const isBookable = slot.status === "AVAILABLE" || slot.status === "FILLING";
-  const isActive = slot.status === "AVAILABLE" || slot.status === "FILLING";
-
-  const actions = slot.status === "CANCELLED" || slot.status === "FULL" ? (
-    <div className="flex gap-1">
-      <SlotRestoreButton slotId={slot.id} />
-      <SlotDeleteButton slotId={slot.id} />
-    </div>
-  ) : slot.status === "BLOCKED" ? (
+  const actions = slot.status === "BLOCKED" ? (
     <div className="flex gap-1">
       <SlotUnblockButton slotId={slot.id} />
       <SlotDeleteButton slotId={slot.id} />
     </div>
-  ) : isActive ? (
+  ) : isAvailable ? (
     <div className="flex gap-1">
       <SlotBlockButton slotId={slot.id} />
-      <SlotCancelButton slotId={slot.id} />
+      <SlotDeleteButton slotId={slot.id} />
     </div>
   ) : null;
 
@@ -340,41 +275,28 @@ function SlotRow({ slot, showDate }: { slot: Slot; showDate: boolean }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant={statusVariant[slot.status] ?? "gray"}>{formatStatus(slot.status)}</Badge>
-            {!slot.staffAssignments.some((a) => a.staff.role === "DRIVER") && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                <SteeringWheel size={12} weight="duotone" />
-                No driver
-              </span>
+            <span className="font-medium text-gray-900">Lane {slot.lane}</span>
+            {bookerName && (
+              <span className="text-sm text-gray-500">&middot; {bookerName}</span>
             )}
-            <span className="font-medium text-gray-900">
-              {slot.rideType === "THEME" ? slot.theme?.name ?? "Theme Ride" : "Group Ride"}
-            </span>
           </div>
           <p className="mt-0.5 text-sm text-gray-500">
-            {showDate && <>{formatDateShort(slot.date)} · </>}
-            {formatTimeShort(slot.startTime)} – {formatTimeShort(slot.endTime)}
-          </p>
-          <p className="text-sm text-gray-500">
-            {slot.bike.name} ·{" "}
-            {slot.rideType === "THEME"
-              ? `${slot.seatsBooked}/${slot.seatsTotal} seats`
-              : slot.status === "AVAILABLE"
-              ? "Available"
-              : "Booked"}
+            {showDate && <>{formatDateShort(slot.date)} &middot; </>}
+            {formatTimeShort(slot.startTime)} &ndash; {formatTimeShort(slot.endTime)}
           </p>
           {slot.status === "BLOCKED" && slot.blockReason && (
             <p className="mt-0.5 text-xs text-purple-600 italic">{slot.blockReason}</p>
           )}
         </div>
         <div className="shrink-0 flex items-center gap-1">
-          {isBookable && (
+          {isAvailable && (
             <button
               onClick={() => setManualOpen(true)}
               className="group flex h-8 items-center gap-0 overflow-hidden rounded-lg pl-2 pr-2 text-brand-blue transition-all hover:bg-blue-50 hover:gap-1.5 hover:pr-3"
             >
               <UserPlus size={18} weight="duotone" className="shrink-0" />
               <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-200 group-hover:max-w-[80px]">
-                Self-Book
+                Book
               </span>
             </button>
           )}

@@ -12,7 +12,6 @@ const statusVariant: Record<string, "green" | "amber" | "blue" | "gray" | "red">
   CONFIRMED: "green",
   COMPLETED: "gray",
   CANCELLED: "gray",
-  REFUNDED: "red",
 };
 
 function toTitleCase(str: string) {
@@ -21,14 +20,15 @@ function toTitleCase(str: string) {
 
 interface Booking {
   id: string;
-  slotId: string;
   status: string;
   bookingType: string;
-  seats: number;
   totalAmountCents: number;
-  stripePaymentIntentId?: string | null;
-  customer: { name: string; email: string };
-  slot: { date: Date; rideType: string; theme?: { name: string } | null };
+  memberId?: string | null;
+  guestName?: string | null;
+  guestEmail?: string | null;
+  member?: { name: string; email: string } | null;
+  slotA: { date: Date; lane: string };
+  slotB?: { lane: string } | null;
   waiver?: { status: string } | null;
 }
 
@@ -38,7 +38,7 @@ interface Props {
   dir: string;
 }
 
-const SORTABLE = ["customer", "date", "status", "total"];
+const SORTABLE = ["name", "date", "status", "total"];
 
 function SortIcon({ col, sort, dir }: { col: string; sort: string; dir: string }) {
   if (sort !== col) return <CaretUpDown size={12} className="opacity-60" />;
@@ -64,10 +64,20 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
     return col && SORTABLE.includes(col) ? `${base} cursor-pointer hover:text-gray-800 hover:bg-gray-100` : base;
   }
 
+  function getName(b: Booking) {
+    return b.member?.name ?? b.guestName ?? "Guest";
+  }
+
+  function getEmail(b: Booking) {
+    return b.member?.email ?? b.guestEmail ?? "";
+  }
+
+  function getLane(b: Booking) {
+    return b.bookingType === "BOTH_LANES" ? "Both Lanes" : `Lane ${b.slotA.lane}`;
+  }
 
   return (
     <>
-      {/* Mobile card list */}
       <ul className="divide-y divide-gray-100 md:hidden">
         {bookings.map((b) => (
           <li
@@ -76,20 +86,15 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
             onClick={() => setSelectedId(b.id)}
           >
             <div className="min-w-0 flex-1">
-              <p className="font-semibold text-gray-900 truncate">{b.customer.name}</p>
-              <p className="text-xs text-gray-400 truncate">{b.customer.email}</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {b.slot.rideType === "THEME" ? b.slot.theme?.name ?? "Theme Ride" : "Group Ride"}
-                {" · "}
-                {b.bookingType === "THEME_SEAT" ? `${b.seats} seat${b.seats > 1 ? "s" : ""}` : "Full vehicle"}
-              </p>
-              <p className="text-xs text-gray-400">{formatDate(b.slot.date)}</p>
-              {b.status === "PENDING" && b.waiver?.status !== "SIGNED" && (
-                <p className="mt-1 text-xs font-semibold text-amber-600">⚠ Waiver needed</p>
-              )}
+              <p className="font-semibold text-gray-900 truncate">{getName(b)}</p>
+              <p className="text-xs text-gray-400 truncate">{getEmail(b)}</p>
+              <p className="mt-1 text-sm text-gray-600">{getLane(b)}</p>
+              <p className="text-xs text-gray-400">{formatDate(b.slotA.date)}</p>
             </div>
             <div className="flex flex-col items-end gap-1.5 shrink-0">
-              <p className="font-semibold text-gray-900">{formatCents(b.totalAmountCents)}</p>
+              <p className="font-semibold text-gray-900">
+                {b.totalAmountCents > 0 ? formatCents(b.totalAmountCents) : "Member"}
+              </p>
               <Badge variant={statusVariant[b.status] ?? "gray"}>{toTitleCase(b.status)}</Badge>
             </div>
           </li>
@@ -99,14 +104,13 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
         )}
       </ul>
 
-      {/* Desktop table */}
       <table className="hidden md:table w-full text-sm">
         <thead>
           <tr className="border-b border-gray-200 bg-gray-50">
-            <th className={thClass("customer")} onClick={() => handleSort("customer")}>
-              <span className="flex items-center gap-1">Customer <SortIcon col="customer" sort={sort} dir={dir} /></span>
+            <th className={thClass("name")} onClick={() => handleSort("name")}>
+              <span className="flex items-center gap-1">Name <SortIcon col="name" sort={sort} dir={dir} /></span>
             </th>
-            <th className={thClass()}>Ride</th>
+            <th className={thClass()}>Lane</th>
             <th className={thClass("date")} onClick={() => handleSort("date")}>
               <span className="flex items-center gap-1">Date <SortIcon col="date" sort={sort} dir={dir} /></span>
             </th>
@@ -127,39 +131,32 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
               onClick={() => setSelectedId(b.id)}
             >
               <td className="px-5 py-3">
-                <p className="font-medium text-gray-900">{b.customer.name}</p>
-                <p className="text-xs text-gray-400">{b.customer.email}</p>
+                <p className="font-medium text-gray-900">{getName(b)}</p>
+                <p className="text-xs text-gray-400">{getEmail(b)}</p>
               </td>
               <td className="px-5 py-3">
-                <p className="font-medium text-gray-900">
-                  {b.slot.rideType === "THEME" ? b.slot.theme?.name ?? "Theme Ride" : "Group Ride"}
-                </p>
+                <p className="font-medium text-gray-900">{getLane(b)}</p>
                 <p className="text-xs text-gray-400">
-                  {b.bookingType === "THEME_SEAT" ? `${b.seats} seat${b.seats > 1 ? "s" : ""}` : "Full vehicle"}
+                  {b.memberId ? "Member" : "Drop-in"}
                 </p>
               </td>
-              <td className="px-5 py-3 text-gray-600">{formatDate(b.slot.date)}</td>
+              <td className="px-5 py-3 text-gray-600">{formatDate(b.slotA.date)}</td>
               <td className="px-5 py-3">
                 <Badge variant={statusVariant[b.status] ?? "gray"}>
                   {toTitleCase(b.status)}
                 </Badge>
-                {b.status === "PENDING" && b.waiver?.status !== "SIGNED" && (
-                  <p className="mt-1 text-xs font-semibold text-amber-600">⚠ Waiver needed</p>
-                )}
               </td>
               <td className="px-5 py-3 text-right font-medium text-gray-900">
-                {formatCents(b.totalAmountCents)}
+                {b.totalAmountCents > 0 ? formatCents(b.totalAmountCents) : "Member"}
               </td>
               <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    onClick={() => setSelectedId(b.id)}
-                    title="View booking"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-line bg-[#f2f4fb] text-admin-primary transition-colors hover:bg-admin-primary hover:text-white"
-                  >
-                    <ArrowSquareOut size={14} weight="regular" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setSelectedId(b.id)}
+                  title="View booking"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-line bg-[#f2f4fb] text-admin-primary transition-colors hover:bg-admin-primary hover:text-white"
+                >
+                  <ArrowSquareOut size={14} weight="regular" />
+                </button>
               </td>
             </tr>
           ))}
@@ -179,7 +176,6 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
           onClose={() => setSelectedId(null)}
         />
       )}
-
     </>
   );
 }
