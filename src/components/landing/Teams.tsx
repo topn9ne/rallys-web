@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const PERKS: Array<[string, string]> = [
   ["Both Lanes", "Removable center divider — your team gets the full facility"],
-  ["Team Pricing", "Flat monthly rate, unlimited 30-min team sessions"],
+  ["Team Pricing", "Flat monthly rate, unlimited 1-hour team sessions"],
   ["Flexible Scheduling", "Book up to 14 days ahead, morning or evening slots"],
   ["Self-Service", "No staff needed — door code, cage time, done"],
 ];

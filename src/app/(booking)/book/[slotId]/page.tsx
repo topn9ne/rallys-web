@@ -103,7 +103,7 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
             )}
             <div className="flex justify-between">
               <dt className="text-gray-500">Duration</dt>
-              <dd className="font-semibold">30 minutes</dd>
+              <dd className="font-semibold">1 hour</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">Price</dt>

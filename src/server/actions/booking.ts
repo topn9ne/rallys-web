@@ -180,8 +180,8 @@ export async function createDropInCheckout(input: CreateDropInInput) {
         currency: "usd",
         product_data: {
           name: input.bookingType === "BOTH_LANES"
-            ? "Batting Cage — Both Lanes (30 min)"
-            : "Batting Cage — Single Lane (30 min)",
+            ? "Batting Cage — Both Lanes (1 hr)"
+            : "Batting Cage — Single Lane (1 hr)",
         },
         unit_amount: baseCents,
       },

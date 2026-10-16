@@ -93,7 +93,7 @@ export function SlotBookingForm({
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-gray-500">
-              {bookingType === "BOTH_LANES" ? "Both Lanes · 30 min" : `Lane ${slotA.lane} · 30 min`}
+              {bookingType === "BOTH_LANES" ? "Both Lanes · 1 hr" : `Lane ${slotA.lane} · 1 hr`}
             </dt>
             <dd className="text-gray-900">{formatCents(priceCents)}</dd>
           </div>

@@ -14,7 +14,7 @@ const TIERS = [
     sub: "/month",
     annualLabel: "/year — save $100",
     features: [
-      "Unlimited 30-min sessions",
+      "Unlimited 1-hour sessions",
       "Book up to 7 days ahead",
       "Priority lane selection",
       "Door code via text",
@@ -44,7 +44,7 @@ const TIERS = [
     sub: "single lane",
     features: [
       "No membership required",
-      "30-minute session",
+      "1-hour session",
       "Door code via text",
       "Great for trying us out",
     ],

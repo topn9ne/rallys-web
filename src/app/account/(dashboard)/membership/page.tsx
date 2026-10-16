@@ -75,7 +75,7 @@ export default async function MembershipPage() {
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Subscribe to book cage sessions anytime. Your membership covers unlimited 30-minute sessions during operating hours.
+            Subscribe to book cage sessions anytime. Your membership covers unlimited 1-hour sessions during operating hours.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">

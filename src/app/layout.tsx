@@ -11,11 +11,11 @@ const barlow = Barlow({
 export const metadata: Metadata = {
   title: "Rally's Indoor Training — Start a Rally",
   description:
-    "Self-service batting cages in Hastings, NE. Book online. Get a door code. Hit.",
+    "Self-service batting cages in Hastings, NE. Book a 1-hour slot online. Get a door code. Hit.",
   openGraph: {
     title: "Rally's Indoor Training — Start a Rally",
     description:
-      "Self-service batting cages in Hastings, NE. Book online. Get a door code. Hit.",
+      "Self-service batting cages in Hastings, NE. Book a 1-hour slot online. Get a door code. Hit.",
     type: "website",
     siteName: "Rally's Indoor Training",
   },

@@ -342,7 +342,7 @@ function TimeSlotRows({
                     {formatTime(ts.startTime)} – {formatTime(ts.endTime)}
                   </p>
                   <p className="mt-0.5 text-sm text-gray-600">
-                    Both Lanes · 30 min
+                    Both Lanes · 1 hr
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -377,7 +377,7 @@ function TimeSlotRows({
                   {formatTime(ts.startTime)} – {formatTime(ts.endTime)}
                 </p>
                 <p className="mt-0.5 text-sm text-gray-600">
-                  Lane {slot.lane} · 30 min
+                  Lane {slot.lane} · 1 hr
                 </p>
               </div>
               <div className="flex items-center gap-2">

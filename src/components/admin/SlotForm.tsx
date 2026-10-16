@@ -40,7 +40,7 @@ export function SlotForm() {
         name="startTime"
         type="time"
         required
-        hint="Each slot is 30 minutes."
+        hint="Each slot is 1 hour."
         error={state.error?.startTime?.[0]}
       />
 

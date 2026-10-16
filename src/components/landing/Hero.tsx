@@ -12,7 +12,7 @@ export function Hero() {
         </h1>
 
         <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-          Self-service batting cages in Hastings, NE. Book a 30-minute slot, get
+          Self-service batting cages in Hastings, NE. Book a 1-hour slot, get
           a door code on your phone, and hit. No staff. No&nbsp;waiting.
         </p>
 
@@ -28,7 +28,7 @@ export function Hero() {
         <div className="mt-14 flex items-center justify-center gap-4 text-[13px] font-semibold uppercase tracking-[1.5px] text-white/60">
           <span>2 lanes</span>
           <span className="text-gold">&middot;</span>
-          <span>30-min slots</span>
+          <span>1-hour slots</span>
           <span className="text-gold">&middot;</span>
           <span>6 AM &ndash; 10 PM daily</span>
         </div>

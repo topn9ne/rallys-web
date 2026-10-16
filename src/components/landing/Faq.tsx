@@ -10,7 +10,7 @@ interface FaqItem {
 const FAQS: FaqItem[] = [
   {
     q: "How does self-service work?",
-    a: "Book a 30-minute slot online. You'll get a unique door code via text message before your session. Punch the code at the door, the cage is yours for 30 minutes, and the code expires when your slot ends.",
+    a: "Book a 1-hour slot online. You'll get a unique door code via text message before your session. Punch the code at the door, the cage is yours for an hour, and the code expires when your slot ends.",
   },
   {
     q: "Do I need a membership?",

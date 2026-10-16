@@ -19,7 +19,7 @@ export async function createSlot(formData: FormData) {
   const { lane, date, startTime } = result.data;
 
   const startDateTime = new Date(`${date}T${startTime}:00`);
-  const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000); // 30 min slots
+  const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000); // 1 hour slots
 
   const conflict = await prisma.cageSlot.findFirst({
     where: {

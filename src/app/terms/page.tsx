@@ -38,7 +38,7 @@ export default function TermsPage() {
 
           <div>
             <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Bookings &amp; Cancellations</h2>
-            <p>All sessions are 30 minutes. Bookings are confirmed upon payment (drop-ins) or slot reservation (members). Cancellation policies and any applicable refund terms are displayed during checkout.</p>
+            <p>All sessions are 1 hour. Bookings are confirmed upon payment (drop-ins) or slot reservation (members). Cancellation policies and any applicable refund terms are displayed during checkout.</p>
             <p className="mt-3">If Rally&apos;s Indoor Training must cancel a session due to equipment failure or circumstances beyond our control, we will work with you to reschedule or issue a refund.</p>
           </div>
 

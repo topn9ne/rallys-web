@@ -30,7 +30,7 @@ export default async function BookPage() {
           BOOK YOUR <span className="text-landing-accent">CAGE</span>
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm text-white/80 sm:text-base">
-          30-minute batting cage sessions. Pick your lane, get a door code, and hit.
+          1-hour batting cage sessions. Pick your lane, get a door code, and hit.
         </p>
       </div>
 

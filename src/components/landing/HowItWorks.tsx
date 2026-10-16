@@ -17,7 +17,7 @@ const STEPS = [
   {
     n: "04",
     t: "Swing away",
-    d: "Thirty minutes of cage time. When your slot ends, the code expires. Simple as that.",
+    d: "One hour of cage time. When your slot ends, the code expires. Simple as that.",
   },
 ];
 
@@ -29,7 +29,7 @@ export function HowItWorks() {
           How It <span className="text-rally-red">Works</span>
         </h2>
         <div className="text-sm font-medium uppercase tracking-[1px] text-navy/50">
-          Four steps. Thirty minutes. All yours.
+          Four steps. One hour. All yours.
         </div>
       </div>
 

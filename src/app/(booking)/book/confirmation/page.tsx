@@ -111,7 +111,7 @@ export default async function ConfirmationPage({ searchParams }: Props) {
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">Duration</dt>
-              <dd>30 minutes</dd>
+              <dd>1 hour</dd>
             </div>
             <div className="flex justify-between border-t border-gray-200 pt-3 font-bold">
               <dt>

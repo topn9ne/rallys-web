@@ -202,7 +202,7 @@ function bookingConfirmedHtml(data: {
       <ol style="color: #444; line-height: 1.6;">
         <li>Enter your code on the keypad at the front door</li>
         <li>Set up the pitching machine to your preferred speed</li>
-        <li>Hit! Your session is 30 minutes</li>
+        <li>Hit! Your session is 1 hour</li>
         <li>Leave the cage as you found it</li>
       </ol>
       <p style="font-size: 13px; color: #888; margin-top: 24px;">
@@ -218,7 +218,7 @@ function welcomeHtml(name: string) {
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <h1 style="font-size: 24px; color: #1a1a1a;">Welcome to Rally's!</h1>
       <p>Hey ${name},</p>
-      <p>Your membership is now active. You can book 30-minute cage sessions anytime during operating hours (6 AM – 10 PM daily).</p>
+      <p>Your membership is now active. You can book 1-hour cage sessions anytime during operating hours (6 AM – 10 PM daily).</p>
       <p>Here's how it works:</p>
       <ol style="color: #444; line-height: 1.6;">
         <li>Book a session from the calendar</li>
