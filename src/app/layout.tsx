@@ -1,35 +1,26 @@
 import type { Metadata } from "next";
-import { Archivo_Black, Inter, Space_Grotesk } from "next/font/google";
+import { Barlow } from "next/font/google";
 import "./globals.css";
 
-const archivoBlack = Archivo_Black({
-  variable: "--font-archivo-black",
-  subsets: ["latin"],
-  weight: ["400"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-});
-
 export const metadata: Metadata = {
-  title: "Rally's Indoor Training — Book. Swing. Repeat.",
+  title: "Rally's Indoor Training — Start a Rally",
   description:
-    "Self-service batting cages in Hastings, NE. Book a 30-minute cage online, get a door code, and hit.",
+    "Self-service batting cages in Hastings, NE. Book online. Get a door code. Hit.",
   openGraph: {
-    title: "Rally's Indoor Training — Book. Swing. Repeat.",
+    title: "Rally's Indoor Training — Start a Rally",
     description:
-      "Self-service batting cages in Hastings, NE. Book a 30-minute cage online, get a door code, and hit.",
+      "Self-service batting cages in Hastings, NE. Book online. Get a door code. Hit.",
     type: "website",
     siteName: "Rally's Indoor Training",
+  },
+  twitter: {
+    card: "summary_large_image",
   },
 };
 
@@ -39,10 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${archivoBlack.variable} ${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${barlow.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col text-foreground">
         {children}
       </body>

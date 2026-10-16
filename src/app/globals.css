@@ -8,31 +8,35 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), var(--font-space-grotesk);
-  --font-display: var(--font-archivo-black);
+  --font-sans: var(--font-barlow), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: var(--font-barlow), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Rally's brand (light-mode primary) */
+  /* Rally's brand */
+  --color-rally-red: #D4391C;
+  --color-rally-red-bright: #E04020;
+  --color-navy: #1B2A4A;
+  --color-gold: #C9A96E;
+
+  /* Functional aliases — used by legal/booking pages */
+  --color-landing-bg: #1B2A4A;
+  --color-landing-fg: #ffffff;
+  --color-landing-primary: #C9A96E;
+  --color-landing-accent: #E04020;
+  --color-landing-ink: #1B2A4A;
+
+  /* Admin — kept from previous build */
   --color-brand-blue: #2B5CE6;
   --color-brand-blue-dark: #1e47c8;
   --color-brand-orange: #E8722A;
   --color-brand-orange-dark: #c95f1e;
-
-  /* Landing page — Midnight + Fuchsia palette */
-  --color-landing-primary: #4a7bff;
-  --color-landing-accent: #ff2e88;
-  --color-landing-bg: #0b1232;
-  --color-landing-fg: #ffffff;
-  --color-landing-ink: #0b1232;
-
-  /* Admin — Midnight + Fuchsia (shared palette, admin-specific tokens) */
-  --color-admin-ink: #0b1232;          /* gradient top, primary text on white */
-  --color-admin-bg-mid: #14225a;       /* gradient bottom */
-  --color-admin-primary: #2b5ce6;      /* true brand blue — highlight card, tiles, links */
-  --color-admin-primary-bright: #4a7bff; /* icons on dark */
-  --color-admin-accent: #ff2e88;       /* fuchsia — reserved for primary CTA, PRIMARY badge, LIVE pill */
-  --color-admin-text-sub: #5b6684;     /* secondary text on white */
-  --color-admin-line: #e5e8f2;         /* dividers, dashed borders */
+  --color-admin-ink: #0b1232;
+  --color-admin-bg-mid: #14225a;
+  --color-admin-primary: #2b5ce6;
+  --color-admin-primary-bright: #4a7bff;
+  --color-admin-accent: #ff2e88;
+  --color-admin-text-sub: #5b6684;
+  --color-admin-line: #e5e8f2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -43,12 +47,9 @@
 }
 
 body {
-  background-color: #0b1232;
-  background-image: url('/app-background.jpg');
-  background-size: cover;
-  background-position: center top;
+  background-color: var(--color-navy);
   color: var(--foreground);
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-sans);
 }
 
 @layer base {
@@ -58,16 +59,4 @@ body {
   input, textarea, select {
     color: #111827;
   }
-}
-
-/* Let background show through page wrappers */
-.page-wrapper {
-  min-height: 100vh;
-  background: transparent;
-}
-
-/* Landing page ticker — slow horizontal scroll */
-@keyframes landing-ticker {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
 }

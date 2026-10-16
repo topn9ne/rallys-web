@@ -51,7 +51,7 @@ export function SettingsTabs() {
                 {isActive && (
                   <span
                     aria-hidden
-                    className="absolute inset-x-2 bottom-0 h-[2px] rounded-full bg-landing-accent"
+                    className="absolute inset-x-2 bottom-0 h-[2px] rounded-full bg-rally-red-bright"
                   />
                 )}
               </Link>

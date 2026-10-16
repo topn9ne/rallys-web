@@ -42,33 +42,24 @@ function FaqAccordionItem({ item }: { item: FaqItem }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div
-      className="border-b"
-      style={{ borderColor: "rgba(255,255,255,0.1)" }}
-    >
+    <div className="border-b border-navy/10">
       <button
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between gap-4 py-5 text-left"
         aria-expanded={open}
       >
-        <span className="font-display text-lg tracking-tight" style={{ color: "var(--color-landing-fg)" }}>
+        <span className="text-lg font-semibold tracking-tight text-navy">
           {item.q}
         </span>
         <span
-          className="flex-none text-xl font-light transition-transform duration-200"
-          style={{
-            color: "var(--color-landing-primary)",
-            transform: open ? "rotate(45deg)" : "rotate(0deg)",
-          }}
+          className="flex-none text-xl font-light text-gold transition-transform duration-200"
+          style={{ transform: open ? "rotate(45deg)" : "rotate(0deg)" }}
         >
           +
         </span>
       </button>
       {open && (
-        <div
-          className="pb-5 text-sm leading-relaxed"
-          style={{ color: "var(--color-landing-fg)", opacity: 0.7 }}
-        >
+        <div className="pb-5 text-sm leading-relaxed text-navy/70">
           {item.a}
         </div>
       )}
@@ -78,10 +69,9 @@ function FaqAccordionItem({ item }: { item: FaqItem }) {
 
 export function Faq() {
   return (
-    <section id="faq" className="px-6 pb-24 pt-6 md:px-14">
-      <h2 className="mb-10 font-display text-5xl tracking-[-1px] sm:text-6xl lg:text-[64px]">
-        GOOD{" "}
-        <span style={{ color: "var(--color-landing-primary)" }}>QUESTIONS</span>
+    <section id="faq" className="bg-white px-6 py-24 md:px-14">
+      <h2 className="mb-10 text-5xl font-bold uppercase tracking-[-1px] text-navy sm:text-6xl lg:text-[64px]">
+        Good <span className="text-rally-red">Questions</span>
       </h2>
       <div className="max-w-3xl">
         {FAQS.map((item) => (
