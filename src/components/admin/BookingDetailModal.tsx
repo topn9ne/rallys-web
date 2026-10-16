@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { getBookingDetail } from "@/server/actions/adminBookings";
-import { getSlotStaff, assignStaffToSlot, unassignStaffFromSlot, broadcastShiftOpen } from "@/server/actions/staff";
 import { formatDate, formatTime, formatCents } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,22 +17,10 @@ import {
   ShoppingBag,
   Tag,
   UserPlus,
-  Users,
-  UserMinus,
-  Plus,
-  BellRinging,
-  Check,
   NoteBlank,
 } from "@phosphor-icons/react/dist/ssr";
 
 type BookingDetail = NonNullable<Awaited<ReturnType<typeof getBookingDetail>>>;
-type SlotStaffData = Awaited<ReturnType<typeof getSlotStaff>>;
-
-const roleVariant: Record<string, "blue" | "green" | "purple"> = {
-  ADMIN: "blue",
-  OPERATOR: "green",
-  DRIVER: "purple",
-};
 
 const statusVariant: Record<string, "green" | "amber" | "blue" | "gray" | "red"> = {
   PENDING: "amber",
@@ -78,45 +65,15 @@ interface Props {
 export function BookingDetailModal({ bookingId, onClose }: Props) {
   const [booking, setBooking] = useState<BookingDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [staffData, setStaffData] = useState<SlotStaffData | null>(null);
-  const [staffPending, startStaffTransition] = useTransition();
-  const [broadcastPending, startBroadcastTransition] = useTransition();
-  const [broadcastDone, setBroadcastDone] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     getBookingDetail(bookingId).then((data) => {
       setBooking(data);
       setLoading(false);
-      if (data?.slotId) getSlotStaff(data.slotId).then(setStaffData);
     });
   }, [bookingId]);
 
-  function reloadStaff(slotId: string) {
-    getSlotStaff(slotId).then(setStaffData);
-  }
-
-  function handleAssign(slotId: string, staffId: string) {
-    startStaffTransition(async () => {
-      await assignStaffToSlot(slotId, staffId);
-      reloadStaff(slotId);
-    });
-  }
-
-  function handleUnassign(slotId: string, staffId: string) {
-    startStaffTransition(async () => {
-      await unassignStaffFromSlot(slotId, staffId);
-      reloadStaff(slotId);
-    });
-  }
-
-  function handleBroadcast(slotId: string) {
-    startBroadcastTransition(async () => {
-      await broadcastShiftOpen(slotId);
-      setBroadcastDone(true);
-      reloadStaff(slotId);
-    });
-  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
@@ -160,99 +117,6 @@ export function BookingDetailModal({ bookingId, onClose }: Props) {
               {booking.passengerCount != null && <Row label="Passengers" value={booking.passengerCount} />}
             </Section>
 
-            {/* Staff */}
-            <div>
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-widest text-orange-400">
-                  <Users size={13} weight="duotone" color="#fb923c" />
-                  Staff
-                </h3>
-                <button
-                  disabled={broadcastPending || broadcastDone}
-                  onClick={() => booking && handleBroadcast(booking.slotId)}
-                  className="flex items-center gap-1 rounded-lg border border-orange-200 bg-white px-2.5 py-1 text-xs font-semibold text-orange-600 hover:bg-orange-500 hover:border-orange-500 hover:text-white disabled:opacity-50 transition-colors"
-                >
-                  {broadcastDone ? <Check size={11} weight="bold" /> : <BellRinging size={11} weight="duotone" />}
-                  {broadcastPending ? "Sending…" : broadcastDone ? "Sent!" : "Notify Staff"}
-                </button>
-              </div>
-              <div className="rounded-xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm space-y-2">
-                {/* Assigned */}
-                {staffData && staffData.assignments.length > 0 ? (
-                  <ul className="space-y-1.5">
-                    {staffData.assignments.map((a) => (
-                      <li key={a.staffId} className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="font-medium text-gray-900 truncate">{a.staff.name}</span>
-                          <Badge variant={roleVariant[a.staff.role] ?? "gray"} className="text-[10px] shrink-0">{a.staff.role}</Badge>
-                        </div>
-                        <button
-                          disabled={staffPending}
-                          onClick={() => handleUnassign(booking.slotId, a.staffId)}
-                          className="shrink-0 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-red-500 hover:bg-red-50 disabled:opacity-50 transition-colors"
-                        >
-                          <UserMinus size={12} weight="duotone" />
-                          Remove
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-gray-400 text-xs">No staff assigned yet.</p>
-                )}
-                {/* Add */}
-                {staffData && staffData.allStaff.filter((s) => !staffData.assignments.find((a) => a.staffId === s.id)).length > 0 && (
-                  <div className="border-t border-orange-200 pt-2 space-y-1">
-                    {staffData.allStaff
-                      .filter((s) => !staffData.assignments.find((a) => a.staffId === s.id))
-                      .map((s) => (
-                        <div key={s.id} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="text-gray-600 truncate">{s.name}</span>
-                            <Badge variant={roleVariant[s.role] ?? "gray"} className="text-[10px] shrink-0">{s.role}</Badge>
-                          </div>
-                          <button
-                            disabled={staffPending}
-                            onClick={() => handleAssign(booking.slotId, s.id)}
-                            className="shrink-0 flex items-center gap-1 rounded-md border border-orange-200 bg-white px-2 py-1 text-xs font-semibold text-orange-600 hover:bg-orange-500 hover:border-orange-500 hover:text-white disabled:opacity-50 transition-colors"
-                          >
-                            <Plus size={12} weight="bold" />
-                            Assign
-                          </button>
-                        </div>
-                      ))
-                    }
-                  </div>
-                )}
-
-                {/* Interested staff */}
-                {staffData && staffData.interests.length > 0 && (
-                  <div className="border-t border-orange-200 pt-2">
-                    <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-widest text-orange-400">
-                      Raised Hand ({staffData.interests.length})
-                    </p>
-                    <div className="space-y-1">
-                      {staffData.interests.map((i) => (
-                        <div key={i.staffId} className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span className="font-medium text-gray-800 truncate">{i.staff.name}</span>
-                            <Badge variant={roleVariant[i.staff.role] ?? "gray"} className="text-[10px] shrink-0">{i.staff.role}</Badge>
-                          </div>
-                          <button
-                            disabled={staffPending}
-                            onClick={() => handleAssign(booking.slotId, i.staffId)}
-                            className="shrink-0 flex items-center gap-1 rounded-md border border-orange-400 bg-orange-500 px-2 py-1 text-xs font-semibold text-white hover:bg-orange-600 disabled:opacity-50 transition-colors"
-                          >
-                            <Check size={11} weight="bold" />
-                            Confirm
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             {/* Pickup */}
             <Section icon={<MapPin size={13} weight="duotone" />} title="Pickup">

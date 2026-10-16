@@ -4,9 +4,8 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { formatDate, formatCents } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
-import { ArrowSquareOut, CaretUp, CaretDown, CaretUpDown, Users } from "@phosphor-icons/react/dist/ssr";
+import { ArrowSquareOut, CaretUp, CaretDown, CaretUpDown } from "@phosphor-icons/react/dist/ssr";
 import { BookingDetailModal } from "@/components/admin/BookingDetailModal";
-import { SlotStaffModal } from "@/components/admin/SlotStaffModal";
 
 const statusVariant: Record<string, "green" | "amber" | "blue" | "gray" | "red"> = {
   PENDING: "amber",
@@ -48,7 +47,6 @@ function SortIcon({ col, sort, dir }: { col: string; sort: string; dir: string }
 
 export function BookingsTable({ bookings, sort, dir }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [staffSlot, setStaffSlot] = useState<{ slotId: string; label: string } | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -66,13 +64,6 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
     return col && SORTABLE.includes(col) ? `${base} cursor-pointer hover:text-gray-800 hover:bg-gray-100` : base;
   }
 
-  function openStaff(e: React.MouseEvent, b: Booking) {
-    e.stopPropagation();
-    setStaffSlot({
-      slotId: b.slotId,
-      label: `${b.slot.rideType === "THEME" ? b.slot.theme?.name ?? "Theme Ride" : "Group Ride"} · ${formatDate(b.slot.date)}`,
-    });
-  }
 
   return (
     <>
@@ -162,13 +153,6 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
               <td className="px-5 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-end gap-2">
                   <button
-                    onClick={(e) => openStaff(e, b)}
-                    title="Assign staff"
-                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-line bg-[#f2f4fb] text-admin-primary transition-colors hover:bg-admin-primary hover:text-white"
-                  >
-                    <Users size={14} weight="regular" />
-                  </button>
-                  <button
                     onClick={() => setSelectedId(b.id)}
                     title="View booking"
                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-line bg-[#f2f4fb] text-admin-primary transition-colors hover:bg-admin-primary hover:text-white"
@@ -196,13 +180,6 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
         />
       )}
 
-      {staffSlot && (
-        <SlotStaffModal
-          slotId={staffSlot.slotId}
-          slotLabel={staffSlot.label}
-          onClose={() => setStaffSlot(null)}
-        />
-      )}
     </>
   );
 }
