@@ -1,0 +1,501 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+  APPLE
+}
+
+enum BikeStatus {
+  ACTIVE
+  OUT_OF_SERVICE
+}
+
+enum RideType {
+  THEME
+  GENERAL
+}
+
+enum SlotStatus {
+  AVAILABLE
+  FILLING
+  FULL
+  COMPLETED
+  CANCELLED
+  BLOCKED
+}
+
+enum BookingType {
+  THEME_SEAT
+  GENERAL_FULL
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+enum WaiverStatus {
+  PENDING
+  SIGNED
+}
+
+enum StaffRole {
+  OPERATOR
+  ADMIN
+  DRIVER
+}
+
+enum StaffTokenType {
+  INVITE
+  RESET
+}
+
+enum AddonAppliesTo {
+  ALL
+  THEME
+  GENERAL
+}
+
+enum DiscountType {
+  PERCENT_OFF
+  FIXED_OFF
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+}
+
+enum NotificationAudience {
+  CUSTOMER
+  OWNER
+}
+
+enum DiscountAppliesTo {
+  ALL
+  THEME
+  GENERAL
+  SPECIFIC_THEME
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Customer {
+  id              String       @id @default(cuid())
+  name            String
+  email           String       @unique
+  phone           String?
+  authProvider    AuthProvider @default(EMAIL)
+  notificationSms Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  bookings  Booking[]
+  accounts  Account[]
+  sessions  Session[]
+
+  // NextAuth
+  emailVerified DateTime?
+  image         String?
+
+  @@map("customers")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  customerId        String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  customerId   String
+  expires      DateTime
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Bike {
+  id           String     @id @default(cuid())
+  name         String
+  status       BikeStatus @default(ACTIVE)
+  passengerCap Int        @default(14)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  rideSlots         RideSlot[]
+  addonRestrictions AddOnBike[]
+
+  @@map("bikes")
+}
+
+model Theme {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  photoUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  rideSlots RideSlot[]
+  discounts DiscountCode[]
+
+  @@map("themes")
+}
+
+model RideSlot {
+  id            String     @id @default(cuid())
+  bikeId        String
+  rideType      RideType
+  themeId       String?
+  date          DateTime   @db.Date
+  startTime     DateTime
+  endTime       DateTime
+  bufferEndTime DateTime
+  seatsTotal    Int        @default(14)
+  seatsBooked   Int        @default(0)
+  status        SlotStatus @default(AVAILABLE)
+  blockReason   String?
+  blockedAt     DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  bike             Bike              @relation(fields: [bikeId], references: [id])
+  theme            Theme?            @relation(fields: [themeId], references: [id])
+  bookings         Booking[]
+  staffAssignments StaffAssignment[]
+  shiftInterests   ShiftInterest[]
+  upsellPurchases  InRideUpsellPurchase[]
+
+  @@map("ride_slots")
+}
+
+model Booking {
+  id                    String        @id @default(cuid())
+  customerId            String
+  slotId                String
+  bookingType           BookingType
+  seats                 Int           @default(1)
+  passengerCount        Int?
+  pickupLocation        String
+  pickupAddress         String?
+  status                BookingStatus @default(PENDING)
+  stripePaymentIntentId String?
+  stripeSessionId       String?       @unique
+  totalAmountCents      Int
+  baseAmountCents       Int
+  taxAmountCents        Int
+  addonsAmountCents     Int           @default(0)
+  discountCodeId        String?
+  discountAmountCents   Int           @default(0)
+  isManual              Boolean       @default(false)
+  paymentReference      String?
+  notes                 String?
+  riderRoster           String?       @db.Text
+  waiverSignedOffline   Boolean       @default(false)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  customer        Customer              @relation(fields: [customerId], references: [id])
+  slot            RideSlot              @relation(fields: [slotId], references: [id])
+  discountCode    DiscountCode?         @relation(fields: [discountCodeId], references: [id])
+  waiver          Waiver?
+  bookingAddons   BookingAddon[]
+
+  @@map("bookings")
+}
+
+model Waiver {
+  id                    String       @id @default(cuid())
+  bookingId             String       @unique
+  signerName            String
+  signerDob             String?
+  signedAt              DateTime?
+  ipAddress             String?
+  agreementTextSnapshot String       @db.Text
+  status                WaiverStatus @default(PENDING)
+  storageKey            String?
+  createdAt             DateTime     @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("waivers")
+}
+
+model Staff {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  phone          String?
+  passwordHash   String?
+  role           StaffRole @default(OPERATOR)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  assignments     StaffAssignment[]
+  tokens          StaffToken[]
+  shiftInterests  ShiftInterest[]
+
+  @@map("staff")
+}
+
+model StaffAssignment {
+  id         String   @id @default(cuid())
+  staffId    String
+  slotId     String
+  assignedAt DateTime @default(now())
+
+  staff Staff    @relation(fields: [staffId], references: [id])
+  slot  RideSlot @relation(fields: [slotId], references: [id])
+
+  @@unique([staffId, slotId])
+  @@map("staff_assignments")
+}
+
+model AddOn {
+  id           String         @id @default(cuid())
+  name         String
+  description  String?        @db.Text
+  priceCents   Int
+  appliesTo    AddonAppliesTo @default(ALL)
+  active       Boolean        @default(true)
+  displayOrder Int            @default(0)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  bookingAddons    BookingAddon[]
+  bikeRestrictions AddOnBike[]
+
+  @@map("addons")
+}
+
+model BookingAddon {
+  id                   String   @id @default(cuid())
+  bookingId            String
+  addonId              String
+  priceCentsAtPurchase Int
+  createdAt            DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  addon   AddOn   @relation(fields: [addonId], references: [id])
+
+  @@unique([bookingId, addonId])
+  @@map("booking_addons")
+}
+
+model InRideUpsellItem {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?  @db.Text
+  priceCents   Int
+  active       Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  purchases InRideUpsellPurchase[]
+
+  @@map("in_ride_upsell_items")
+}
+
+model InRideUpsellPurchase {
+  id                   String   @id @default(cuid())
+  slotId               String?
+  itemId               String?
+  quantity             Int      @default(1)
+  priceCentsAtPurchase Int      @default(0)
+  gratuityAmountCents  Int      @default(0)
+  stripeSessionId      String?  @unique
+  createdAt            DateTime @default(now())
+
+  slot    RideSlot?         @relation(fields: [slotId], references: [id])
+  item    InRideUpsellItem? @relation(fields: [itemId], references: [id])
+
+  @@map("in_ride_upsell_purchases")
+}
+
+model DiscountCode {
+  id                    String            @id @default(cuid())
+  code                  String            @unique
+  type                  DiscountType
+  value                 Int
+  generalValue          Int?              // Optional override for GENERAL rides when appliesTo = ALL
+  appliesTo             DiscountAppliesTo @default(ALL)
+  themeId               String?
+  maxUses               Int?
+  usesCount             Int               @default(0)
+  expiresAt             DateTime?
+  firstTimeCustomerOnly Boolean           @default(false)
+  active                Boolean           @default(true)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  theme    Theme?    @relation(fields: [themeId], references: [id])
+  bookings Booking[]
+
+  @@map("discount_codes")
+}
+
+// Append-only; latest record per rideType is the active pricing
+model PricingConfig {
+  id              String   @id @default(cuid())
+  rideType        RideType
+  baseAmountCents Int
+  taxRatePercent  Float    @default(0)
+  bookingFeeCents Int      @default(0)
+  effectiveFrom   DateTime @default(now())
+  createdById     String?
+  createdAt       DateTime @default(now())
+
+  @@map("pricing_configs")
+}
+
+model PickupLocation {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("pickup_locations")
+}
+
+model StaffToken {
+  id        String         @id @default(cuid())
+  staffId   String
+  token     String         @unique
+  type      StaffTokenType
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime       @default(now())
+
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@map("staff_tokens")
+}
+
+model ShiftInterest {
+  id        String   @id @default(cuid())
+  staffId   String
+  slotId    String
+  createdAt DateTime @default(now())
+
+  staff Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  slot  RideSlot @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@unique([staffId, slotId])
+  @@map("shift_interests")
+}
+
+model NotificationConfig {
+  id        String               @id @default(cuid())
+  trigger   String
+  channel   NotificationChannel
+  audience  NotificationAudience
+  enabled   Boolean              @default(true)
+  updatedAt DateTime             @updatedAt
+
+  @@unique([trigger, channel, audience])
+  @@map("notification_configs")
+}
+
+// Single-row table; use upsert on id "singleton" to edit
+model WaiverTemplate {
+  id        String   @id @default(cuid())
+  body      String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("waiver_templates")
+}
+
+model GalleryPhoto {
+  id        String   @id @default(cuid())
+  url       String
+  caption   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@map("gallery_photos")
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model AddOnBike {
+  addonId String
+  bikeId  String
+  addon   AddOn  @relation(fields: [addonId], references: [id], onDelete: Cascade)
+  bike    Bike   @relation(fields: [bikeId], references: [id], onDelete: Cascade)
+
+  @@id([addonId, bikeId])
+  @@map("addon_bikes")
+}
+
+model FaqItem {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faq_items")
+}
+
+model Sponsor {
+  id         String   @id @default(cuid())
+  name       String
+  logoUrl    String
+  websiteUrl String?
+  active     Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("sponsors")
+}

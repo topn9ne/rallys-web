@@ -1,0 +1,28 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reminders",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/waiver-alerts",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/slot-status",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/review-requests",
+      "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/cron/ride-today",
+      "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/shift-reminders",
+      "schedule": "0 13 * * *"
+    }
+  ]
+}
