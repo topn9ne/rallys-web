@@ -24,7 +24,9 @@ async function main() {
   // Pricing configs (append-only — seed initial prices)
   const pricingData = [
     { tier: PricingTier.FAMILY, amountCents: 5000, label: "Family $50/mo" },
+    { tier: PricingTier.FAMILY_ANNUAL, amountCents: 50000, label: "Family annual $500/yr" },
     { tier: PricingTier.TEAM, amountCents: 7500, label: "Team $75/mo" },
+    { tier: PricingTier.TEAM_ANNUAL, amountCents: 75000, label: "Team annual $750/yr" },
     { tier: PricingTier.DROPIN_SINGLE, amountCents: 2500, label: "Drop-in individual $25" },
     { tier: PricingTier.DROPIN_BOTH, amountCents: 5000, label: "Drop-in team $50" },
   ];
