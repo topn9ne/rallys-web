@@ -120,6 +120,7 @@ model Booking {
   totalAmountCents      Int           @default(0)
   taxAmountCents        Int           @default(0)
   notes                 String?
+  reminderSent          Boolean       @default(false)
   accessCodeId          String?
   accessCodePin         String?
   createdAt             DateTime      @default(now())

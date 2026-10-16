@@ -9,10 +9,9 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
 
-  // Mark slots as COMPLETED once their end time has passed
-  const endedSlots = await prisma.rideSlot.findMany({
+  const endedSlots = await prisma.cageSlot.findMany({
     where: {
-      status: { in: ["AVAILABLE", "FILLING", "FULL"] },
+      status: { in: ["AVAILABLE", "BOOKED"] },
       endTime: { lte: now },
     },
     select: { id: true },
@@ -20,17 +19,28 @@ export async function GET(req: NextRequest) {
 
   let completed = 0;
   if (endedSlots.length) {
-    const ids = endedSlots.map((s) => s.id);
-    await prisma.rideSlot.updateMany({
+    const ids = endedSlots.map((s: { id: string }) => s.id);
+    await prisma.cageSlot.updateMany({
       where: { id: { in: ids } },
       data: { status: "COMPLETED" },
     });
     await prisma.booking.updateMany({
-      where: { slotId: { in: ids }, status: "CONFIRMED" },
+      where: {
+        OR: [{ slotIdA: { in: ids } }, { slotIdB: { in: ids } }],
+        status: "CONFIRMED",
+      },
       data: { status: "COMPLETED" },
     });
     completed = endedSlots.length;
   }
 
-  return NextResponse.json({ ok: true, completed });
+  const expiredCodes = await prisma.accessCode.updateMany({
+    where: {
+      status: { in: ["SETTING", "ACTIVE"] },
+      endsAt: { lte: now },
+    },
+    data: { status: "EXPIRED" },
+  });
+
+  return NextResponse.json({ ok: true, completed, expiredCodes: expiredCodes.count });
 }

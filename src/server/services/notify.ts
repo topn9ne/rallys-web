@@ -110,6 +110,48 @@ export async function notifyNewMember(memberId: string) {
   }
 }
 
+// ── Subscription alerts ──────────────────────────────────────────────────────
+
+export async function notifyPaymentFailed(memberId: string) {
+  const member = await prisma.member.findUnique({ where: { id: memberId } });
+  if (!member) return;
+
+  if (member.phone) {
+    await sendSms(
+      member.phone,
+      `Rally's: Your membership payment failed. Update your payment method to keep booking: ${APP_URL}/account/membership`
+    );
+  }
+
+  if (member.email) {
+    await sendEmail(
+      member.email,
+      "Action Required — Payment Failed",
+      `<p>Hey ${member.name},</p><p>Your Rally's membership payment didn't go through. Please <a href="${APP_URL}/account/membership">update your payment method</a> to keep your membership active.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`
+    );
+  }
+}
+
+export async function notifySubscriptionCancelled(memberId: string) {
+  const member = await prisma.member.findUnique({ where: { id: memberId } });
+  if (!member) return;
+
+  if (member.phone) {
+    await sendSms(
+      member.phone,
+      `Rally's: Your membership has been cancelled. You can still book drop-in sessions anytime: ${APP_URL}/book`
+    );
+  }
+
+  if (member.email) {
+    await sendEmail(
+      member.email,
+      "Membership Cancelled",
+      `<p>Hey ${member.name},</p><p>Your Rally's membership has been cancelled. You can still book drop-in cage sessions anytime at <a href="${APP_URL}/book">rallysindoor.com/book</a>.</p><p>If you'd like to resubscribe, visit your <a href="${APP_URL}/account/membership">membership page</a>.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`
+    );
+  }
+}
+
 // ── Booking reminder (called by cron, e.g. 1 hour before) ───────────────────
 
 export async function notifyBookingReminder(bookingId: string) {

@@ -5,7 +5,12 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rateLimit";
 import { createAccessCode } from "@/server/services/seam";
-import { notifyBookingConfirmed, notifyNewMember } from "@/server/services/notify";
+import {
+  notifyBookingConfirmed,
+  notifyNewMember,
+  notifyPaymentFailed,
+  notifySubscriptionCancelled,
+} from "@/server/services/notify";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
@@ -188,6 +193,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     where: { id: member.id },
     data: { subscriptionStatus: "CANCELLED" },
   });
+
+  try {
+    await notifySubscriptionCancelled(member.id);
+  } catch (err) {
+    console.error("[webhook] Cancellation notification failed:", err);
+  }
 }
 
 // ── Invoice paid (subscription renewal success) ─────────────────────────────
@@ -230,6 +241,12 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
     where: { id: member.id },
     data: { subscriptionStatus: "PAST_DUE" },
   });
+
+  try {
+    await notifyPaymentFailed(member.id);
+  } catch (err) {
+    console.error("[webhook] Payment failed notification failed:", err);
+  }
 }
 
 // ── Checkout expired (drop-in didn't pay) ───────────────────────────────────
