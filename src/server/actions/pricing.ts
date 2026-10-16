@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authGuard";
 
 const PricingSchema = z.object({
-  tier: z.enum(["MEMBER", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"]),
+  tier: z.enum(["FAMILY", "FAMILY_ANNUAL", "TEAM", "TEAM_ANNUAL", "DROPIN_SINGLE", "DROPIN_BOTH"]),
   amountDollars: z.coerce.number().positive("Price must be positive"),
   taxRatePercent: z.coerce.number().min(0).max(100),
 });
@@ -31,7 +31,7 @@ export async function updatePricing(formData: FormData) {
 }
 
 export async function getCurrentPricing() {
-  const tiers = ["MEMBER", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"] as const;
+  const tiers = ["FAMILY", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"] as const;
   const configs = await Promise.all(
     tiers.map((tier) =>
       prisma.pricingConfig.findFirst({

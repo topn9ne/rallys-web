@@ -6,7 +6,7 @@ import { SettingsTabs } from "@/components/admin/SettingsTabs";
 import { User, UsersThree, BaseballCap } from "@phosphor-icons/react/dist/ssr";
 
 async function getLatestPricing() {
-  const tiers = ["MEMBER", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"] as const;
+  const tiers = ["FAMILY", "TEAM", "DROPIN_SINGLE", "DROPIN_BOTH"] as const;
   const configs = await Promise.all(
     tiers.map((tier) =>
       prisma.pricingConfig.findFirst({
@@ -28,8 +28,8 @@ export default async function PricingPage() {
 
   const cards = [
     {
-      key: "MEMBER" as const,
-      label: "Member Monthly",
+      key: "FAMILY" as const,
+      label: "Family Monthly",
       sublabel: "/month",
       Icon: User,
       config: pricing.member,

@@ -54,7 +54,7 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
 
   const pricingTier = bookingType === "BOTH_LANES"
     ? (isMember ? "TEAM" : "DROPIN_BOTH")
-    : (isMember ? "MEMBER" : "DROPIN_SINGLE");
+    : (isMember ? "FAMILY" : "DROPIN_SINGLE");
   const activePrice = pricing[pricingTier];
   const priceCents = activePrice?.amountCents ?? 0;
   const taxRatePercent = activePrice?.taxRatePercent ?? 7.0;

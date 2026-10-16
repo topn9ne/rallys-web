@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { updatePricing } from "@/server/actions/pricing";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-type PricingTier = "MEMBER" | "TEAM" | "DROPIN_SINGLE" | "DROPIN_BOTH";
+type PricingTier = "FAMILY" | "FAMILY_ANNUAL" | "TEAM" | "TEAM_ANNUAL" | "DROPIN_SINGLE" | "DROPIN_BOTH";
 
 interface PricingFormProps {
   tier: PricingTier;

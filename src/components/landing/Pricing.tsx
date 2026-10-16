@@ -8,8 +8,8 @@ function formatDollars(cents: number) {
 
 const TIERS = [
   {
-    key: "MEMBER",
-    name: "Member",
+    key: "FAMILY",
+    name: "Family",
     sub: "/month",
     features: ["Unlimited 30-min sessions", "Book up to 7 days ahead", "Priority lane selection", "Door code via text"],
     featured: true,

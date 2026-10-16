@@ -51,7 +51,7 @@ export async function createBooking(input: CreateBookingInput) {
   });
 
   const pricing = await prisma.pricingConfig.findFirst({
-    where: { tier: input.bookingType === "BOTH_LANES" ? "TEAM" : "MEMBER" },
+    where: { tier: input.bookingType === "BOTH_LANES" ? "TEAM" : "FAMILY" },
     orderBy: { effectiveFrom: "desc" },
   });
   const taxRate = (pricing?.taxRatePercent ?? 7) / 100;

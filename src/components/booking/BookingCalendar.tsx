@@ -93,7 +93,7 @@ export function BookingCalendar({ slots, todayKey, pricing, isDropIn }: BookingC
 
   const pricingTier = bookingType === "BOTH_LANES"
     ? (isDropIn ? "DROPIN_BOTH" : "TEAM")
-    : (isDropIn ? "DROPIN_SINGLE" : "MEMBER");
+    : (isDropIn ? "DROPIN_SINGLE" : "FAMILY");
   const activePrice = pricing[pricingTier];
 
   function prevMonth() {

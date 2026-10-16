@@ -24,8 +24,8 @@ export default async function MembershipPage() {
     getActivePricing(),
   ]);
 
-  const memberPrice = pricing["MEMBER"]?.amountCents ?? 5000;
-  const teamPrice = pricing["TEAM"]?.amountCents ?? 10000;
+  const memberPrice = pricing["FAMILY"]?.amountCents ?? 5000;
+  const teamPrice = pricing["TEAM"]?.amountCents ?? 7500;
 
   return (
     <div className="space-y-6">
@@ -37,7 +37,7 @@ export default async function MembershipPage() {
             <div>
               <p className="text-sm font-medium text-green-800">Active Membership</p>
               <p className="mt-1 text-2xl font-bold text-green-900">
-                {member.tier === "TEAM" ? "Team" : "Member"}
+                {member.tier === "TEAM" ? "Team" : "Family"}
               </p>
               <p className="mt-1 text-sm text-green-700">
                 {member.tier === "TEAM"
@@ -79,9 +79,9 @@ export default async function MembershipPage() {
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* Member tier */}
+            {/* Family tier */}
             <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-gray-900">Member</h2>
+              <h2 className="text-lg font-bold text-gray-900">Family</h2>
               <p className="mt-1 text-3xl font-bold text-brand-blue">
                 {formatCents(memberPrice)}
                 <span className="text-base font-normal text-gray-500">/mo</span>
@@ -94,7 +94,7 @@ export default async function MembershipPage() {
               </ul>
               <MembershipActions
                 status="NONE"
-                tier="MEMBER"
+                tier="FAMILY"
                 hasStripeCustomer={false}
               />
             </div>

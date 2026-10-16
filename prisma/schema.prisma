@@ -9,7 +9,7 @@ datasource db {
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum MemberTier {
-  MEMBER
+  FAMILY
   TEAM
 }
 
@@ -61,10 +61,17 @@ enum AccessCodeStatus {
 }
 
 enum PricingTier {
-  MEMBER
+  FAMILY
+  FAMILY_ANNUAL
   TEAM
+  TEAM_ANNUAL
   DROPIN_SINGLE
   DROPIN_BOTH
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
 }
 
 // ─── Models ───────────────────────────────────────────────────────────────────
@@ -74,7 +81,7 @@ model Member {
   name                  String
   email                 String             @unique
   phone                 String
-  tier                  MemberTier         @default(MEMBER)
+  tier                  MemberTier         @default(FAMILY)
   stripeCustomerId      String?            @unique
   stripeSubscriptionId  String?
   subscriptionStatus    SubscriptionStatus @default(NONE)
@@ -84,8 +91,29 @@ model Member {
 
   bookings Booking[]
   waivers  Waiver[]
+  players  Player[]
 
   @@map("members")
+}
+
+model Player {
+  id          String   @id @default(uuid())
+  memberId    String
+  name        String
+  dateOfBirth DateTime? @db.Date
+  positions   String?
+  school      String?
+  travelTeam  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  member          Member             @relation(fields: [memberId], references: [id])
+  bookingPlayers  BookingPlayer[]
+  hours           PlayerHours?
+  summerStats     PlayerSummerStats[]
+  milestones      PlayerMilestones[]
+
+  @@map("players")
 }
 
 model CageSlot {
@@ -120,6 +148,8 @@ model Booking {
   baseAmountCents       Int           @default(0)
   totalAmountCents      Int           @default(0)
   taxAmountCents        Int           @default(0)
+  discountAmountCents   Int           @default(0)
+  promoCodeId           String?
   notes                 String?
   reminderSent          Boolean       @default(false)
   accessCodeId          String?
@@ -127,13 +157,26 @@ model Booking {
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
-  member     Member?      @relation(fields: [memberId], references: [id])
-  slotA      CageSlot     @relation("SlotA", fields: [slotIdA], references: [id])
-  slotB      CageSlot?    @relation("SlotB", fields: [slotIdB], references: [id])
+  member     Member?         @relation(fields: [memberId], references: [id])
+  slotA      CageSlot        @relation("SlotA", fields: [slotIdA], references: [id])
+  slotB      CageSlot?       @relation("SlotB", fields: [slotIdB], references: [id])
   waiver     Waiver?
   accessCode AccessCode?
+  promoCode  PromoCode?      @relation(fields: [promoCodeId], references: [id])
+  players    BookingPlayer[]
 
   @@map("bookings")
+}
+
+model BookingPlayer {
+  bookingId String
+  playerId  String
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  player  Player  @relation(fields: [playerId], references: [id])
+
+  @@id([bookingId, playerId])
+  @@map("booking_players")
 }
 
 model Waiver {
@@ -171,6 +214,25 @@ model AccessCode {
   @@map("access_codes")
 }
 
+model PromoCode {
+  id             String       @id @default(uuid())
+  code           String       @unique
+  description    String?
+  discountType   DiscountType
+  discountAmount Int
+  maxUses        Int?
+  currentUses    Int          @default(0)
+  validFrom      DateTime?
+  validUntil     DateTime?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  bookings Booking[]
+
+  @@map("promo_codes")
+}
+
 model PricingConfig {
   id             String      @id @default(uuid())
   tier           PricingTier
@@ -206,4 +268,47 @@ model SiteSetting {
   updatedAt DateTime @updatedAt
 
   @@map("site_settings")
+}
+
+// ─── Cage Rats Tracking ───────────────────────────────────────────────────────
+
+model PlayerHours {
+  id            String    @id @default(uuid())
+  playerId      String    @unique
+  totalMinutes  Int       @default(0)
+  lastSessionAt DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@map("player_hours")
+}
+
+model PlayerSummerStats {
+  id            String   @id @default(uuid())
+  playerId      String
+  year          Int
+  summerMinutes Int      @default(0)
+  qualified     Boolean  @default(false)
+  shirtAwarded  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, year])
+  @@map("player_summer_stats")
+}
+
+model PlayerMilestones {
+  id           String   @id @default(uuid())
+  playerId     String
+  milestoneKey String
+  achievedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([playerId, milestoneKey])
+  @@map("player_milestones")
 }

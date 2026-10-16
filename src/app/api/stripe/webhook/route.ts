@@ -147,7 +147,7 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
       stripeCustomerId: session.customer as string,
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: "ACTIVE",
-      tier: tier === "TEAM" ? "TEAM" : "MEMBER",
+      tier: tier === "TEAM" ? "TEAM" : "FAMILY",
     },
   });
 
@@ -168,13 +168,13 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 
   const status = mapSubscriptionStatus(subscription.status);
   const priceId = subscription.items.data[0]?.price?.id;
-  const tier = priceId === process.env.STRIPE_TEAM_PRICE_ID ? "TEAM" : "MEMBER";
+  const tier = priceId === process.env.STRIPE_TEAM_PRICE_ID ? "TEAM" : "FAMILY";
 
   await prisma.member.update({
     where: { id: member.id },
     data: {
       subscriptionStatus: status,
-      tier: tier === "TEAM" ? "TEAM" : "MEMBER",
+      tier: tier === "TEAM" ? "TEAM" : "FAMILY",
     },
   });
 }

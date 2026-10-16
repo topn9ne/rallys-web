@@ -166,7 +166,7 @@ The Schlage Encode supports 100 concurrent codes. With per-booking time-bound co
 
 ## Data Model
 
-The Railside schema has 22 models. Rally's needs 9. Everything below is new or substantially rewritten.
+The Railside schema has 22 models. Rally's started at 9, expanded to 15 with the v2 amendment (Player model, Cage Rats tracking, promo codes). Everything below is new or substantially rewritten. See the Amendment section for additions.
 
 ### Models
 
@@ -178,7 +178,7 @@ The Railside schema has 22 models. Rally's needs 9. Everything below is new or s
 | name | string |  |
 | email | string unique |  |
 | phone | string | Required — SMS is the primary communication channel |
-| tier | enum (MEMBER, TEAM) | Determines default booking type and subscription price |
+| tier | enum (FAMILY, TEAM) | Determines default booking type and subscription price. See Amendment. |
 | stripeCustomerId | string unique | Stripe Customer object ID |
 | stripeSubscriptionId | string nullable | Active subscription ID; null for lapsed/cancelled |
 | subscriptionStatus | enum (ACTIVE, PAST_DUE, CANCELLED, NONE) | Mirrors Stripe subscription status |
@@ -195,7 +195,7 @@ The Railside schema has 22 models. Rally's needs 9. Everything below is new or s
 | date | date |  |
 | startTime | timestamp |  |
 | endTime | timestamp | Always startTime + 30 minutes |
-| status | enum (AVAILABLE, BOOKED, BLOCKED) | No FILLING state — a lane is open or taken |
+| status | enum (AVAILABLE, BOOKED, BLOCKED, COMPLETED) | No FILLING state — a lane is open or taken. COMPLETED added for past slots. |
 | blockReason | string nullable | "Maintenance", "Private event", "Holiday" |
 | createdAt | timestamp |  |
 | updatedAt | timestamp |  |
@@ -337,14 +337,16 @@ Rally's uses Stripe for two distinct payment flows: recurring subscriptions (mem
 
 ### Products & Prices
 
-Create in Stripe Dashboard (not programmatically):
+Create in Stripe Dashboard (not programmatically). **Superseded by Amendment — see updated table there.**
 
 | Product | Price | Interval | Notes |
 | --- | --- | --- | --- |
-| Rally's Member | $50.00 | Monthly | Tax-inclusive |
-| Rally's Team | $100.00 | Monthly | Tax-inclusive |
-| Rally's Drop-in (Single Lane) | $15.00–$20.00 | One-time | + 7% tax at checkout |
-| Rally's Drop-in (Both Lanes) | TBD | One-time | + 7% tax at checkout |
+| Rally's Family | $50.00 | Monthly | Tax-inclusive (was "Rally's Member") |
+| Rally's Family Annual | $500.00 | Yearly / One-time | Tax-inclusive |
+| Rally's Team | $75.00 | Monthly | Tax-inclusive (was $100) |
+| Rally's Team Annual | $750.00 | Yearly / One-time | Tax-inclusive |
+| Rally's Drop-in (Individual) | $15.00 | One-time | 30 min, 1 lane, + 7% tax |
+| Rally's Drop-in (Team) | $75.00 | One-time | 60 min, both lanes, + 7% tax |
 
 ### Subscription Flow (New)
 
@@ -708,6 +710,216 @@ The Rally's codebase is forked from Railside Rides (railside-rides-main). Below 
 | tsconfig.json | Carry |  |
 | postcss.config.mjs | Carry |  |
 | eslint.config.mjs | Carry |  |
+
+## Amendment: v2 Changes (October 2026)
+
+Changes to the original spec based on pricing strategy, player management, and the Cage Rats loyalty program. These modify the Data Model, Booking Flow, Stripe Integration, and Notifications sections above.
+
+### Tier Naming & Pricing
+
+The `MemberTier` enum values change:
+
+| Old | New | Monthly | Annual | Notes |
+| --- | --- | --- | --- | --- |
+| MEMBER | FAMILY | $50 | $500 | Renamed — same concept (parent + kids) |
+| TEAM | TEAM | $75 | $750 | Price reduced from $100/mo |
+
+Annual pricing is a new Stripe price variant (one-time or yearly subscription). The `PricingTier` enum gains `FAMILY_ANNUAL` and `TEAM_ANNUAL` values.
+
+All code referencing `MemberTier.MEMBER` changes to `MemberTier.FAMILY`. The Stripe prices need updating: the Team monthly price drops from $100 → $75, and annual prices are created for both tiers.
+
+### Drop-in Pricing (Revised)
+
+| Product | Price | Duration | Lanes | Tax |
+| --- | --- | --- | --- | --- |
+| Individual Drop-in | $15.00 | 30 min | 1 lane | + 7% |
+| Team Drop-in | $75.00 | 60 min | Both lanes | + 7% |
+
+Team drop-ins are 60 minutes, not 30. The booking system must handle variable-duration slots when `bookingType === BOTH_LANES` and the booker is a drop-in. Member bookings remain 30-minute slots regardless of lane count.
+
+The Stripe Products & Prices table (above) is superseded by:
+
+| Product | Price | Interval | Notes |
+| --- | --- | --- | --- |
+| Rally's Family | $50.00 | Monthly | Tax-inclusive |
+| Rally's Family Annual | $500.00 | One-time or yearly | Tax-inclusive |
+| Rally's Team | $75.00 | Monthly | Tax-inclusive |
+| Rally's Team Annual | $750.00 | One-time or yearly | Tax-inclusive |
+| Rally's Drop-in (Individual) | $15.00 | One-time | 30 min, 1 lane, + 7% tax |
+| Rally's Drop-in (Team) | $75.00 | One-time | 60 min, both lanes, + 7% tax |
+
+### Player Model (New)
+
+Members are parents/account holders. Players are the kids who actually hit. A member can have multiple players (siblings, carpool kids on the account).
+
+**Player**
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid PK | |
+| memberId | uuid FK → Member | Parent account |
+| name | string | Player's full name |
+| dateOfBirth | date nullable | For age-group tracking |
+| positions | string nullable | Comma-separated: "SS, 2B, OF" |
+| school | string nullable | School or organization |
+| travelTeam | string nullable | Travel ball team name |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+A member with no players can still book (adult sessions, batting practice for themselves). The player list is optional but unlocks Cage Rats tracking.
+
+### Booking Flow Changes
+
+The booking form changes from an "Individual or Team?" toggle to a **player checklist**:
+
+1. Member logs in → sees "Who's hitting today?"
+2. Player checklist shows all players on the account (checkboxes)
+3. Selecting 1 player → defaults to `SINGLE_LANE`
+4. Selecting multiple players → still `SINGLE_LANE` (they share the cage)
+5. "Book both lanes" override available for any selection (team practice, etc.)
+6. Team-tier members see "Book team session" shortcut that pre-selects `BOTH_LANES`
+
+The Booking model gains a many-to-many relationship with Player:
+
+**BookingPlayer** (join table)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| bookingId | uuid FK → Booking | |
+| playerId | uuid FK → Player | |
+
+This replaces the implicit "who booked = who's hitting" assumption. Now the system knows exactly which players were in the cage for every booking — critical for Cage Rats hour tracking.
+
+Drop-in bookings (no member account) skip the player checklist entirely.
+
+### Promo Code System (New)
+
+Promo codes are scoped to **team drop-in bookings only** at launch. No member subscription discounts, no individual drop-in discounts.
+
+**PromoCode**
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid PK | |
+| code | string unique | Uppercase, alphanumeric, 4–20 chars |
+| description | string nullable | Admin-facing note ("Fall ball 2026 promo") |
+| discountType | enum (PERCENT, FIXED) | |
+| discountAmount | int | Cents for FIXED, whole number for PERCENT (e.g. 20 = 20%) |
+| maxUses | int nullable | Null = unlimited |
+| currentUses | int default 0 | |
+| validFrom | timestamp nullable | Null = immediately valid |
+| validUntil | timestamp nullable | Null = no expiry |
+| isActive | boolean default true | Admin kill switch |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+Promo code validation rules:
+- `isActive` must be true
+- Current date must be between `validFrom` and `validUntil` (if set)
+- `currentUses < maxUses` (if maxUses is set)
+- Booking must be a team drop-in (`bookingType === BOTH_LANES` and no member subscription)
+
+The Booking model gains:
+- `promoCodeId` (uuid FK → PromoCode, nullable)
+- `discountAmountCents` (int, default 0)
+
+When a promo code is applied, `discountAmountCents` is calculated and subtracted from `totalAmountCents` before creating the Stripe Checkout Session. The `currentUses` counter increments on booking confirmation (not on code entry).
+
+### Cage Rats Program (New)
+
+Cage Rats is Rally's loyalty and hours-tracking program for players. It tracks cumulative cage time per player, awards milestones, and runs a summer challenge.
+
+**Hours tracking is tied to Player, not Member.** A family with three kids tracks three separate hour totals. Only confirmed, completed individual bookings (not team sessions) increment minutes. No-shows don't count.
+
+#### PlayerHours (running totals)
+
+One row per player. Updated after each completed booking.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid PK | |
+| playerId | uuid FK → Player unique | One row per player |
+| totalMinutes | int default 0 | Lifetime cage minutes |
+| lastSessionAt | timestamp nullable | Most recent completed booking |
+| updatedAt | timestamp | |
+
+#### PlayerSummerStats (seasonal tracking)
+
+One row per player per summer. The summer window is Memorial Day through Labor Day (exact dates configurable via SiteSetting keys `cage_rats_summer_start` and `cage_rats_summer_end`).
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid PK | |
+| playerId | uuid FK → Player | |
+| year | int | e.g. 2027 |
+| summerMinutes | int default 0 | Minutes accumulated during summer window only |
+| qualified | boolean default false | True when summerMinutes >= threshold |
+| shirtAwarded | boolean default false | Admin marks when shirt is given |
+| createdAt | timestamp | |
+| updatedAt | timestamp | |
+
+The Cage Rats qualification threshold starts at **10 hours (600 minutes)** and is stored in SiteSetting key `cage_rats_threshold_minutes` (default 600). When a player's `summerMinutes` crosses the threshold, `qualified` flips to true and a milestone is logged.
+
+**@@unique([playerId, year])** — one row per player per summer.
+
+#### PlayerMilestones (append-only log)
+
+Every milestone achievement is logged once. Milestones are never deleted or updated — the log is the source of truth for what was earned and when.
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | uuid PK | |
+| playerId | uuid FK → Player | |
+| milestoneKey | string | "25hr", "50hr", "100hr", "cage_rats_2027", "5x_club" |
+| achievedAt | timestamp | When the milestone was reached |
+| createdAt | timestamp | |
+
+**@@unique([playerId, milestoneKey])** — each milestone earned once per player.
+
+Milestone keys and their triggers:
+
+| Key | Trigger | Minutes |
+| --- | --- | --- |
+| `25hr` | totalMinutes >= 1500 | 1,500 min |
+| `50hr` | totalMinutes >= 3000 | 3,000 min |
+| `100hr` | totalMinutes >= 6000 | 6,000 min |
+| `cage_rats_YYYY` | Cage Rats summer qualified | Threshold from config |
+| `5x_club` | Derived — see below | N/A |
+
+**5X Club** is derived at query time, not stored as a milestone trigger. A player qualifies for 5X Club if they have 5 or more `cage_rats_YYYY` milestones. The query: `SELECT playerId FROM player_milestones WHERE milestoneKey LIKE 'cage_rats_%' GROUP BY playerId HAVING COUNT(*) >= 5`.
+
+#### Cage Rats Business Rules
+
+1. **Only individual bookings count.** If `bookingType === SINGLE_LANE` and the booking has exactly one player, the slot duration (30 min) is added to that player's `totalMinutes` and (if in summer window) `summerMinutes`.
+2. **No-shows don't count.** Only bookings with status `COMPLETED` increment hours. The cron that marks past slots as COMPLETED is the trigger.
+3. **Summer window** is Memorial Day through Labor Day. Exact dates stored in SiteSettings: `cage_rats_summer_start` (e.g. "2027-05-26") and `cage_rats_summer_end` (e.g. "2027-09-01"). Admin updates these annually.
+4. **Cage Rats threshold** is configurable: SiteSetting key `cage_rats_threshold_minutes`, default 600.
+5. **Milestone triggers fire once.** Before logging a milestone, check `@@unique([playerId, milestoneKey])` — if the row exists, skip.
+6. **Notifications on milestone:** SMS to member (parent) + email with Cage Rats progress summary. Added to the notification triggers table.
+
+#### Updated Model Count
+
+With the amendment, Rally's has **15 models** (up from 9):
+
+Member, Player, CageSlot, Booking, BookingPlayer, Waiver, AccessCode, PromoCode, PricingConfig, OperatingHours, WaiverTemplate, SiteSetting, PlayerHours, PlayerSummerStats, PlayerMilestones
+
+### Updated Notification Triggers
+
+Add to the Notification Triggers table:
+
+| Trigger | Channel | Recipient | Content |
+| --- | --- | --- | --- |
+| Cage Rats milestone hit | SMS + Email | Member (parent) | Player name, milestone, progress summary |
+| Cage Rats summer qualified | SMS + Email | Member (parent) | Player qualified for Cage Rats [year], shirt pickup details |
+| Player added to account | SMS | Member | Confirmation of new player profile |
+
+### Updated Build Sequence
+
+Insert after "Core Booking" and before "Stripe Subscriptions":
+
+- **Player CRUD** — Member dashboard: add/edit/remove players. Player selector in booking form.
+- **Promo Code system** — Admin CRUD, validation logic, Stripe discount application on team drop-in checkout.
+- **Cage Rats engine** — PlayerHours increment on booking completion, summer stats tracking, milestone detection and logging, notification triggers.
 
 ## Launch Checklist
 
