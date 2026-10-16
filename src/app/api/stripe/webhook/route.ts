@@ -1,13 +1,14 @@
+"use server";
+
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
-import { notifyBookingConfirmed, notifyOwnerBookingConfirmed } from "@/server/services/notifications";
 import { rateLimit } from "@/lib/rateLimit";
-import { getWaiverTemplate } from "@/server/actions/waiverTemplate";
+import { createAccessCode } from "@/server/services/seam";
+import { notifyBookingConfirmed, notifyNewMember } from "@/server/services/notify";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
-  // Rate limit: 100 webhook calls per minute from any single IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
   if (!rateLimit(`webhook:${ip}`, { limit: 100, windowSecs: 60 })) {
     return NextResponse.json({ error: "Rate limited" }, { status: 429 });
@@ -34,12 +35,31 @@ export async function POST(req: NextRequest) {
 
   try {
     switch (event.type) {
+      // ── Drop-in one-time checkout ──
       case "checkout.session.completed":
         await handleCheckoutComplete(event.data.object as Stripe.Checkout.Session);
         break;
       case "checkout.session.expired":
         await handleCheckoutExpired(event.data.object as Stripe.Checkout.Session);
         break;
+
+      // ── Subscription lifecycle ──
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdate(event.data.object as Stripe.Subscription);
+        break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+
+      // ── Payment events ──
+      case "invoice.paid":
+        await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        break;
+      case "invoice.payment_failed":
+        await handleInvoiceFailed(event.data.object as Stripe.Invoice);
+        break;
+
       case "charge.refunded":
         await handleRefund(event.data.object as Stripe.Charge);
         break;
@@ -52,23 +72,22 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
+// ── Drop-in checkout completed ──────────────────────────────────────────────
+
 async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
-  // Route to the appropriate handler based on session type
-  if (session.metadata?.type === "shop") {
-    await handleShopPurchase(session);
+  if (session.mode === "subscription") {
+    await handleSubscriptionCheckout(session);
     return;
   }
 
   const bookingId = session.metadata?.bookingId;
   if (!bookingId) return;
 
-  // Idempotency guard — skip if already confirmed
   const existing = await prisma.booking.findUnique({ where: { id: bookingId } });
   if (!existing || existing.status !== "PENDING") return;
 
-  // Atomic: confirm booking + decrement seats + increment discount uses
-  await prisma.$transaction(async (tx) => {
-    const booking = await tx.booking.update({
+  await prisma.$transaction(async (tx: any) => {
+    await tx.booking.update({
       where: { id: bookingId },
       data: {
         status: "CONFIRMED",
@@ -76,136 +95,170 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
       },
     });
 
-    // Decrement seats on the slot
-    if (booking.bookingType === "THEME_SEAT") {
-      const slot = await tx.rideSlot.update({
-        where: { id: booking.slotId },
-        data: { seatsBooked: { increment: booking.seats } },
-      });
+    await tx.cageSlot.update({
+      where: { id: existing.slotIdA },
+      data: { status: "BOOKED" },
+    });
 
-      // Update slot status
-      const seatsRemaining = slot.seatsTotal - slot.seatsBooked;
-      let newStatus = slot.status;
-      if (seatsRemaining === 0) newStatus = "FULL";
-      else if (seatsRemaining <= 3) newStatus = "FILLING";
-
-      if (newStatus !== slot.status) {
-        await tx.rideSlot.update({
-          where: { id: slot.id },
-          data: { status: newStatus },
-        });
-      }
-    } else {
-      // Group ride — mark slot as FULL
-      await tx.rideSlot.update({
-        where: { id: booking.slotId },
-        data: { status: "FULL" },
+    if (existing.slotIdB) {
+      await tx.cageSlot.update({
+        where: { id: existing.slotIdB },
+        data: { status: "BOOKED" },
       });
     }
 
-    // Increment discount code uses
-    if (booking.discountCodeId) {
-      await tx.discountCode.update({
-        where: { id: booking.discountCodeId },
-        data: { usesCount: { increment: 1 } },
-      });
-    }
-
-    // Create waiver record (pending signature)
-    const waiverText = await getWaiverTemplate();
     await tx.waiver.upsert({
-      where: { bookingId: booking.id },
+      where: { bookingId },
       update: {},
       create: {
-        bookingId: booking.id,
+        bookingId,
         signerName: "",
-        agreementTextSnapshot: waiverText,
+        agreementTextSnapshot: await getWaiverText(),
         status: "PENDING",
       },
     });
   });
 
-  // Send confirmation email + SMS (fire and forget — don't block webhook response)
-  notifyBookingConfirmed(bookingId).catch((err) =>
-    console.error("[webhook] Failed to send confirmation notification:", err)
-  );
-  notifyOwnerBookingConfirmed(bookingId).catch((err) =>
-    console.error("[webhook] Failed to send owner confirmation notification:", err)
-  );
+  try {
+    const { pin } = await createAccessCode(bookingId);
+    await notifyBookingConfirmed(bookingId, pin);
+  } catch (err) {
+    console.error("[webhook] Access code / notification failed:", err);
+  }
 }
 
-async function handleShopPurchase(session: Stripe.Checkout.Session) {
-  const bikeId = session.metadata?.bikeId;
-  const itemIds: string[] = JSON.parse(session.metadata?.itemIds ?? "[]");
-  const gratuityAmountCents = Number(session.metadata?.gratuityAmountCents ?? 0);
+// ── Subscription checkout completed (new member signup) ─────────────────────
 
-  if (!bikeId) return;
+async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
+  const memberId = session.metadata?.memberId;
+  const tier = session.metadata?.tier;
+  if (!memberId || !tier) return;
 
-  // Idempotency guard
-  const existing = await prisma.inRideUpsellPurchase.findFirst({
-    where: { stripeSessionId: session.id },
-  });
-  if (existing) return;
+  const subscription = await stripe.subscriptions.retrieve(
+    session.subscription as string
+  );
 
-  // Find active slot using the buffer window (covers post-ride tips)
-  const now = new Date();
-  const activeSlot = await prisma.rideSlot.findFirst({
-    where: {
-      bikeId,
-      startTime: { lte: now },
-      bufferEndTime: { gte: now },
+  await prisma.member.update({
+    where: { id: memberId },
+    data: {
+      stripeCustomerId: session.customer as string,
+      stripeSubscriptionId: subscription.id,
+      subscriptionStatus: "ACTIVE",
+      tier: tier === "TEAM" ? "TEAM" : "MEMBER",
     },
   });
 
-  const slotId = activeSlot?.id ?? null;
-
-  // Fetch purchased items
-  const items = itemIds.length
-    ? await prisma.inRideUpsellItem.findMany({ where: { id: { in: itemIds } } })
-    : [];
-
-  // Create one purchase record per item + one for gratuity if applicable
-  const creates = [
-    ...items.map((item) =>
-      prisma.inRideUpsellPurchase.create({
-        data: {
-          slotId,
-          itemId: item.id,
-          quantity: 1,
-          priceCentsAtPurchase: item.priceCents,
-          gratuityAmountCents: 0,
-          stripeSessionId: items.indexOf(item) === 0 ? session.id : null,
-        },
-      })
-    ),
-    ...(gratuityAmountCents > 0
-      ? [
-          prisma.inRideUpsellPurchase.create({
-            data: {
-              slotId,
-              itemId: null,
-              quantity: 1,
-              priceCentsAtPurchase: 0,
-              gratuityAmountCents,
-              stripeSessionId: items.length === 0 ? session.id : null,
-            },
-          }),
-        ]
-      : []),
-  ];
-
-  await Promise.all(creates);
+  try {
+    await notifyNewMember(memberId);
+  } catch (err) {
+    console.error("[webhook] Welcome notification failed:", err);
+  }
 }
+
+// ── Subscription updated (upgrade/downgrade, status change) ─────────────────
+
+async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+  const member = await prisma.member.findFirst({
+    where: { stripeSubscriptionId: subscription.id },
+  });
+  if (!member) return;
+
+  const status = mapSubscriptionStatus(subscription.status);
+  const priceId = subscription.items.data[0]?.price?.id;
+  const tier = priceId === process.env.STRIPE_TEAM_PRICE_ID ? "TEAM" : "MEMBER";
+
+  await prisma.member.update({
+    where: { id: member.id },
+    data: {
+      subscriptionStatus: status,
+      tier: tier === "TEAM" ? "TEAM" : "MEMBER",
+    },
+  });
+}
+
+// ── Subscription cancelled ──────────────────────────────────────────────────
+
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const member = await prisma.member.findFirst({
+    where: { stripeSubscriptionId: subscription.id },
+  });
+  if (!member) return;
+
+  await prisma.member.update({
+    where: { id: member.id },
+    data: { subscriptionStatus: "CANCELLED" },
+  });
+}
+
+// ── Invoice paid (subscription renewal success) ─────────────────────────────
+
+async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const inv = invoice as any;
+  const subscriptionId = typeof inv.subscription === "string"
+    ? inv.subscription
+    : inv.subscription?.id;
+  if (!subscriptionId) return;
+
+  const member = await prisma.member.findFirst({
+    where: { stripeSubscriptionId: subscriptionId },
+  });
+  if (!member) return;
+
+  if (member.subscriptionStatus === "PAST_DUE") {
+    await prisma.member.update({
+      where: { id: member.id },
+      data: { subscriptionStatus: "ACTIVE" },
+    });
+  }
+}
+
+// ── Invoice payment failed (dunning) ────────────────────────────────────────
+
+async function handleInvoiceFailed(invoice: Stripe.Invoice) {
+  const inv = invoice as any;
+  const subscriptionId = typeof inv.subscription === "string"
+    ? inv.subscription
+    : inv.subscription?.id;
+  if (!subscriptionId) return;
+
+  const member = await prisma.member.findFirst({
+    where: { stripeSubscriptionId: subscriptionId },
+  });
+  if (!member) return;
+
+  await prisma.member.update({
+    where: { id: member.id },
+    data: { subscriptionStatus: "PAST_DUE" },
+  });
+}
+
+// ── Checkout expired (drop-in didn't pay) ───────────────────────────────────
 
 async function handleCheckoutExpired(session: Stripe.Checkout.Session) {
   const bookingId = session.metadata?.bookingId;
   if (!bookingId) return;
 
-  await prisma.booking.updateMany({
-    where: { id: bookingId, status: "PENDING" },
+  const booking = await prisma.booking.findUnique({ where: { id: bookingId } });
+  if (!booking || booking.status !== "PENDING") return;
+
+  await prisma.booking.update({
+    where: { id: bookingId },
     data: { status: "CANCELLED" },
   });
+
+  await prisma.cageSlot.update({
+    where: { id: booking.slotIdA },
+    data: { status: "AVAILABLE" },
+  });
+  if (booking.slotIdB) {
+    await prisma.cageSlot.update({
+      where: { id: booking.slotIdB },
+      data: { status: "AVAILABLE" },
+    });
+  }
 }
+
+// ── Refund ───────────────────────────────────────────────────────────────────
 
 async function handleRefund(charge: Stripe.Charge) {
   if (!charge.payment_intent) return;
@@ -213,9 +266,35 @@ async function handleRefund(charge: Stripe.Charge) {
   await prisma.booking.updateMany({
     where: {
       stripePaymentIntentId: charge.payment_intent as string,
-      status: { notIn: ["CANCELLED", "REFUNDED"] },
+      status: { notIn: ["CANCELLED"] },
     },
-    data: { status: "REFUNDED" },
+    data: { status: "CANCELLED" },
   });
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function mapSubscriptionStatus(
+  stripeStatus: Stripe.Subscription.Status
+): "ACTIVE" | "PAST_DUE" | "CANCELLED" | "NONE" {
+  switch (stripeStatus) {
+    case "active":
+    case "trialing":
+      return "ACTIVE";
+    case "past_due":
+      return "PAST_DUE";
+    case "canceled":
+    case "unpaid":
+    case "incomplete_expired":
+      return "CANCELLED";
+    default:
+      return "NONE";
+  }
+}
+
+async function getWaiverText(): Promise<string> {
+  const template = await prisma.waiverTemplate.findFirst({
+    orderBy: { createdAt: "desc" },
+  });
+  return template?.body ?? "Liability waiver text not configured.";
+}

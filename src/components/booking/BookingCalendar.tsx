@@ -2,22 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CaretLeft, CaretRight, CalendarBlank, List, MagnifyingGlass } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, CalendarBlank, List } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/Badge";
 import { formatTime, formatCents } from "@/lib/utils";
-import type { RideSlot, Theme, Bike, PricingConfig } from "@prisma/client";
+import type { CageSlot, PricingConfig } from "@prisma/client";
 
-type SlotWithRelations = RideSlot & { theme: Theme | null; bike: Bike };
-
-type Pricing = {
-  theme: PricingConfig | null;
-  general: PricingConfig | null;
-};
+type Pricing = Record<string, PricingConfig>;
 
 interface BookingCalendarProps {
-  slots: SlotWithRelations[];
+  slots: CageSlot[];
   todayKey: string;
   pricing: Pricing;
+  isDropIn?: boolean;
 }
 
 function getMonthDays(year: number, month: number) {
@@ -30,87 +26,47 @@ function toDateKey(date: Date) {
   return date.toISOString().split("T")[0];
 }
 
-function groupSlotsByDate(slots: SlotWithRelations[]) {
-  const map = new Map<string, SlotWithRelations[]>();
+type TimeSlot = {
+  time: string;
+  startTime: Date;
+  endTime: Date;
+  laneA?: CageSlot;
+  laneB?: CageSlot;
+};
+
+function groupByDateAndTime(slots: CageSlot[]) {
+  const dateMap = new Map<string, Map<string, TimeSlot>>();
   for (const slot of slots) {
-    const key = toDateKey(new Date(slot.date));
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(slot);
+    const dateKey = toDateKey(new Date(slot.date));
+    if (!dateMap.has(dateKey)) dateMap.set(dateKey, new Map());
+    const timeMap = dateMap.get(dateKey)!;
+    const timeKey = new Date(slot.startTime).toISOString();
+    if (!timeMap.has(timeKey)) {
+      timeMap.set(timeKey, {
+        time: timeKey,
+        startTime: new Date(slot.startTime),
+        endTime: new Date(slot.endTime),
+      });
+    }
+    const ts = timeMap.get(timeKey)!;
+    if (slot.lane === "A") ts.laneA = slot;
+    if (slot.lane === "B") ts.laneB = slot;
   }
-  return map;
+  return dateMap;
 }
 
-function slotBadge(slots: SlotWithRelations[]) {
-  const allFull = slots.every((s) => s.status === "FULL");
-  if (allFull) return <Badge variant="red">Full</Badge>;
-  const isFilling = slots.some((s) => s.status === "FILLING");
-  if (isFilling) return <Badge variant="amber">Filling</Badge>;
-  return <Badge variant="green">Available</Badge>;
-}
-
-function durationLabel(start: Date | string, end: Date | string) {
-  const ms = new Date(end).getTime() - new Date(start).getTime();
-  const hrs = ms / 3_600_000;
-  return hrs === Math.floor(hrs) ? `${hrs} hr${hrs !== 1 ? "s" : ""}` : `${hrs} hrs`;
-}
-
-function SlotRows({ slots, pricing }: { slots: SlotWithRelations[]; pricing: Pricing }) {
-  return (
-    <ul className="divide-y divide-gray-100">
-      {slots.map((slot) => {
-        const isTheme = slot.rideType === "THEME";
-        const seatsLeft = slot.seatsTotal - slot.seatsBooked;
-        const duration = durationLabel(slot.startTime, slot.endTime);
-        const priceConfig = isTheme ? pricing.theme : pricing.general;
-        const priceLabel = priceConfig
-          ? isTheme
-            ? `${formatCents(priceConfig.baseAmountCents)}/person`
-            : formatCents(priceConfig.baseAmountCents)
-          : null;
-
-        return (
-          <li key={slot.id} className="px-6 py-4">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="font-semibold text-gray-900">
-                  {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
-                  <span className="ml-2 text-xs font-normal text-gray-400">{duration}</span>
-                </p>
-                <p className="mt-0.5 text-sm text-gray-600">
-                  {isTheme ? (slot.theme?.name ?? "Theme Ride") : `Group Ride · up to ${slot.bike.passengerCap} riders`}
-                </p>
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                  {priceLabel && (
-                    <span className="text-sm font-semibold text-brand-blue">{priceLabel}</span>
-                  )}
-                  {isTheme && (
-                    <span className="text-xs text-gray-400">
-                      {seatsLeft} of {slot.seatsTotal} seats left
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {slot.status === "FILLING" ? (
-                  <Badge variant="amber">Filling up</Badge>
-                ) : slot.status === "FULL" ? (
-                  <Badge variant="red">Full</Badge>
-                ) : (
-                  <Badge variant="green">Available</Badge>
-                )}
-                <Link
-                  href={`/book/${slot.id}`}
-                  className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-dark transition-colors"
-                >
-                  Book Now
-                </Link>
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-  );
+function hasAvailability(
+  timeSlots: Map<string, TimeSlot>,
+  bookingType: "SINGLE_LANE" | "BOTH_LANES"
+) {
+  for (const ts of timeSlots.values()) {
+    if (bookingType === "BOTH_LANES") {
+      if (ts.laneA?.status === "AVAILABLE" && ts.laneB?.status === "AVAILABLE") return true;
+    } else {
+      if (ts.laneA?.status === "AVAILABLE" || ts.laneB?.status === "AVAILABLE") return true;
+    }
+  }
+  return false;
 }
 
 const MONTHS = [
@@ -119,19 +75,9 @@ const MONTHS = [
 ];
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 
-function matchesQuery(slot: SlotWithRelations, q: string) {
-  if (!q) return true;
-  const lower = q.toLowerCase();
-  return (
-    (slot.theme?.name ?? "").toLowerCase().includes(lower) ||
-    slot.bike.name.toLowerCase().includes(lower) ||
-    (slot.rideType === "THEME" ? "theme" : "group").includes(lower)
-  );
-}
-
-export function BookingCalendar({ slots, todayKey, pricing }: BookingCalendarProps) {
+export function BookingCalendar({ slots, todayKey, pricing, isDropIn }: BookingCalendarProps) {
+  const [bookingType, setBookingType] = useState<"SINGLE_LANE" | "BOTH_LANES">("SINGLE_LANE");
   const [view, setView] = useState<"calendar" | "list">("calendar");
-  const [query, setQuery] = useState("");
   const [viewDate, setViewDate] = useState(() => {
     const key = todayKey ?? new Date().toISOString().split("T")[0];
     const [y, m] = key.split("-").map(Number);
@@ -142,9 +88,13 @@ export function BookingCalendar({ slots, todayKey, pricing }: BookingCalendarPro
   const effectiveTodayKey = todayKey ?? new Date().toISOString().split("T")[0];
   const [todayYear, todayMonth] = effectiveTodayKey.split("-").map(Number);
 
-  const filteredSlots = query ? slots.filter((s) => matchesQuery(s, query)) : slots;
-  const slotMap = groupSlotsByDate(filteredSlots);
+  const dateMap = groupByDateAndTime(slots);
   const { firstDay, daysInMonth } = getMonthDays(viewDate.getFullYear(), viewDate.getMonth());
+
+  const pricingTier = bookingType === "BOTH_LANES"
+    ? (isDropIn ? "DROPIN_BOTH" : "TEAM")
+    : (isDropIn ? "DROPIN_SINGLE" : "MEMBER");
+  const activePrice = pricing[pricingTier];
 
   function prevMonth() {
     setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
@@ -155,60 +105,83 @@ export function BookingCalendar({ slots, todayKey, pricing }: BookingCalendarPro
     setSelectedDate(null);
   }
 
-  const selectedSlots = selectedDate ? (slotMap.get(selectedDate) ?? []) : [];
+  const selectedTimeSlots = selectedDate
+    ? [...(dateMap.get(selectedDate)?.values() ?? [])]
+        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+    : [];
 
-  const upcomingDates = Array.from(slotMap.entries())
-    .filter(([key]) => key >= effectiveTodayKey)
+  const upcomingDates = [...dateMap.entries()]
+    .filter(([key, timeMap]) => key >= effectiveTodayKey && hasAvailability(timeMap, bookingType))
     .sort(([a], [b]) => a.localeCompare(b));
 
   return (
     <div className="space-y-4">
-      {/* Search + view toggle */}
-      <div className="flex items-center justify-between gap-3">
-        <div className="relative w-56">
-          <MagnifyingGlass
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-white/60 pointer-events-none"
-          />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setSelectedDate(null); }}
-            placeholder="Search by theme, vehicle, or ride type…"
-            className="w-full rounded-lg border border-white/30 bg-white/10 py-1.5 pl-8 pr-3 text-sm text-white placeholder-white/50 outline-none focus:border-white/60 focus:bg-white/15 transition-colors"
-          />
+      {/* Booking type toggle */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="inline-flex rounded-xl border border-white/30 bg-white/10 p-1">
+          <button
+            onClick={() => { setBookingType("SINGLE_LANE"); setSelectedDate(null); }}
+            className={[
+              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              bookingType === "SINGLE_LANE"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-white/80 hover:text-white",
+            ].join(" ")}
+          >
+            Player / Family
+          </button>
+          <button
+            onClick={() => { setBookingType("BOTH_LANES"); setSelectedDate(null); }}
+            className={[
+              "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+              bookingType === "BOTH_LANES"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-white/80 hover:text-white",
+            ].join(" ")}
+          >
+            Team Session
+          </button>
         </div>
-        <div className="inline-flex rounded-lg border border-white/30 bg-white/10 p-0.5">
-          <button
-            onClick={() => setView("calendar")}
-            className={[
-              "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              view === "calendar"
-                ? "bg-white text-brand-blue shadow-sm"
-                : "text-white/80 hover:text-white",
-            ].join(" ")}
-          >
-            <CalendarBlank size={13} weight="duotone" />
-            Calendar
-          </button>
-          <button
-            onClick={() => setView("list")}
-            className={[
-              "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              view === "list"
-                ? "bg-white text-brand-blue shadow-sm"
-                : "text-white/80 hover:text-white",
-            ].join(" ")}
-          >
-            <List size={13} weight="bold" />
-            List
-          </button>
+
+        <div className="flex items-center gap-3">
+          {activePrice && (
+            <span className="text-sm font-semibold text-white/90">
+              {isDropIn
+                ? `${formatCents(activePrice.amountCents)}/session`
+                : `${formatCents(activePrice.amountCents)}/mo`}
+            </span>
+          )}
+          <div className="inline-flex rounded-lg border border-white/30 bg-white/10 p-0.5">
+            <button
+              onClick={() => setView("calendar")}
+              className={[
+                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "calendar"
+                  ? "bg-white text-brand-blue shadow-sm"
+                  : "text-white/80 hover:text-white",
+              ].join(" ")}
+            >
+              <CalendarBlank size={13} weight="duotone" />
+              Calendar
+            </button>
+            <button
+              onClick={() => setView("list")}
+              className={[
+                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "list"
+                  ? "bg-white text-brand-blue shadow-sm"
+                  : "text-white/80 hover:text-white",
+              ].join(" ")}
+            >
+              <List size={13} weight="bold" />
+              List
+            </button>
+          </div>
         </div>
       </div>
 
       {view === "calendar" ? (
         <>
-          {/* Calendar grid */}
           <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
               <button
@@ -247,25 +220,27 @@ export function BookingCalendar({ slots, todayKey, pricing }: BookingCalendarPro
                 const day = i + 1;
                 const dateObj = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
                 const key = toDateKey(dateObj);
-                const daySlots = slotMap.get(key) ?? [];
+                const timeSlots = dateMap.get(key);
                 const isPast = key < effectiveTodayKey;
                 const isSelected = key === selectedDate;
-                const hasSlots = daySlots.length > 0;
+                const available = timeSlots ? hasAvailability(timeSlots, bookingType) : false;
 
                 return (
                   <button
                     key={key}
-                    disabled={isPast || !hasSlots}
+                    disabled={isPast || !available}
                     onClick={() => setSelectedDate(key)}
                     className={[
                       "flex min-h-[75px] flex-col items-start border-b border-r border-gray-100 p-2 text-left transition-colors",
-                      isPast || !hasSlots ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-50",
+                      isPast || !available ? "cursor-not-allowed text-gray-300" : "hover:bg-blue-50",
                       isSelected ? "bg-brand-blue/10 ring-1 ring-inset ring-brand-blue" : "",
                     ].join(" ")}
                   >
                     <span className="text-sm font-medium">{day}</span>
-                    {hasSlots && !isPast && (
-                      <span className="mt-auto">{slotBadge(daySlots)}</span>
+                    {available && !isPast && (
+                      <span className="mt-auto">
+                        <Badge variant="green">Open</Badge>
+                      </span>
                     )}
                   </button>
                 );
@@ -273,7 +248,6 @@ export function BookingCalendar({ slots, todayKey, pricing }: BookingCalendarPro
             </div>
           </div>
 
-          {/* Slot list for selected date */}
           {selectedDate && (
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="border-b border-gray-200 px-6 py-4">
@@ -284,56 +258,145 @@ export function BookingCalendar({ slots, todayKey, pricing }: BookingCalendarPro
                   })}
                 </h3>
               </div>
-              {selectedSlots.length === 0 ? (
-                <p className="px-6 py-8 text-center text-sm text-gray-500">
-                  No rides match your search on this date.
-                </p>
-              ) : (
-                <SlotRows slots={selectedSlots} pricing={pricing} />
-              )}
+              <TimeSlotRows
+                timeSlots={selectedTimeSlots}
+                bookingType={bookingType}
+                pricing={activePrice}
+              />
             </div>
           )}
         </>
       ) : (
-        /* List view */
         <div className="space-y-3">
           {upcomingDates.length === 0 ? (
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm px-6 py-10 text-center text-sm text-gray-500">
-              {query ? "No rides match your search." : "No upcoming rides available."}
+              No available slots. Check back soon!
             </div>
           ) : (
-            upcomingDates.map(([dateKey, dateSlots]) => (
-              <div key={dateKey} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-3">
-                  <span className="font-semibold text-gray-800">
-                    {new Date(dateKey + "T12:00:00").toLocaleDateString("en-US", {
-                      weekday: "long", month: "long", day: "numeric",
-                    })}
-                  </span>
+            upcomingDates.map(([dateKey, timeMap]) => {
+              const timeSlots = [...timeMap.values()].sort(
+                (a, b) => a.startTime.getTime() - b.startTime.getTime()
+              );
+              return (
+                <div key={dateKey} className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-6 py-3">
+                    <span className="font-semibold text-gray-800">
+                      {new Date(dateKey + "T12:00:00").toLocaleDateString("en-US", {
+                        weekday: "long", month: "long", day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  <TimeSlotRows
+                    timeSlots={timeSlots}
+                    bookingType={bookingType}
+                    pricing={activePrice}
+                  />
                 </div>
-                <SlotRows slots={dateSlots} pricing={pricing} />
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
 
-      {/* Legend + contact */}
-      <div className="flex items-center justify-between gap-2 drop-shadow">
-        <div className="flex items-center gap-2">
-          <Badge variant="green"><span className="mr-1">●</span>Available</Badge>
-          <Badge variant="amber"><span className="mr-1">●</span>Filling up (≤3 seats)</Badge>
-          <Badge variant="red"><span className="mr-1">●</span>Full</Badge>
-        </div>
-        <a
-          href="https://railsiderides.com/contact"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full bg-black/30 px-3 py-1 text-xs text-white/70 backdrop-blur-sm hover:bg-black/50 hover:text-white transition-colors whitespace-nowrap"
-        >
-          Questions? <span className="font-semibold">Contact us</span>
-        </a>
+      <div className="flex items-center gap-2 drop-shadow">
+        <Badge variant="green"><span className="mr-1">●</span>Available</Badge>
+        <Badge variant="gray"><span className="mr-1">●</span>Booked</Badge>
       </div>
     </div>
+  );
+}
+
+function TimeSlotRows({
+  timeSlots,
+  bookingType,
+  pricing,
+}: {
+  timeSlots: TimeSlot[];
+  bookingType: "SINGLE_LANE" | "BOTH_LANES";
+  pricing?: PricingConfig;
+}) {
+  const filtered = timeSlots.filter((ts) => {
+    if (bookingType === "BOTH_LANES") {
+      return ts.laneA?.status === "AVAILABLE" && ts.laneB?.status === "AVAILABLE";
+    }
+    return ts.laneA?.status === "AVAILABLE" || ts.laneB?.status === "AVAILABLE";
+  });
+
+  if (filtered.length === 0) {
+    return (
+      <p className="px-6 py-8 text-center text-sm text-gray-500">
+        No available time slots.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="divide-y divide-gray-100">
+      {filtered.map((ts) => {
+        if (bookingType === "BOTH_LANES") {
+          return (
+            <li key={ts.time} className="px-6 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {formatTime(ts.startTime)} – {formatTime(ts.endTime)}
+                  </p>
+                  <p className="mt-0.5 text-sm text-gray-600">
+                    Both Lanes · 30 min
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {pricing && (
+                    <span className="text-sm font-semibold text-brand-blue">
+                      {formatCents(pricing.amountCents)}
+                    </span>
+                  )}
+                  <Link
+                    href={`/book/${ts.laneA!.id}?type=BOTH_LANES&slotB=${ts.laneB!.id}`}
+                    className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-dark transition-colors"
+                  >
+                    Book
+                  </Link>
+                </div>
+              </div>
+            </li>
+          );
+        }
+
+        // Single lane — show each available lane
+        const lanes = [
+          ts.laneA?.status === "AVAILABLE" ? ts.laneA : null,
+          ts.laneB?.status === "AVAILABLE" ? ts.laneB : null,
+        ].filter(Boolean) as CageSlot[];
+
+        return lanes.map((slot) => (
+          <li key={slot.id} className="px-6 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-gray-900">
+                  {formatTime(ts.startTime)} – {formatTime(ts.endTime)}
+                </p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  Lane {slot.lane} · 30 min
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {pricing && (
+                  <span className="text-sm font-semibold text-brand-blue">
+                    {formatCents(pricing.amountCents)}
+                  </span>
+                )}
+                <Link
+                  href={`/book/${slot.id}?type=SINGLE_LANE`}
+                  className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-dark transition-colors"
+                >
+                  Book
+                </Link>
+              </div>
+            </div>
+          </li>
+        ));
+      })}
+    </ul>
   );
 }

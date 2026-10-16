@@ -1,91 +1,95 @@
-import { PrismaClient, RideType, BikeStatus } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcryptjs";
+import { PrismaClient, PricingTier } from "@prisma/client";
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL!,
-  ssl: { rejectUnauthorized: false },
-});
-const prisma = new PrismaClient({ adapter });
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Seeding Rally's Indoor Training...");
 
-  // Seed bikes
-  const bike1 = await prisma.bike.upsert({
-    where: { id: "bike-railside-flyer" },
+  // Operating hours: 6 AM – 10 PM, 7 days a week
+  for (let day = 0; day <= 6; day++) {
+    await prisma.operatingHours.upsert({
+      where: { id: `hours-${day}` },
+      update: {},
+      create: {
+        id: `hours-${day}`,
+        dayOfWeek: day,
+        openTime: "06:00",
+        closeTime: "22:00",
+        isOpen: true,
+      },
+    });
+  }
+  console.log("Operating hours: 6 AM – 10 PM daily");
+
+  // Pricing configs (append-only — seed initial prices)
+  const pricingData = [
+    { tier: PricingTier.MEMBER, amountCents: 5000, label: "Member $50/mo" },
+    { tier: PricingTier.TEAM, amountCents: 10000, label: "Team $100/mo" },
+    { tier: PricingTier.DROPIN_SINGLE, amountCents: 1500, label: "Drop-in single $15" },
+    { tier: PricingTier.DROPIN_BOTH, amountCents: 2500, label: "Drop-in both $25" },
+  ];
+
+  for (const p of pricingData) {
+    const existing = await prisma.pricingConfig.findFirst({
+      where: { tier: p.tier },
+    });
+    if (!existing) {
+      await prisma.pricingConfig.create({
+        data: {
+          tier: p.tier,
+          amountCents: p.amountCents,
+          taxRatePercent: 7.0,
+          effectiveFrom: new Date(),
+        },
+      });
+      console.log(`  ${p.label}`);
+    }
+  }
+
+  // Waiver template
+  await prisma.waiverTemplate.upsert({
+    where: { id: "default" },
     update: {},
     create: {
-      id: "bike-railside-flyer",
-      name: "Railside Flyer",
-      status: BikeStatus.ACTIVE,
-      passengerCap: 14,
+      id: "default",
+      body: [
+        "RALLY'S INDOOR TRAINING — WAIVER AND RELEASE OF LIABILITY",
+        "",
+        "I, the undersigned, acknowledge that participation in batting cage activities at Rally's Indoor Training involves inherent risks including but not limited to injury from pitched balls, bat contact, slipping, and equipment malfunction.",
+        "",
+        "I voluntarily assume all risks associated with my participation and hereby release Rally's Indoor Training LLC, its owners, operators, and affiliates from any and all liability for injury, damage, or loss arising from my use of the facility.",
+        "",
+        "I confirm that I am physically able to participate in batting cage activities and will follow all posted rules and safety guidelines.",
+        "",
+        "For participants under 18: I am the parent or legal guardian of the minor named below and I give my consent for their participation. I accept full responsibility for their safety and agree to this waiver on their behalf.",
+        "",
+        "By signing below, I acknowledge that I have read and understand this waiver and agree to its terms.",
+      ].join("\n"),
     },
   });
+  console.log("Waiver template seeded");
 
-  const bike2 = await prisma.bike.upsert({
-    where: { id: "bike-grand-express" },
-    update: {},
-    create: {
-      id: "bike-grand-express",
-      name: "Grand Express",
-      status: BikeStatus.ACTIVE,
-      passengerCap: 14,
-    },
-  });
+  // Site settings
+  const settings = [
+    { key: "facility_name", value: "Rally's Indoor Training" },
+    { key: "facility_address", value: "203 S Woodland Ave, Bay 5, Hastings, NE 68901" },
+    { key: "facility_phone", value: "" },
+    { key: "timezone", value: "America/Chicago" },
+    { key: "booking_advance_days", value: "7" },
+    { key: "cancellation_deadline_hours", value: "2" },
+    { key: "max_active_bookings", value: "1" },
+  ];
 
-  console.log(`Bikes: ${bike1.name}, ${bike2.name}`);
+  for (const s of settings) {
+    await prisma.siteSetting.upsert({
+      where: { key: s.key },
+      update: {},
+      create: { key: s.key, value: s.value },
+    });
+  }
+  console.log("Site settings seeded");
 
-  // Seed pricing configs
-  const themePricing = await prisma.pricingConfig.create({
-    data: {
-      rideType: RideType.THEME,
-      baseAmountCents: 3000, // $30/seat
-      taxRatePercent: 0,
-      effectiveFrom: new Date(),
-    },
-  });
-
-  const generalPricing = await prisma.pricingConfig.create({
-    data: {
-      rideType: RideType.GENERAL,
-      baseAmountCents: 40000, // $400/booking
-      taxRatePercent: 0,
-      effectiveFrom: new Date(),
-    },
-  });
-
-  console.log(
-    `Pricing: Theme $${themePricing.baseAmountCents / 100}/seat, General $${generalPricing.baseAmountCents / 100}/booking`
-  );
-
-  // Seed pickup locations
-  await prisma.pickupLocation.createMany({
-    skipDuplicates: true,
-    data: [
-      { id: "loc-depot", name: "Railside Depot", address: "123 Rail Ave, Grand Island, NE 68801" },
-      { id: "loc-downtown", name: "Downtown Square", address: "200 W 3rd St, Grand Island, NE 68801" },
-    ],
-  });
-
-  console.log("Pickup locations seeded");
-
-  // Seed admin staff account
-  const passwordHash = await bcrypt.hash("admin123!", 12);
-  await prisma.staff.upsert({
-    where: { email: "admin@railsiderides.com" },
-    update: { passwordHash },
-    create: {
-      email: "admin@railsiderides.com",
-      name: "Admin",
-      passwordHash,
-      role: "ADMIN",
-      active: true,
-    },
-  });
-
-  console.log("Admin account: admin@railsiderides.com / admin123!");
-  console.log("✓ Seed complete");
+  console.log("\nSeed complete. Admin account must be created via Supabase Auth.");
 }
 
 main()

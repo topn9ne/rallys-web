@@ -28,6 +28,12 @@ export default async function AccountLayout({
                 My Bookings
               </Link>
               <Link
+                href="/account/membership"
+                className="text-blue-100 hover:text-white transition-colors"
+              >
+                Membership
+              </Link>
+              <Link
                 href="/account/profile"
                 className="text-blue-100 hover:text-white transition-colors"
               >

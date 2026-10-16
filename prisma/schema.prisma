@@ -116,8 +116,10 @@ model Booking {
   status                BookingStatus @default(PENDING)
   stripeSessionId       String?       @unique
   stripePaymentIntentId String?
+  baseAmountCents       Int           @default(0)
   totalAmountCents      Int           @default(0)
   taxAmountCents        Int           @default(0)
+  notes                 String?
   accessCodeId          String?
   accessCodePin         String?
   createdAt             DateTime      @default(now())

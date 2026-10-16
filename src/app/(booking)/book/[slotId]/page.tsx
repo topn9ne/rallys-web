@@ -1,46 +1,63 @@
 export const dynamic = "force-dynamic";
 
-import { notFound } from "next/navigation";
-import { getSlotById, getAddonsForRideType, getPickupLocations } from "@/server/queries/slots";
+import { notFound, redirect } from "next/navigation";
+import { getSlotById, getActivePricing } from "@/server/queries/slots";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { formatDate, formatTime, formatCents } from "@/lib/utils";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { SlotBookingForm } from "@/components/booking/SlotBookingForm";
+import type { BookingType } from "@prisma/client";
 
 interface Props {
   params: Promise<{ slotId: string }>;
+  searchParams: Promise<{ type?: string; slotB?: string }>;
 }
 
-const CARD_SHADOW =
-  "shadow-[0_1px_2px_rgba(11,18,50,0.08),_0_8px_24px_rgba(11,18,50,0.12)]";
-
-export default async function SlotDetailPage({ params }: Props) {
+export default async function SlotDetailPage({ params, searchParams }: Props) {
   const { slotId } = await params;
-  const [slot, pickupLocations, user] = await Promise.all([
+  const { type, slotB: slotBId } = await searchParams;
+
+  const bookingType: BookingType =
+    type === "BOTH_LANES" ? "BOTH_LANES" : "SINGLE_LANE";
+
+  const [slotA, user, pricing] = await Promise.all([
     getSlotById(slotId),
-    getPickupLocations(),
     getUser(),
+    getActivePricing(),
   ]);
 
-  if (!slot || slot.status === "FULL" || slot.status === "CANCELLED") {
-    notFound();
+  if (!slotA || slotA.status !== "AVAILABLE") notFound();
+
+  let slotB = null;
+  if (bookingType === "BOTH_LANES" && slotBId) {
+    slotB = await getSlotById(slotBId);
+    if (!slotB || slotB.status !== "AVAILABLE") notFound();
   }
 
   const isLoggedIn = !!user;
-  const memberPhone = isLoggedIn
-    ? (await prisma.member.findUnique({ where: { id: user.id }, select: { phone: true } }))?.phone ?? undefined
-    : undefined;
+  let isMember = false;
+  let memberName: string | undefined;
+  let memberPhone: string | undefined;
 
-  const addons = await getAddonsForRideType(slot.rideType, slot.bikeId);
+  if (isLoggedIn) {
+    const member = await prisma.member.findUnique({
+      where: { id: user.id },
+      select: { name: true, phone: true, subscriptionStatus: true },
+    });
+    if (member) {
+      isMember = member.subscriptionStatus === "ACTIVE";
+      memberName = member.name ?? user.user_metadata?.name ?? undefined;
+      memberPhone = member.phone ?? undefined;
+    }
+  }
 
-  const pricing = await prisma.pricingConfig.findFirst({
-    where: { rideType: slot.rideType },
-    orderBy: { effectiveFrom: "desc" },
-  });
-
-  const pricePerUnit = pricing?.baseAmountCents ?? (slot.rideType === "THEME" ? 3000 : 40000);
-  const taxRatePercent = pricing?.taxRatePercent ?? 0;
+  const pricingTier = bookingType === "BOTH_LANES"
+    ? (isMember ? "TEAM" : "DROPIN_BOTH")
+    : (isMember ? "MEMBER" : "DROPIN_SINGLE");
+  const activePrice = pricing[pricingTier];
+  const priceCents = activePrice?.amountCents ?? 0;
+  const taxRatePercent = activePrice?.taxRatePercent ?? 7.0;
 
   return (
     <>
@@ -54,64 +71,59 @@ export default async function SlotDetailPage({ params }: Props) {
             Back to Calendar
           </a>
           <h1 className="mt-4 font-display text-[32px] leading-none tracking-[-0.5px]">
-            {slot.rideType === "THEME" ? slot.theme?.name : "Group Ride"}
+            {bookingType === "BOTH_LANES" ? "Team Session" : `Lane ${slotA.lane}`}
           </h1>
-          {/* When: BOOKING pill + uppercase date/time signifier */}
           <div className="mt-3 flex flex-wrap items-center gap-2.5">
             <span className="rounded-full border border-admin-accent/40 bg-admin-accent/15 px-2 py-[3px] font-mono text-[11px] uppercase tracking-[1px] text-admin-accent">
               Booking
             </span>
             <p className="text-sm font-semibold uppercase tracking-[0.5px] text-white sm:text-[15px]">
-              {formatDate(slot.date)}
-              <span className="mx-2 text-white/40">·</span>
-              {formatTime(slot.startTime)} – {formatTime(slot.endTime)}
+              {formatDate(slotA.date)}
+              <span className="mx-2 text-white/40">&middot;</span>
+              {formatTime(slotA.startTime)} &ndash; {formatTime(slotA.endTime)}
             </p>
           </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-2xl space-y-5 px-4 py-6">
-        {/* Slot summary */}
-        <div className={`rounded-[14px] bg-white p-6 text-admin-ink ${CARD_SHADOW}`}>
+        <div className="rounded-[14px] bg-white p-6 text-gray-900 shadow-[0_1px_2px_rgba(11,18,50,0.08),_0_8px_24px_rgba(11,18,50,0.12)]">
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-admin-text-sub">Ride type</dt>
+              <dt className="text-gray-500">Session type</dt>
               <dd className="font-semibold">
-                {slot.rideType === "THEME" ? "Theme Ride (per seat)" : "Group Ride (full vehicle)"}
+                {bookingType === "BOTH_LANES" ? "Both Lanes (team)" : "Single Lane"}
               </dd>
             </div>
-            <div className="flex justify-between">
-              <dt className="text-admin-text-sub">Bike</dt>
-              <dd className="font-semibold">{slot.bike.name}</dd>
-            </div>
-            {slot.rideType === "THEME" && (
+            {bookingType === "SINGLE_LANE" && (
               <div className="flex justify-between">
-                <dt className="text-admin-text-sub">Seats remaining</dt>
-                <dd className="font-semibold text-green-600">
-                  {slot.seatsTotal - slot.seatsBooked} of {slot.seatsTotal}
-                </dd>
+                <dt className="text-gray-500">Lane</dt>
+                <dd className="font-semibold">Lane {slotA.lane}</dd>
               </div>
             )}
             <div className="flex justify-between">
-              <dt className="text-admin-text-sub">Price</dt>
-              <dd className="font-bold text-admin-primary">
-                {formatCents(pricePerUnit)}
-                {slot.rideType === "THEME" ? "/seat" : "/booking"}
+              <dt className="text-gray-500">Duration</dt>
+              <dd className="font-semibold">30 minutes</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-gray-500">Price</dt>
+              <dd className="font-bold text-brand-blue">
+                {isMember ? "Included with membership" : formatCents(priceCents)}
               </dd>
             </div>
           </dl>
         </div>
 
         <SlotBookingForm
-          slot={slot}
-          addons={addons}
-          pickupLocations={pickupLocations}
-          pricePerUnitCents={pricePerUnit}
+          slotA={slotA}
+          slotB={slotB ?? undefined}
+          bookingType={bookingType}
+          priceCents={isMember ? 0 : priceCents}
+          taxRatePercent={isMember ? 0 : taxRatePercent}
           isLoggedIn={isLoggedIn}
-          customerName={user?.user_metadata?.name ?? undefined}
-          customerPhone={memberPhone}
-          slotId={slotId}
-          taxRatePercent={taxRatePercent}
+          isMember={isMember}
+          memberName={memberName ?? user?.email}
+          memberPhone={memberPhone}
         />
       </div>
     </>

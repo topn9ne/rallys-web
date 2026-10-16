@@ -3,252 +3,210 @@
 import { getUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { calcDiscount } from "@/lib/utils";
 import { rateLimit } from "@/lib/rateLimit";
+import { createAccessCode, deleteAccessCode } from "@/server/services/seam";
+import { notifyBookingConfirmed, notifyBookingCancelled } from "@/server/services/notify";
+import type { BookingType } from "@prisma/client";
 
-const STRIPE_TAX_RATE_ID = "txr_1Tds8JAH2pgWWjUlRIUkgUHQ";
+interface CreateBookingInput {
+  slotIdA: string;
+  slotIdB?: string;
+  bookingType: BookingType;
+  phone: string;
+  smsOptIn: boolean;
+  notes?: string;
+}
 
-export async function createCheckoutSession(formData: FormData) {
+export async function createBooking(input: CreateBookingInput) {
+  const user = await getUser();
+  if (!user) return { error: "You must be signed in to book." };
+
+  const member = await prisma.member.findUnique({
+    where: { id: user.id },
+    select: { subscriptionStatus: true },
+  });
+  if (!member || member.subscriptionStatus !== "ACTIVE") {
+    return { error: "Active membership required. Subscribe or use drop-in booking." };
+  }
+
+  const allowed = rateLimit(`booking:${user.id}`, { limit: 5, windowSecs: 60 });
+  if (!allowed) return { error: "Too many requests. Please wait a moment." };
+
+  const slotA = await prisma.cageSlot.findUnique({ where: { id: input.slotIdA } });
+  if (!slotA || slotA.status !== "AVAILABLE") {
+    return { error: "This time slot is no longer available." };
+  }
+
+  let slotB = null;
+  if (input.bookingType === "BOTH_LANES" && input.slotIdB) {
+    slotB = await prisma.cageSlot.findUnique({ where: { id: input.slotIdB } });
+    if (!slotB || slotB.status !== "AVAILABLE") {
+      return { error: "The second lane is no longer available." };
+    }
+  }
+
+  await prisma.member.update({
+    where: { id: user.id },
+    data: { phone: input.phone },
+  });
+
+  const pricing = await prisma.pricingConfig.findFirst({
+    where: { tier: input.bookingType === "BOTH_LANES" ? "TEAM" : "MEMBER" },
+    orderBy: { effectiveFrom: "desc" },
+  });
+  const taxRate = (pricing?.taxRatePercent ?? 7) / 100;
+  const baseCents = 0;
+  const taxCents = 0;
+
+  const booking = await prisma.booking.create({
+    data: {
+      memberId: user.id,
+      slotIdA: slotA.id,
+      slotIdB: slotB?.id ?? null,
+      bookingType: input.bookingType,
+      status: "CONFIRMED",
+      totalAmountCents: 0,
+      baseAmountCents: 0,
+      taxAmountCents: 0,
+      notes: input.notes ?? null,
+    },
+  });
+
+  await prisma.cageSlot.update({
+    where: { id: slotA.id },
+    data: { status: "BOOKED" },
+  });
+  if (slotB) {
+    await prisma.cageSlot.update({
+      where: { id: slotB.id },
+      data: { status: "BOOKED" },
+    });
+  }
+
+  try {
+    const { pin } = await createAccessCode(booking.id);
+    await notifyBookingConfirmed(booking.id, pin);
+  } catch (err) {
+    console.error("[booking] Access code / notification failed:", err);
+  }
+
+  return { bookingId: booking.id };
+}
+
+interface CreateDropInInput {
+  slotIdA: string;
+  slotIdB?: string;
+  bookingType: BookingType;
+  guestName?: string;
+  guestEmail?: string;
+  phone: string;
+  smsOptIn: boolean;
+  notes?: string;
+}
+
+export async function createDropInCheckout(input: CreateDropInInput) {
   const user = await getUser();
 
-  let customerId: string;
+  let memberId: string | undefined;
   let customerEmail: string | undefined;
 
   if (user) {
-    customerId = user.id;
+    memberId = user.id;
     customerEmail = user.email ?? undefined;
-    const phone = (formData.get("guestPhone") as string)?.trim() || null;
-    if (!phone) {
-      return { error: "Phone number is required." };
-    }
-    const notificationSms = formData.get("notificationSms") === "on";
-    await prisma.customer.update({
-      where: { id: customerId },
-      data: { phone, notificationSms },
+    await prisma.member.update({
+      where: { id: user.id },
+      data: { phone: input.phone },
     });
   } else {
-    // Guest checkout — find or create customer by email
-    const guestEmail = (formData.get("guestEmail") as string)?.trim().toLowerCase();
-    const guestName = (formData.get("guestName") as string)?.trim();
-    if (!guestEmail || !guestName) {
-      return { error: "Your name and email are required to continue." };
+    if (!input.guestName || !input.guestEmail) {
+      return { error: "Name and email are required." };
     }
-    const guestPhone = (formData.get("guestPhone") as string)?.trim() || null;
-    if (!guestPhone) {
-      return { error: "Phone number is required." };
+    if (!input.phone) {
+      return { error: "Phone number is required for your door code." };
     }
-    const notificationSms = formData.get("notificationSms") === "on";
-    const customer = await prisma.customer.upsert({
-      where: { email: guestEmail },
-      update: { ...(guestPhone ? { phone: guestPhone, notificationSms } : {}) },
-      create: { email: guestEmail, name: guestName, phone: guestPhone, notificationSms },
-    });
-    customerId = customer.id;
-    customerEmail = guestEmail;
+    customerEmail = input.guestEmail;
   }
 
-  // Rate limit: 5 checkout attempts per customer per minute
-  const allowed = rateLimit(`checkout:${customerId}`, { limit: 5, windowSecs: 60 });
-  if (!allowed) {
-    return { error: "Too many requests. Please wait a moment and try again." };
+  const rateLimitKey = memberId ?? input.guestEmail ?? "anon";
+  const allowed = rateLimit(`checkout:${rateLimitKey}`, { limit: 5, windowSecs: 60 });
+  if (!allowed) return { error: "Too many requests. Please wait a moment." };
+
+  const slotA = await prisma.cageSlot.findUnique({ where: { id: input.slotIdA } });
+  if (!slotA || slotA.status !== "AVAILABLE") {
+    return { error: "This time slot is no longer available." };
   }
 
-  const slotId = formData.get("slotId") as string;
-  const seats = Number(formData.get("seats")) || 1;
-  const passengerCount = Number(formData.get("passengerCount")) || null;
-  const pickupLocationId = formData.get("pickupLocationId") as string;
-  const addonIds: string[] = JSON.parse(
-    (formData.get("addonIds") as string) || "[]"
-  );
-  const discountCodeId = formData.get("discountCodeId") as string | null;
-  const notes = (formData.get("notes") as string)?.trim() || null;
-  const riderRoster = (formData.get("riderRoster") as string)?.trim() || null;
-
-  // Fetch slot and validate it's still available
-  const slot = await prisma.rideSlot.findUnique({
-    where: { id: slotId },
-    include: { theme: true },
-  });
-
-  if (!slot || slot.status === "FULL" || slot.status === "CANCELLED") {
-    return { error: "This ride is no longer available." };
+  let slotB = null;
+  if (input.bookingType === "BOTH_LANES" && input.slotIdB) {
+    slotB = await prisma.cageSlot.findUnique({ where: { id: input.slotIdB } });
+    if (!slotB || slotB.status !== "AVAILABLE") {
+      return { error: "The second lane is no longer available." };
+    }
   }
 
-  if (slot.rideType === "THEME" && slot.seatsBooked + seats > slot.seatsTotal) {
-    return { error: `Only ${slot.seatsTotal - slot.seatsBooked} seats remaining.` };
-  }
-
-  // Fetch pricing
+  const pricingTier = input.bookingType === "BOTH_LANES" ? "DROPIN_BOTH" : "DROPIN_SINGLE";
   const pricing = await prisma.pricingConfig.findFirst({
-    where: { rideType: slot.rideType },
+    where: { tier: pricingTier },
     orderBy: { effectiveFrom: "desc" },
   });
-  const pricePerUnit = pricing?.baseAmountCents ?? (slot.rideType === "THEME" ? 3000 : 40000);
+  const baseCents = pricing?.amountCents ?? (input.bookingType === "BOTH_LANES" ? 2500 : 1500);
+  const taxRate = (pricing?.taxRatePercent ?? 7) / 100;
+  const taxCents = Math.round(baseCents * taxRate);
+  const totalCents = baseCents + taxCents;
 
-  // Fetch addons
-  const addons = addonIds.length
-    ? await prisma.addOn.findMany({ where: { id: { in: addonIds }, active: true } })
-    : [];
-
-  // Fetch pickup location
-  const pickup = await prisma.pickupLocation.findUnique({
-    where: { id: pickupLocationId },
+  const booking = await prisma.booking.create({
+    data: {
+      memberId: memberId ?? null,
+      slotIdA: slotA.id,
+      slotIdB: slotB?.id ?? null,
+      bookingType: input.bookingType,
+      status: "PENDING",
+      totalAmountCents: totalCents,
+      baseAmountCents: baseCents,
+      taxAmountCents: taxCents,
+      guestName: !memberId ? input.guestName : null,
+      guestEmail: !memberId ? input.guestEmail : null,
+      guestPhone: input.phone,
+      notes: input.notes ?? null,
+    },
   });
 
-  // Fetch discount
-  let discountAmount = 0;
-  let discountCode = null;
-  if (discountCodeId) {
-    discountCode = await prisma.discountCode.findUnique({
-      where: { id: discountCodeId, active: true },
-    });
-    if (discountCode) {
-      const base = slot.rideType === "THEME" ? pricePerUnit * seats : pricePerUnit;
-      const effectiveValue =
-        slot.rideType === "GENERAL" && discountCode.generalValue != null
-          ? discountCode.generalValue
-          : discountCode.value;
-      discountAmount = calcDiscount(base, discountCode.type, effectiveValue);
-    }
-  }
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
+  const STRIPE_TAX_RATE_ID = process.env.STRIPE_TAX_RATE_ID;
 
-  // Calculate totals
-  const baseAmountCents =
-    slot.rideType === "THEME" ? pricePerUnit * seats : pricePerUnit;
-  const addonsAmountCents = addons.reduce((sum, a) => sum + a.priceCents, 0);
-  const subtotalAfterDiscount = baseAmountCents + addonsAmountCents - discountAmount;
-  const taxRate = (pricing?.taxRatePercent ?? 0) / 100;
-  const taxAmountCents = Math.round(subtotalAfterDiscount * taxRate);
-  const totalAmountCents = subtotalAfterDiscount + taxAmountCents;
-
-  // Build Stripe line items
-  const lineItems = [
+  const lineItems: any[] = [
     {
       price_data: {
         currency: "usd",
         product_data: {
-          name:
-            slot.rideType === "THEME"
-              ? `${slot.theme?.name ?? "Theme Ride"} — ${seats} seat${seats > 1 ? "s" : ""}`
-              : "Group Ride — Full Vehicle",
+          name: input.bookingType === "BOTH_LANES"
+            ? "Batting Cage — Both Lanes (30 min)"
+            : "Batting Cage — Single Lane (30 min)",
         },
-        unit_amount:
-          slot.rideType === "THEME"
-            ? pricePerUnit
-            : pricePerUnit,
-      },
-      quantity: slot.rideType === "THEME" ? seats : 1,
-      tax_rates: [STRIPE_TAX_RATE_ID],
-    },
-    ...addons.map((a) => ({
-      price_data: {
-        currency: "usd",
-        product_data: { name: a.name },
-        unit_amount: a.priceCents,
+        unit_amount: baseCents,
       },
       quantity: 1,
-      tax_rates: [STRIPE_TAX_RATE_ID],
-    })),
+      ...(STRIPE_TAX_RATE_ID ? { tax_rates: [STRIPE_TAX_RATE_ID] } : {}),
+    },
   ];
 
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-
-  // Reuse or create a pending booking record
-  const existingPending = await prisma.booking.findFirst({
-    where: { customerId, slotId, status: "PENDING" },
-  });
-
-  let booking;
-  if (existingPending) {
-    // Update the existing pending booking with the latest selections
-    await prisma.bookingAddon.deleteMany({ where: { bookingId: existingPending.id } });
-    booking = await prisma.booking.update({
-      where: { id: existingPending.id },
-      data: {
-        seats,
-        passengerCount,
-        pickupLocation: pickup?.name ?? pickupLocationId,
-        pickupAddress: pickup?.address,
-        totalAmountCents,
-        baseAmountCents,
-        taxAmountCents,
-        addonsAmountCents,
-        discountCodeId: discountCode?.id ?? null,
-        discountAmountCents: discountAmount,
-        notes,
-        riderRoster,
-      },
-    });
-  } else {
-    booking = await prisma.booking.create({
-      data: {
-        customerId,
-        slotId,
-        bookingType: slot.rideType === "THEME" ? "THEME_SEAT" : "GENERAL_FULL",
-        seats,
-        passengerCount,
-        pickupLocation: pickup?.name ?? pickupLocationId,
-        pickupAddress: pickup?.address,
-        status: "PENDING",
-        totalAmountCents,
-        baseAmountCents,
-        taxAmountCents,
-        addonsAmountCents,
-        discountCodeId: discountCode?.id ?? null,
-        discountAmountCents: discountAmount,
-        notes,
-        riderRoster,
-      },
-    });
-  }
-
-  // Create booking addons
-  if (addons.length) {
-    await prisma.bookingAddon.createMany({
-      data: addons.map((a) => ({
-        bookingId: booking.id,
-        addonId: a.id,
-        priceCentsAtPurchase: a.priceCents,
-      })),
-    });
-  }
-
-  // Create Stripe Checkout Session
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
     line_items: lineItems,
-    ...(discountAmount > 0
-      ? {
-          discounts: [
-            {
-              coupon: await getOrCreateStripeCoupon(
-                discountCode!,
-                discountAmount
-              ),
-            },
-          ],
-        }
-      : {}),
     metadata: {
       bookingId: booking.id,
-      slotId,
-      customerId,
-      rideType: slot.rideType,
-      themeName: slot.theme?.name ?? "",
-      rideDate: slot.date ? new Date(slot.date).toISOString().slice(0, 10) : "",
-      seats: String(seats),
-      addons: addons.map((a) => a.name).join(", "),
-      discountCode: discountCode?.code ?? "",
-      pickupLocation: pickup?.name ?? "",
+      slotIdA: slotA.id,
+      slotIdB: slotB?.id ?? "",
+      bookingType: input.bookingType,
+      guestPhone: input.phone,
     },
     customer_email: customerEmail,
     success_url: `${appUrl}/book/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/book/${slotId}`,
-    expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 min
+    cancel_url: `${appUrl}/book/${slotA.id}?type=${input.bookingType}${slotB ? `&slotB=${slotB.id}` : ""}`,
+    expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
   });
 
-  // Update booking with Stripe session ID
   await prisma.booking.update({
     where: { id: booking.id },
     data: { stripeSessionId: checkoutSession.id },
@@ -259,15 +217,13 @@ export async function createCheckoutSession(formData: FormData) {
 
 export async function cancelBooking(bookingId: string) {
   const user = await getUser();
-  if (!user) {
-    return { error: "Unauthorized" };
-  }
+  if (!user) return { error: "Unauthorized" };
 
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
   });
 
-  if (!booking || booking.customerId !== user.id) {
+  if (!booking || booking.memberId !== user.id) {
     return { error: "Booking not found." };
   }
 
@@ -275,80 +231,41 @@ export async function cancelBooking(bookingId: string) {
     return { error: "Only confirmed bookings can be cancelled." };
   }
 
-  // Look up non-refundable booking fee from pricing config
-  const slot = await prisma.rideSlot.findUnique({ where: { id: booking.slotId } });
-  const pricingConfig = slot
-    ? await prisma.pricingConfig.findFirst({
-        where: { rideType: slot.rideType },
-        orderBy: { effectiveFrom: "desc" },
-      })
-    : null;
-  const bookingFeeCents = pricingConfig?.bookingFeeCents ?? 0;
-  const refundAmount = Math.max(0, booking.totalAmountCents - bookingFeeCents);
-
-  // Issue Stripe refund (minus non-refundable booking fee)
-  if (booking.stripeSessionId && refundAmount > 0) {
+  if (booking.stripeSessionId && booking.totalAmountCents > 0) {
     try {
-      const stripeSession = await stripe.checkout.sessions.retrieve(
-        booking.stripeSessionId
-      );
+      const stripeSession = await stripe.checkout.sessions.retrieve(booking.stripeSessionId);
       if (stripeSession.payment_intent) {
         await stripe.refunds.create({
           payment_intent: stripeSession.payment_intent as string,
-          amount: refundAmount,
         });
       }
     } catch {
-      // Log but don't block — staff can reconcile manually
+      // Log but don't block — reconcile manually
     }
   }
 
-  const updated = await prisma.booking.update({
+  await prisma.booking.update({
     where: { id: bookingId },
     data: { status: "CANCELLED" },
   });
 
-  // Release discount code use
-  if (updated.discountCodeId) {
-    await prisma.discountCode.update({
-      where: { id: updated.discountCodeId },
-      data: { usesCount: { decrement: 1 } },
+  await prisma.cageSlot.update({
+    where: { id: booking.slotIdA },
+    data: { status: "AVAILABLE" },
+  });
+  if (booking.slotIdB) {
+    await prisma.cageSlot.update({
+      where: { id: booking.slotIdB },
+      data: { status: "AVAILABLE" },
     });
   }
 
-  if (updated.bookingType === "THEME_SEAT") {
-    const slot = await prisma.rideSlot.update({
-      where: { id: updated.slotId },
-      data: { seatsBooked: { decrement: updated.seats } },
-    });
-    const seatsRemaining = slot.seatsTotal - slot.seatsBooked;
-    const newStatus = seatsRemaining === 0 ? "FULL" : seatsRemaining <= 3 ? "FILLING" : "AVAILABLE";
-    if (newStatus !== slot.status) {
-      await prisma.rideSlot.update({ where: { id: slot.id }, data: { status: newStatus } });
-    }
-  } else {
-    await prisma.rideSlot.update({ where: { id: updated.slotId }, data: { status: "AVAILABLE" } });
+  try {
+    await deleteAccessCode(bookingId);
+    await notifyBookingCancelled(bookingId);
+  } catch (err) {
+    console.error("[booking] Access code deletion / notification failed:", err);
   }
 
   return { success: true };
-}
-
-async function getOrCreateStripeCoupon(
-  discountCode: { id: string; type: string; value: number; code: string },
-  discountAmountCents: number
-): Promise<string> {
-  const couponId = `dc_${discountCode.id}_${discountAmountCents}`;
-  try {
-    await stripe.coupons.retrieve(couponId);
-    return couponId;
-  } catch {
-    await stripe.coupons.create({
-      id: couponId,
-      name: discountCode.code,
-      amount_off: discountAmountCents,
-      currency: "usd",
-      duration: "once",
-    });
-    return couponId;
-  }
 }
