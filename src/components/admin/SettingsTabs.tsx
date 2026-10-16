@@ -8,11 +8,13 @@ import {
   Bell,
   Signature,
   Gear,
+  Tag,
 } from "@phosphor-icons/react";
 import { AdminPageHeader } from "./AdminPageHeader";
 
 const tabs = [
   { label: "Pricing",        href: "/admin/pricing",        Icon: CurrencyDollar },
+  { label: "Promo Codes",    href: "/admin/promo-codes",    Icon: Tag },
   { label: "Notifications",  href: "/admin/notifications",  Icon: Bell },
   { label: "Waivers",        href: "/admin/waivers",        Icon: Signature },
 ];

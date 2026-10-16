@@ -19,6 +19,7 @@ import type { Icon } from "@phosphor-icons/react";
 
 const SETTINGS_PATHS = [
   "/admin/pricing",
+  "/admin/promo-codes",
   "/admin/notifications",
   "/admin/waivers",
 ];

@@ -34,6 +34,12 @@ export default async function AccountLayout({
                 Membership
               </Link>
               <Link
+                href="/account/players"
+                className="text-blue-100 hover:text-white transition-colors"
+              >
+                Players
+              </Link>
+              <Link
                 href="/account/profile"
                 className="text-blue-100 hover:text-white transition-colors"
               >

@@ -19,6 +19,7 @@ import {
 
 const SETTINGS_PATHS = [
   "/admin/pricing",
+  "/admin/promo-codes",
   "/admin/notifications",
   "/admin/waivers",
 ];
