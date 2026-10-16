@@ -4,7 +4,7 @@
 
 ## Product Overview
 
-Rally's Indoor Training is a membership-based, self-service batting cage in Hastings, Nebraska. No employees, no front desk, no staffed hours. Members book 30-minute time slots online, receive a door code via SMS, let themselves in, hit baseballs or softballs, and leave.
+Rally's Indoor Training is a membership-based, self-service batting cage in Hastings, Nebraska. No employees, no front desk, no staffed hours. Members book 1-hour time slots online, receive a door code via SMS, let themselves in, hit baseballs or softballs, and leave.
 
 The booking system is the entire operational layer — it handles membership subscriptions, slot scheduling, payment processing, door code generation and delivery, digital waivers, and automated member engagement. Without it, the facility doesn't function.
 
@@ -31,7 +31,7 @@ The Member vs Team distinction is a subscription tier, not a separate role. Both
 
 ### Slot Structure
 
-The facility operates 6 AM – 10 PM daily. Slots are 30 minutes. Two lanes exist when the center divider net is up. Each lane is an independently bookable slot.
+The facility operates 6 AM – 10 PM daily. Slots are 1 hour (16 slots per lane per day). Two lanes exist when the center divider net is up. Each lane is an independently bookable slot.
 
 No buffer period between slots (unlike Railside's 1-hour cleaning buffer). Members configure their own machines and clean up after themselves — "leave it how you found it."
 
@@ -39,9 +39,9 @@ No buffer period between slots (unlike Railside's 1-hour cleaning buffer). Membe
 
 Every booking is either `SINGLE_LANE` or `BOTH_LANES`. The booking flow determines this based on a question presented before slot selection: "Booking for a player/family, or a full team session?"
 
-**Single-lane booking:** Reserves one lane (Lane A or Lane B) for the 30-minute slot. The other lane remains available for a separate booking. Two families can hit simultaneously in adjacent lanes.
+**Single-lane booking:** Reserves one lane (Lane A or Lane B) for the 1-hour slot. The other lane remains available for a separate booking. Two families can hit simultaneously in adjacent lanes.
 
-**Both-lanes booking:** Atomically reserves both Lane A and Lane B for the same 30-minute window in a single transaction. Used for team practices, hitting clinics, birthday parties, or anyone who wants the full open floor with the divider net pulled back. The system validates both lanes are available before presenting the time slot as bookable in team mode.
+**Both-lanes booking:** Atomically reserves both Lane A and Lane B for the same 1-hour window in a single transaction. Used for team practices, hitting clinics, birthday parties, or anyone who wants the full open floor with the divider net pulled back. The system validates both lanes are available before presenting the time slot as bookable in team mode.
 
 ### Calendar Display
 
@@ -73,7 +73,7 @@ Default: 6:00 AM – 10:00 PM, 7 days a week. Admin can block specific dates or 
 | --- | --- | --- | --- |
 | Member | $50 | Single lane | Recurring subscription |
 | Team | $100 | Both lanes (auto-books both) | Recurring subscription |
-| Drop-in | $15–$20/visit | Single lane or both (priced separately) | One-time Checkout Session |
+| Drop-in | $25 individual / $50 team | Single lane or both (priced separately) | One-time Checkout Session |
 
 ### Tax
 
@@ -156,7 +156,7 @@ After the Seam API confirms the code is set on the lock (access_code.set_on_devi
 
 ### Code Management
 
-The Schlage Encode supports 100 concurrent codes. With per-booking time-bound codes, the active count at any moment equals the number of overlapping booking windows (each with a 10-minute buffer). At peak (two lanes, 30-minute slots, 6 AM – 10 PM), that's a maximum of 2 active codes at any given time — well within limits. Codes auto-expire, so no cleanup is needed. The system tracks active code count and alerts the admin if it approaches 80% capacity.
+The Schlage Encode supports 100 concurrent codes. With per-booking time-bound codes, the active count at any moment equals the number of overlapping booking windows (each with a 10-minute buffer). At peak (two lanes, 1-hour slots, 6 AM – 10 PM), that's a maximum of 2 active codes at any given time — well within limits. Codes auto-expire, so no cleanup is needed. The system tracks active code count and alerts the admin if it approaches 80% capacity.
 
 ### Failure Modes
 
@@ -194,7 +194,7 @@ The Railside schema has 22 models. Rally's started at 9, expanded to 15 with the
 | lane | enum (A, B) | Which physical lane this slot represents |
 | date | date |  |
 | startTime | timestamp |  |
-| endTime | timestamp | Always startTime + 30 minutes |
+| endTime | timestamp | Always startTime + 60 minutes |
 | status | enum (AVAILABLE, BOOKED, BLOCKED, COMPLETED) | No FILLING state — a lane is open or taken. COMPLETED added for past slots. |
 | blockReason | string nullable | "Maintenance", "Private event", "Holiday" |
 | createdAt | timestamp |  |
@@ -345,8 +345,8 @@ Create in Stripe Dashboard (not programmatically). **Superseded by Amendment —
 | Rally's Family Annual | $500.00 | Yearly / One-time | Tax-inclusive |
 | Rally's Team | $75.00 | Monthly | Tax-inclusive (was $100) |
 | Rally's Team Annual | $750.00 | Yearly / One-time | Tax-inclusive |
-| Rally's Drop-in (Individual) | $15.00 | One-time | 30 min, 1 lane, + 7% tax |
-| Rally's Drop-in (Team) | $75.00 | One-time | 60 min, both lanes, + 7% tax |
+| Rally's Drop-in (Individual) | $25.00 | One-time | 1 hr, 1 lane, + 7% tax |
+| Rally's Drop-in (Team) | $50.00 | One-time | 1 hr, both lanes, + 7% tax |
 
 ### Subscription Flow (New)
 
@@ -732,10 +732,10 @@ All code referencing `MemberTier.MEMBER` changes to `MemberTier.FAMILY`. The Str
 
 | Product | Price | Duration | Lanes | Tax |
 | --- | --- | --- | --- | --- |
-| Individual Drop-in | $15.00 | 30 min | 1 lane | + 7% |
-| Team Drop-in | $75.00 | 60 min | Both lanes | + 7% |
+| Individual Drop-in | $25.00 | 1 hr | 1 lane | + 7% |
+| Team Drop-in | $50.00 | 1 hr | Both lanes | + 7% |
 
-Team drop-ins are 60 minutes, not 30. The booking system must handle variable-duration slots when `bookingType === BOTH_LANES` and the booker is a drop-in. Member bookings remain 30-minute slots regardless of lane count.
+All slots are 1 hour regardless of booking type or membership status. Drop-in pricing conversion math: 2 individual drop-ins ($50) = Family membership price → 3rd visit converts. 2 team drop-ins ($100) > Team membership ($75) → 2nd visit converts. Team drop-in at $50 protects member weekend slots from tournament traffic.
 
 The Stripe Products & Prices table (above) is superseded by:
 
@@ -745,8 +745,8 @@ The Stripe Products & Prices table (above) is superseded by:
 | Rally's Family Annual | $500.00 | One-time or yearly | Tax-inclusive |
 | Rally's Team | $75.00 | Monthly | Tax-inclusive |
 | Rally's Team Annual | $750.00 | One-time or yearly | Tax-inclusive |
-| Rally's Drop-in (Individual) | $15.00 | One-time | 30 min, 1 lane, + 7% tax |
-| Rally's Drop-in (Team) | $75.00 | One-time | 60 min, both lanes, + 7% tax |
+| Rally's Drop-in (Individual) | $25.00 | One-time | 1 hr, 1 lane, + 7% tax |
+| Rally's Drop-in (Team) | $50.00 | One-time | 1 hr, both lanes, + 7% tax |
 
 ### Player Model (New)
 
@@ -890,7 +890,7 @@ Milestone keys and their triggers:
 
 #### Cage Rats Business Rules
 
-1. **Only individual bookings count.** If `bookingType === SINGLE_LANE` and the booking has exactly one player, the slot duration (30 min) is added to that player's `totalMinutes` and (if in summer window) `summerMinutes`.
+1. **Only individual bookings count.** If `bookingType === SINGLE_LANE` and the booking has exactly one player, the slot duration (60 min) is added to that player's `totalMinutes` and (if in summer window) `summerMinutes`.
 2. **No-shows don't count.** Only bookings with status `COMPLETED` increment hours. The cron that marks past slots as COMPLETED is the trigger.
 3. **Summer window** is Memorial Day through Labor Day. Exact dates stored in SiteSettings: `cage_rats_summer_start` (e.g. "2027-05-26") and `cage_rats_summer_end` (e.g. "2027-09-01"). Admin updates these annually.
 4. **Cage Rats threshold** is configurable: SiteSetting key `cage_rats_threshold_minutes`, default 600.

@@ -25,8 +25,8 @@ async function main() {
   const pricingData = [
     { tier: PricingTier.FAMILY, amountCents: 5000, label: "Family $50/mo" },
     { tier: PricingTier.TEAM, amountCents: 7500, label: "Team $75/mo" },
-    { tier: PricingTier.DROPIN_SINGLE, amountCents: 1500, label: "Drop-in individual $15" },
-    { tier: PricingTier.DROPIN_BOTH, amountCents: 7500, label: "Drop-in team $75" },
+    { tier: PricingTier.DROPIN_SINGLE, amountCents: 2500, label: "Drop-in individual $25" },
+    { tier: PricingTier.DROPIN_BOTH, amountCents: 5000, label: "Drop-in team $50" },
   ];
 
   for (const p of pricingData) {
