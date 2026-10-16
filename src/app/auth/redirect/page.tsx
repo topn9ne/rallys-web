@@ -1,25 +1,16 @@
-import { auth } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 export default async function AuthRedirectPage() {
-  const session = await auth();
+  const user = await getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/auth/signin");
   }
 
-  if (session.user.role === "ADMIN") {
+  if (await isAdmin()) {
     redirect("/admin");
   }
 
-  if (session.user.role === "OPERATOR" || session.user.role === "DRIVER") {
-    redirect("/operator");
-  }
-
-  if (session.user.userType === "customer") {
-    redirect("/account/bookings");
-  }
-
-  // Fallback for unexpected roles
-  redirect("/auth/signin");
+  redirect("/account/bookings");
 }

@@ -19,7 +19,7 @@ export function AuthCard({ title, subtitle, children, footer }: AuthCardProps) {
       <div className="space-y-5 rounded-[14px] bg-white p-8 shadow-[0_1px_2px_rgba(11,18,50,0.08),_0_8px_24px_rgba(11,18,50,0.18)]">
         <div className="text-center">
           <div className="mx-auto mb-3 grid h-9 w-9 place-items-center rounded-lg bg-admin-primary font-display text-[12px] tracking-[0.5px] text-white">
-            RR
+            R
           </div>
           <h1 className="font-display text-[22px] leading-none tracking-[-0.3px] text-admin-ink">
             {title}

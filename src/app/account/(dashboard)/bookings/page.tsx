@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatTime, formatCents } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
@@ -21,8 +21,8 @@ const statusLabel: Record<string, string> = {
 };
 
 export default async function AccountBookingsPage() {
-  const session = await auth();
-  const customerId = session!.user.id;
+  const user = await requireUser();
+  const customerId = user.id;
 
   const bookings = await prisma.booking.findMany({
     where: {

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 
@@ -41,8 +41,8 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ bookingId: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getUser();
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -62,10 +62,9 @@ export async function GET(
     return NextResponse.json({ error: "Booking not found" }, { status: 404 });
   }
 
-  // Auth: must be the booking's customer OR an admin staff member
-  const isCustomer = booking.customerId === session.user.id;
-  const isAdmin = session.user.role === "ADMIN";
-  if (!isCustomer && !isAdmin) {
+  const isOwner = booking.customerId === user.id;
+  const admin = await isAdmin();
+  if (!isOwner && !admin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

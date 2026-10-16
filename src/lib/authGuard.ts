@@ -1,17 +1,17 @@
-import { auth } from "@/lib/auth";
+import { getUser, getMember } from "@/lib/auth";
 
 export async function requireAdmin() {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
+  const user = await getUser();
+  if (!user || user.app_metadata?.role !== "admin") {
     throw new Error("Unauthorized");
   }
-  return session;
+  return user;
 }
 
-export async function requireStaff() {
-  const session = await auth();
-  if (!session || session.user.userType !== "staff") {
-    throw new Error("Unauthorized");
-  }
-  return session;
+export async function requireMember() {
+  const user = await getUser();
+  if (!user) throw new Error("Unauthorized");
+  const member = await getMember();
+  if (!member) throw new Error("No member record");
+  return { user, member };
 }

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { calcDiscount } from "@/lib/utils";
@@ -9,14 +9,14 @@ import { rateLimit } from "@/lib/rateLimit";
 const STRIPE_TAX_RATE_ID = "txr_1Tds8JAH2pgWWjUlRIUkgUHQ";
 
 export async function createCheckoutSession(formData: FormData) {
-  const session = await auth();
+  const user = await getUser();
 
   let customerId: string;
   let customerEmail: string | undefined;
 
-  if (session?.user?.id && session.user.userType === "customer") {
-    customerId = session.user.id;
-    customerEmail = session.user.email ?? undefined;
+  if (user) {
+    customerId = user.id;
+    customerEmail = user.email ?? undefined;
     const phone = (formData.get("guestPhone") as string)?.trim() || null;
     if (!phone) {
       return { error: "Phone number is required." };
@@ -258,8 +258,8 @@ export async function createCheckoutSession(formData: FormData) {
 }
 
 export async function cancelBooking(bookingId: string) {
-  const session = await auth();
-  if (!session?.user?.id || session.user.userType !== "customer") {
+  const user = await getUser();
+  if (!user) {
     return { error: "Unauthorized" };
   }
 
@@ -267,7 +267,7 @@ export async function cancelBooking(bookingId: string) {
     where: { id: bookingId },
   });
 
-  if (!booking || booking.customerId !== session.user.id) {
+  if (!booking || booking.customerId !== user.id) {
     return { error: "Booking not found." };
   }
 

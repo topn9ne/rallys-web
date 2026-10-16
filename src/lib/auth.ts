@@ -1,92 +1,52 @@
-import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import Google from "next-auth/providers/google";
-import Nodemailer from "next-auth/providers/nodemailer";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true,
-  adapter: PrismaAdapter(prisma) as any,
-  providers: [
-    // Customer: Google OAuth
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    // Customer: Magic link email
-    Nodemailer({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: Number(process.env.EMAIL_SERVER_PORT),
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
-      },
-      from: process.env.EMAIL_FROM,
-    }),
-    // Staff/Admin: email + password
-    Credentials({
-      id: "staff-credentials",
-      name: "Staff Login",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+/**
+ * Get the current authenticated user. Returns null if not signed in.
+ * Uses supabase.auth.getUser() which validates the JWT server-side.
+ */
+export async function getUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
+}
 
-        const staff = await prisma.staff.findUnique({
-          where: { email: (credentials.email as string).toLowerCase().trim(), active: true },
-        });
+/**
+ * Get the current user or redirect to sign-in.
+ */
+export async function requireUser(callbackUrl = "/account/bookings") {
+  const user = await getUser();
+  if (!user) {
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
+  }
+  return user;
+}
 
-        if (!staff) return null;
+/**
+ * Get the Member record for the current user. Returns null if not found.
+ */
+export async function getMember() {
+  const user = await getUser();
+  if (!user) return null;
+  return prisma.member.findUnique({ where: { id: user.id } });
+}
 
-        if (!staff.passwordHash) {
-          // Invited but hasn't set a password yet
-          throw new Error("PendingInvite");
-        }
+/**
+ * Check if the current user is an admin (via Supabase app_metadata.role).
+ */
+export async function isAdmin() {
+  const user = await getUser();
+  return user?.app_metadata?.role === "admin";
+}
 
-        const valid = await bcrypt.compare(
-          credentials.password as string,
-          staff.passwordHash
-        );
-        if (!valid) return null;
-
-        return {
-          id: staff.id,
-          email: staff.email,
-          name: staff.name,
-          role: staff.role,
-          userType: "staff" as const,
-        };
-      },
-    }),
-  ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as any).role ?? "CUSTOMER";
-        token.userType = (user as any).userType ?? "customer";
-        token.userId = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.role = token.role as string;
-        session.user.userType = token.userType as string;
-        session.user.id = token.userId as string;
-      }
-      return session;
-    },
-  },
-  pages: {
-    signIn: "/auth/signin",
-    verifyRequest: "/auth/verify",
-    error: "/auth/error",
-  },
-  session: { strategy: "jwt" },
-});
+/**
+ * Sign out and redirect.
+ */
+export async function signOut(redirectTo = "/auth/signin") {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect(redirectTo);
+}

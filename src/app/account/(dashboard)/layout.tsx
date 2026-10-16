@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { getUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 
 export default async function AccountLayout({
@@ -8,10 +8,10 @@ export default async function AccountLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const user = await getUser();
 
-  if (!session || session.user.userType !== "customer") {
-    redirect("/account/signin?callbackUrl=/account/bookings");
+  if (!user) {
+    redirect("/auth/signin?callbackUrl=/account/bookings");
   }
 
   return (
@@ -19,7 +19,7 @@ export default async function AccountLayout({
       <header className="bg-brand-blue text-white shadow-sm">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-6">
-            <span className="font-bold tracking-tight">Railside Rides</span>
+            <span className="font-bold tracking-tight">Rally&apos;s Indoor Training</span>
             <nav className="flex items-center gap-4 text-sm">
               <Link
                 href="/account/bookings"
@@ -36,11 +36,11 @@ export default async function AccountLayout({
             </nav>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <span className="text-blue-200">{session.user.name ?? session.user.email}</span>
+            <span className="text-blue-200">{user.user_metadata?.name ?? user.email}</span>
             <form
               action={async () => {
                 "use server";
-                await signOut({ redirectTo: "/book" });
+                await signOut("/book");
               }}
             >
               <button

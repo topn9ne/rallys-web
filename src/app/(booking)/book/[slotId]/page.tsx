@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import { getSlotById, getAddonsForRideType, getPickupLocations } from "@/server/queries/slots";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { formatDate, formatTime, formatCents } from "@/lib/utils";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { SlotBookingForm } from "@/components/booking/SlotBookingForm";
@@ -17,19 +17,19 @@ const CARD_SHADOW =
 
 export default async function SlotDetailPage({ params }: Props) {
   const { slotId } = await params;
-  const [slot, pickupLocations, session] = await Promise.all([
+  const [slot, pickupLocations, user] = await Promise.all([
     getSlotById(slotId),
     getPickupLocations(),
-    auth(),
+    getUser(),
   ]);
 
   if (!slot || slot.status === "FULL" || slot.status === "CANCELLED") {
     notFound();
   }
 
-  const isLoggedInCustomer = !!session?.user?.id && session.user.userType === "customer";
-  const customerPhone = isLoggedInCustomer
-    ? (await prisma.customer.findUnique({ where: { id: session.user.id }, select: { phone: true } }))?.phone ?? undefined
+  const isLoggedIn = !!user;
+  const memberPhone = isLoggedIn
+    ? (await prisma.member.findUnique({ where: { id: user.id }, select: { phone: true } }))?.phone ?? undefined
     : undefined;
 
   const addons = await getAddonsForRideType(slot.rideType, slot.bikeId);
@@ -107,9 +107,9 @@ export default async function SlotDetailPage({ params }: Props) {
           addons={addons}
           pickupLocations={pickupLocations}
           pricePerUnitCents={pricePerUnit}
-          isLoggedIn={isLoggedInCustomer}
-          customerName={session?.user?.name ?? undefined}
-          customerPhone={customerPhone}
+          isLoggedIn={isLoggedIn}
+          customerName={user?.user_metadata?.name ?? undefined}
+          customerPhone={memberPhone}
           slotId={slotId}
           taxRatePercent={taxRatePercent}
         />

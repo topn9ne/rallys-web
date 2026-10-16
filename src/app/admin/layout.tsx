@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getUser, isAdmin } from "@/lib/auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { MobileNav } from "@/components/admin/MobileNav";
 
@@ -10,8 +10,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
+  const user = await getUser();
+  if (!user || !(await isAdmin())) {
     redirect("/auth/signin?callbackUrl=/admin");
   }
 

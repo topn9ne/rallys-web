@@ -12,7 +12,7 @@ import {
   User,
 } from "@phosphor-icons/react/dist/ssr";
 
-import { auth } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn, formatCents, formatTime } from "@/lib/utils";
 
@@ -120,11 +120,11 @@ function firstNameFrom(displayName: string | null | undefined, email: string | n
 }
 
 export default async function AdminDashboard() {
-  const [data, session] = await Promise.all([getDashboardData(), auth()]);
+  const [data, user] = await Promise.all([getDashboardData(), getUser()]);
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = firstNameFrom(session?.user.name, session?.user.email);
+  const firstName = firstNameFrom(user?.user_metadata?.name, user?.email);
   const dateStr = now
     .toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })
     .toUpperCase();

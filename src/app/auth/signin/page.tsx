@@ -1,84 +1,177 @@
-import { signIn } from "@/lib/auth";
-import { AuthError } from "next-auth";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ callbackUrl?: string; error?: string; invited?: string }>;
-}) {
-  const { error, invited } = await searchParams;
+export default function SignInPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/account/bookings";
+  const errorParam = searchParams.get("error");
 
-  const errorMessage =
-    error === "PendingInvite"
-      ? "Check your email — you need to set your password via the invite link before signing in."
-      : error === "CredentialsSignin"
-      ? "Invalid email or password."
-      : null;
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [error, setError] = useState(errorParam ? "Something went wrong. Please try again." : "");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function handleSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    router.push(callbackUrl);
+    router.refresh();
+  }
+
+  async function handleSignUp(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name, phone },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(callbackUrl)}`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setMessage("Check your email for a confirmation link.");
+    setLoading(false);
+  }
 
   return (
     <AuthCard
-      title="Staff Sign In"
-      subtitle="Railside Rides"
-      footer={
-        <a href="/auth/forgot-password" className="text-admin-primary hover:underline">
-          Forgot password?
-        </a>
-      }
+      title={mode === "signin" ? "Sign In" : "Create Account"}
+      subtitle="Rally's Indoor Training"
     >
-      {invited && (
-        <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700">
-          Account created! Sign in below to get started.
-        </p>
-      )}
-      {errorMessage && (
+      {error && (
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700">
-          {errorMessage}
+          {error}
         </p>
       )}
 
-      <form
-        action={async (formData: FormData) => {
-          "use server";
-          try {
-            await signIn("staff-credentials", {
-              email: formData.get("email"),
-              password: formData.get("password"),
-              redirectTo: "/auth/redirect",
-            });
-          } catch (error) {
-            if (error instanceof AuthError) {
-              const code = (error.cause as any)?.err?.message === "PendingInvite"
-                ? "PendingInvite"
-                : error.type;
-              redirect(`/auth/signin?error=${code}`);
-            }
-            throw error;
-          }
-        }}
-        className="space-y-3"
-      >
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          required
-        />
-        <Input
-          label="Password"
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-        />
-        <Button type="submit" variant="primary" className="w-full">
-          Sign In
-        </Button>
-      </form>
+      {message && (
+        <p className="rounded-lg border border-green-200 bg-green-50 px-4 py-2.5 text-sm text-green-700">
+          {message}
+        </p>
+      )}
+
+      {!message && (
+        <form
+          onSubmit={mode === "signin" ? handleSignIn : handleSignUp}
+          className="space-y-3"
+        >
+          {mode === "signup" && (
+            <>
+              <Input
+                label="Full Name"
+                name="name"
+                type="text"
+                autoComplete="name"
+                required
+                value={name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+              />
+              <Input
+                label="Phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                required
+                value={phone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+              />
+            </>
+          )}
+          <Input
+            label="Email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+          />
+          <Input
+            label="Password"
+            name="password"
+            type="password"
+            autoComplete={mode === "signin" ? "current-password" : "new-password"}
+            required
+            value={password}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+          />
+          <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+            {loading
+              ? "Please wait..."
+              : mode === "signin"
+              ? "Sign In"
+              : "Create Account"}
+          </Button>
+        </form>
+      )}
+
+      <p className="text-center text-sm text-gray-500">
+        {mode === "signin" ? (
+          <>
+            New member?{" "}
+            <button
+              type="button"
+              onClick={() => { setMode("signup"); setError(""); setMessage(""); }}
+              className="font-medium text-admin-primary hover:underline"
+            >
+              Create an account
+            </button>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => { setMode("signin"); setError(""); setMessage(""); }}
+              className="font-medium text-admin-primary hover:underline"
+            >
+              Sign in
+            </button>
+          </>
+        )}
+      </p>
+
+      <p className="text-center text-xs text-gray-400">
+        By continuing, you agree to our{" "}
+        <a href="/terms" className="hover:underline">Terms</a>{" "}
+        and{" "}
+        <a href="/privacy" className="hover:underline">Privacy Policy</a>.
+      </p>
     </AuthCard>
   );
 }
