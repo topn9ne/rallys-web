@@ -23,10 +23,10 @@ async function main() {
 
   // Pricing configs (append-only — seed initial prices)
   const pricingData = [
-    { tier: PricingTier.MEMBER, amountCents: 5000, label: "Member $50/mo" },
-    { tier: PricingTier.TEAM, amountCents: 10000, label: "Team $100/mo" },
-    { tier: PricingTier.DROPIN_SINGLE, amountCents: 1500, label: "Drop-in single $15" },
-    { tier: PricingTier.DROPIN_BOTH, amountCents: 2500, label: "Drop-in both $25" },
+    { tier: PricingTier.FAMILY, amountCents: 5000, label: "Family $50/mo" },
+    { tier: PricingTier.TEAM, amountCents: 7500, label: "Team $75/mo" },
+    { tier: PricingTier.DROPIN_SINGLE, amountCents: 1500, label: "Drop-in individual $15" },
+    { tier: PricingTier.DROPIN_BOTH, amountCents: 7500, label: "Drop-in team $75" },
   ];
 
   for (const p of pricingData) {
@@ -78,6 +78,9 @@ async function main() {
     { key: "booking_advance_days", value: "7" },
     { key: "cancellation_deadline_hours", value: "2" },
     { key: "max_active_bookings", value: "1" },
+    { key: "cage_rats_threshold_minutes", value: "600" },
+    { key: "cage_rats_summer_start", value: "2027-05-26" },
+    { key: "cage_rats_summer_end", value: "2027-09-01" },
   ];
 
   for (const s of settings) {
