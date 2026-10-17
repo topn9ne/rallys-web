@@ -58,7 +58,7 @@ export async function createBulkSlots(formData: FormData) {
   const endDate = formData.get("endDate") as string;
   const startTime = formData.get("startTime") as string;
   const endTime = formData.get("endTime") as string;
-  const slotDuration = 30; // minutes
+  const slotDuration = 60; // minutes
   const daysOfWeek = formData.getAll("daysOfWeek").map(Number);
 
   if (!startDate || !endDate || !startTime || !endTime || lanes.length === 0 || daysOfWeek.length === 0) {

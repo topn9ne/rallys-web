@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 export async function getAllUpcomingSlots() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const advanceDays = 7;
+
+  const settings = await getSiteSettings();
+  const advanceDays = parseInt(settings.booking_advance_days ?? "30", 10);
   const maxDate = new Date(today);
   maxDate.setDate(maxDate.getDate() + advanceDays);
 

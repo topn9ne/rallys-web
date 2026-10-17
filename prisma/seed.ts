@@ -77,7 +77,7 @@ async function main() {
     { key: "facility_address", value: "203 S Woodland Ave, Bay 5, Hastings, NE 68901" },
     { key: "facility_phone", value: "" },
     { key: "timezone", value: "America/Chicago" },
-    { key: "booking_advance_days", value: "7" },
+    { key: "booking_advance_days", value: "30" },
     { key: "cancellation_deadline_hours", value: "2" },
     { key: "max_active_bookings", value: "1" },
     { key: "cage_rats_threshold_minutes", value: "600" },
