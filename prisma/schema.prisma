@@ -312,3 +312,11 @@ model PlayerMilestones {
   @@unique([playerId, milestoneKey])
   @@map("player_milestones")
 }
+
+model Waitlist {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("waitlist")
+}
