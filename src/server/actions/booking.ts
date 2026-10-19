@@ -7,6 +7,7 @@ import { rateLimit } from "@/lib/rateLimit";
 import { createAccessCode, deleteAccessCode } from "@/server/services/seam";
 import { notifyBookingConfirmed, notifyBookingCancelled } from "@/server/services/notify";
 import type { BookingType } from "@prisma/client";
+import { resolveSlot, materializeSlot } from "@/server/services/virtualSlots";
 
 interface CreateBookingInput {
   slotIdA: string;
@@ -32,15 +33,15 @@ export async function createBooking(input: CreateBookingInput) {
   const allowed = rateLimit(`booking:${user.id}`, { limit: 5, windowSecs: 60 });
   if (!allowed) return { error: "Too many requests. Please wait a moment." };
 
-  const slotA = await prisma.cageSlot.findUnique({ where: { id: input.slotIdA } });
+  const slotA = await resolveSlot(input.slotIdA);
   if (!slotA || slotA.status !== "AVAILABLE") {
     return { error: "This time slot is no longer available." };
   }
 
-  let slotB = null;
+  let slotBResolved = null;
   if (input.bookingType === "BOTH_LANES" && input.slotIdB) {
-    slotB = await prisma.cageSlot.findUnique({ where: { id: input.slotIdB } });
-    if (!slotB || slotB.status !== "AVAILABLE") {
+    slotBResolved = await resolveSlot(input.slotIdB);
+    if (!slotBResolved || slotBResolved.status !== "AVAILABLE") {
       return { error: "The second lane is no longer available." };
     }
   }
@@ -50,19 +51,17 @@ export async function createBooking(input: CreateBookingInput) {
     data: { phone: input.phone },
   });
 
-  const pricing = await prisma.pricingConfig.findFirst({
-    where: { tier: input.bookingType === "BOTH_LANES" ? "TEAM" : "FAMILY" },
-    orderBy: { effectiveFrom: "desc" },
-  });
-  const taxRate = (pricing?.taxRatePercent ?? 7) / 100;
-  const baseCents = 0;
-  const taxCents = 0;
+  const materializedA = await materializeSlot(input.slotIdA, "BOOKED");
+  let materializedB = null;
+  if (input.bookingType === "BOTH_LANES" && input.slotIdB) {
+    materializedB = await materializeSlot(input.slotIdB, "BOOKED");
+  }
 
   const booking = await prisma.booking.create({
     data: {
       memberId: user.id,
-      slotIdA: slotA.id,
-      slotIdB: slotB?.id ?? null,
+      slotIdA: materializedA.id,
+      slotIdB: materializedB?.id ?? null,
       bookingType: input.bookingType,
       status: "CONFIRMED",
       totalAmountCents: 0,
@@ -71,17 +70,6 @@ export async function createBooking(input: CreateBookingInput) {
       notes: input.notes ?? null,
     },
   });
-
-  await prisma.cageSlot.update({
-    where: { id: slotA.id },
-    data: { status: "BOOKED" },
-  });
-  if (slotB) {
-    await prisma.cageSlot.update({
-      where: { id: slotB.id },
-      data: { status: "BOOKED" },
-    });
-  }
 
   try {
     const { pin } = await createAccessCode(booking.id);
@@ -131,17 +119,23 @@ export async function createDropInCheckout(input: CreateDropInInput) {
   const allowed = rateLimit(`checkout:${rateLimitKey}`, { limit: 5, windowSecs: 60 });
   if (!allowed) return { error: "Too many requests. Please wait a moment." };
 
-  const slotA = await prisma.cageSlot.findUnique({ where: { id: input.slotIdA } });
+  const slotA = await resolveSlot(input.slotIdA);
   if (!slotA || slotA.status !== "AVAILABLE") {
     return { error: "This time slot is no longer available." };
   }
 
-  let slotB = null;
+  let slotBResolved = null;
   if (input.bookingType === "BOTH_LANES" && input.slotIdB) {
-    slotB = await prisma.cageSlot.findUnique({ where: { id: input.slotIdB } });
-    if (!slotB || slotB.status !== "AVAILABLE") {
+    slotBResolved = await resolveSlot(input.slotIdB);
+    if (!slotBResolved || slotBResolved.status !== "AVAILABLE") {
       return { error: "The second lane is no longer available." };
     }
+  }
+
+  const materializedA = await materializeSlot(input.slotIdA, "BOOKED");
+  let materializedB = null;
+  if (input.bookingType === "BOTH_LANES" && input.slotIdB) {
+    materializedB = await materializeSlot(input.slotIdB, "BOOKED");
   }
 
   const pricingTier = input.bookingType === "BOTH_LANES" ? "DROPIN_BOTH" : "DROPIN_SINGLE";
@@ -157,8 +151,8 @@ export async function createDropInCheckout(input: CreateDropInInput) {
   const booking = await prisma.booking.create({
     data: {
       memberId: memberId ?? null,
-      slotIdA: slotA.id,
-      slotIdB: slotB?.id ?? null,
+      slotIdA: materializedA.id,
+      slotIdB: materializedB?.id ?? null,
       bookingType: input.bookingType,
       status: "PENDING",
       totalAmountCents: totalCents,
@@ -196,14 +190,14 @@ export async function createDropInCheckout(input: CreateDropInInput) {
     line_items: lineItems,
     metadata: {
       bookingId: booking.id,
-      slotIdA: slotA.id,
-      slotIdB: slotB?.id ?? "",
+      slotIdA: materializedA.id,
+      slotIdB: materializedB?.id ?? "",
       bookingType: input.bookingType,
       guestPhone: input.phone,
     },
     customer_email: customerEmail,
     success_url: `${appUrl}/book/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${appUrl}/book/${slotA.id}?type=${input.bookingType}${slotB ? `&slotB=${slotB.id}` : ""}`,
+    cancel_url: `${appUrl}/book/${materializedA.id}?type=${input.bookingType}${materializedB ? `&slotB=${materializedB.id}` : ""}`,
     expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
   });
 

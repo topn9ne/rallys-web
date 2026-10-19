@@ -154,7 +154,7 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
             ))}
             {slots.length === 0 && (
               <li className="px-6 py-8 text-center text-sm text-gray-500">
-                No upcoming sessions. Create slots below.
+                No upcoming sessions. Check operating hours.
               </li>
             )}
           </ul>

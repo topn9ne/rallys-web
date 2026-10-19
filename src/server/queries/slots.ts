@@ -1,26 +1,20 @@
 import { prisma } from "@/lib/prisma";
+import {
+  generateVirtualSlots,
+  getBookingWindow,
+  resolveSlot,
+  type SlotInfo,
+} from "@/server/services/virtualSlots";
 
-export async function getAllUpcomingSlots() {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const settings = await getSiteSettings();
-  const advanceDays = parseInt(settings.booking_advance_days ?? "30", 10);
-  const maxDate = new Date(today);
-  maxDate.setDate(maxDate.getDate() + advanceDays);
-
-  return prisma.cageSlot.findMany({
-    where: {
-      date: { gte: today, lte: maxDate },
-    },
-    orderBy: [{ date: "asc" }, { startTime: "asc" }, { lane: "asc" }],
-  });
+export async function getAllUpcomingSlots(
+  userType: "member" | "dropin" | "admin" = "dropin"
+): Promise<SlotInfo[]> {
+  const { startDate, endDate } = getBookingWindow(userType);
+  return generateVirtualSlots({ startDate, endDate });
 }
 
 export async function getSlotById(id: string) {
-  return prisma.cageSlot.findUnique({
-    where: { id },
-  });
+  return resolveSlot(id);
 }
 
 export async function getSlotPairForTime(date: Date, startTime: Date) {

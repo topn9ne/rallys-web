@@ -61,6 +61,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  serverExternalPackages: ["twilio"],
   experimental: {
     serverComponentsHmrCache: true,
     preloadEntriesOnStart: false,

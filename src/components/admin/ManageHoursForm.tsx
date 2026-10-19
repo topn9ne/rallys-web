@@ -1,0 +1,110 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { CardHeader, CardBody } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Clock, FloppyDisk } from "@phosphor-icons/react";
+import { updateOperatingHours } from "@/server/actions/operatingHours";
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+interface HoursRow {
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: string;
+  closeTime: string;
+}
+
+interface ManageHoursFormProps {
+  initialHours: HoursRow[];
+}
+
+export function ManageHoursForm({ initialHours }: ManageHoursFormProps) {
+  const [hours, setHours] = useState<HoursRow[]>(() =>
+    DAY_NAMES.map((_, i) => {
+      const existing = initialHours.find((h) => h.dayOfWeek === i);
+      return existing ?? { dayOfWeek: i, isOpen: false, openTime: "06:00", closeTime: "22:00" };
+    })
+  );
+  const [isPending, startTransition] = useTransition();
+  const [saved, setSaved] = useState(false);
+
+  function updateRow(dayOfWeek: number, patch: Partial<HoursRow>) {
+    setHours((prev) =>
+      prev.map((h) => (h.dayOfWeek === dayOfWeek ? { ...h, ...patch } : h))
+    );
+    setSaved(false);
+  }
+
+  function handleSave() {
+    startTransition(async () => {
+      await updateOperatingHours(hours);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    });
+  }
+
+  return (
+    <>
+      <CardHeader className="px-8 py-5">
+        <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
+          <Clock size={22} weight="duotone" color="#1B2A4A" />
+          Operating Hours
+        </h2>
+        <p className="mt-1 text-xs text-gray-500">
+          Set when cages are available. Slots auto-generate from these hours.
+        </p>
+      </CardHeader>
+
+      <CardBody className="space-y-3 px-8 pb-6">
+        {hours.map((row) => (
+          <div
+            key={row.dayOfWeek}
+            className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5"
+          >
+            <label className="flex w-24 shrink-0 items-center gap-2">
+              <input
+                type="checkbox"
+                checked={row.isOpen}
+                onChange={(e) => updateRow(row.dayOfWeek, { isOpen: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              <span className="text-sm font-semibold text-gray-700">
+                {DAY_NAMES[row.dayOfWeek].slice(0, 3)}
+              </span>
+            </label>
+
+            {row.isOpen ? (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="time"
+                  value={row.openTime}
+                  onChange={(e) => updateRow(row.dayOfWeek, { openTime: e.target.value })}
+                  className="rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                />
+                <span className="text-xs text-gray-400">to</span>
+                <input
+                  type="time"
+                  value={row.closeTime}
+                  onChange={(e) => updateRow(row.dayOfWeek, { closeTime: e.target.value })}
+                  className="rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                />
+              </div>
+            ) : (
+              <span className="text-sm text-gray-400">Closed</span>
+            )}
+          </div>
+        ))}
+
+        <Button
+          onClick={handleSave}
+          disabled={isPending}
+          className="mt-2 w-full"
+        >
+          <FloppyDisk size={16} weight="bold" />
+          {isPending ? "Saving..." : saved ? "Saved!" : "Save Hours"}
+        </Button>
+      </CardBody>
+    </>
+  );
+}

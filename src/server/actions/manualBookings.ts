@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authGuard";
 import { createAccessCode } from "@/server/services/seam";
 import { notifyBookingConfirmed } from "@/server/services/notify";
+import { resolveSlot, materializeSlot, pairedVirtualSlotId } from "@/server/services/virtualSlots";
 
 interface ManualBookingInput {
   slotId: string;
@@ -21,7 +22,7 @@ interface ManualBookingInput {
 export async function createManualBooking(input: ManualBookingInput) {
   await requireAdmin();
 
-  const slot = await prisma.cageSlot.findUnique({ where: { id: input.slotId } });
+  const slot = await resolveSlot(input.slotId);
   if (!slot) return { error: "Cage slot not found." };
   if (slot.status === "BLOCKED") return { error: "Cannot book a blocked slot." };
   if (slot.status === "BOOKED") return { error: "Slot is already booked." };
@@ -35,20 +36,31 @@ export async function createManualBooking(input: ManualBookingInput) {
     memberId = member.id;
   }
 
-  let slotIdB: string | null = null;
+  const materializedA = await materializeSlot(input.slotId, "BOOKED");
+
+  let materializedB = null;
   if (input.bookingType === "BOTH_LANES") {
-    const otherLane = slot.lane === "A" ? "B" : "A";
-    const paired = await prisma.cageSlot.findFirst({
-      where: {
-        lane: otherLane as any,
-        date: slot.date,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        status: "AVAILABLE",
-      },
-    });
-    if (!paired) return { error: `No available ${otherLane} lane slot at this time.` };
-    slotIdB = paired.id;
+    const pairedId = pairedVirtualSlotId(input.slotId);
+    if (pairedId) {
+      const pairedSlot = await resolveSlot(pairedId);
+      if (!pairedSlot || pairedSlot.status !== "AVAILABLE") {
+        return { error: `No available paired lane slot at this time.` };
+      }
+      materializedB = await materializeSlot(pairedId, "BOOKED");
+    } else {
+      const otherLane = slot.lane === "A" ? "B" : "A";
+      const paired = await prisma.cageSlot.findFirst({
+        where: {
+          lane: otherLane as any,
+          date: slot.date,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          status: "AVAILABLE",
+        },
+      });
+      if (!paired) return { error: `No available ${otherLane} lane slot at this time.` };
+      materializedB = await materializeSlot(paired.id, "BOOKED");
+    }
   }
 
   const booking = await prisma.booking.create({
@@ -58,8 +70,8 @@ export async function createManualBooking(input: ManualBookingInput) {
       guestEmail: memberId ? null : input.guestEmail?.toLowerCase().trim() || null,
       guestPhone: memberId ? null : input.guestPhone?.trim() || null,
       bookingType: input.bookingType as any,
-      slotIdA: input.slotId,
-      slotIdB,
+      slotIdA: materializedA.id,
+      slotIdB: materializedB?.id ?? null,
       status: "CONFIRMED",
       totalAmountCents: input.totalAmountCents,
       baseAmountCents: input.totalAmountCents,
@@ -67,17 +79,6 @@ export async function createManualBooking(input: ManualBookingInput) {
       notes: input.notes?.trim() || null,
     },
   });
-
-  await prisma.cageSlot.update({
-    where: { id: input.slotId },
-    data: { status: "BOOKED" },
-  });
-  if (slotIdB) {
-    await prisma.cageSlot.update({
-      where: { id: slotIdB },
-      data: { status: "BOOKED" },
-    });
-  }
 
   if (input.waiverSignedOffline) {
     await prisma.waiver.create({
@@ -105,15 +106,14 @@ export async function createManualBooking(input: ManualBookingInput) {
 
 export async function getSlotForManualBooking(slotId: string) {
   await requireAdmin();
-  return prisma.cageSlot.findUnique({
-    where: { id: slotId },
-    select: {
-      id: true,
-      lane: true,
-      status: true,
-      date: true,
-      startTime: true,
-      endTime: true,
-    },
-  });
+  const slot = await resolveSlot(slotId);
+  if (!slot) return null;
+  return {
+    id: slot.id,
+    lane: slot.lane,
+    status: slot.status,
+    date: slot.date,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+  };
 }

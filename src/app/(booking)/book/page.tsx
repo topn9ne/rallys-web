@@ -9,10 +9,21 @@ import { BookingCalendar } from "@/components/booking/BookingCalendar";
 export const metadata = { title: "Book a Cage | Rally's Indoor Training" };
 
 export default async function BookPage() {
-  const [slots, pricing, user] = await Promise.all([
-    getAllUpcomingSlots(),
+  const user = await getUser();
+
+  let userType: "member" | "dropin" = "dropin";
+  if (user) {
+    const { prisma } = await import("@/lib/prisma");
+    const member = await prisma.member.findUnique({
+      where: { id: user.id },
+      select: { subscriptionStatus: true },
+    });
+    if (member?.subscriptionStatus === "ACTIVE") userType = "member";
+  }
+
+  const [slots, pricing] = await Promise.all([
+    getAllUpcomingSlots(userType),
     getActivePricing(),
-    getUser(),
   ]);
 
   const todayKey = new Date().toISOString().split("T")[0];

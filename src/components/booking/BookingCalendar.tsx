@@ -5,12 +5,13 @@ import Link from "next/link";
 import { CaretLeft, CaretRight, CalendarBlank, List } from "@phosphor-icons/react";
 import { Badge } from "@/components/ui/Badge";
 import { formatTime, formatCents } from "@/lib/utils";
-import type { CageSlot, PricingConfig } from "@prisma/client";
+import type { PricingConfig } from "@prisma/client";
+import type { SlotInfo } from "@/server/services/virtualSlots";
 
 type Pricing = Record<string, PricingConfig>;
 
 interface BookingCalendarProps {
-  slots: CageSlot[];
+  slots: SlotInfo[];
   todayKey: string;
   pricing: Pricing;
   isDropIn?: boolean;
@@ -30,11 +31,11 @@ type TimeSlot = {
   time: string;
   startTime: Date;
   endTime: Date;
-  laneA?: CageSlot;
-  laneB?: CageSlot;
+  laneA?: SlotInfo;
+  laneB?: SlotInfo;
 };
 
-function groupByDateAndTime(slots: CageSlot[]) {
+function groupByDateAndTime(slots: SlotInfo[]) {
   const dateMap = new Map<string, Map<string, TimeSlot>>();
   for (const slot of slots) {
     const dateKey = toDateKey(new Date(slot.date));
@@ -367,7 +368,7 @@ function TimeSlotRows({
         const lanes = [
           ts.laneA?.status === "AVAILABLE" ? ts.laneA : null,
           ts.laneB?.status === "AVAILABLE" ? ts.laneB : null,
-        ].filter(Boolean) as CageSlot[];
+        ].filter(Boolean) as SlotInfo[];
 
         return lanes.map((slot) => (
           <li key={slot.id} className="px-6 py-4">
