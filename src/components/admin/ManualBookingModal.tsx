@@ -88,7 +88,7 @@ export function ManualBookingModal({ slotId, onClose, onSuccess }: Props) {
       <div className="relative z-10 flex h-full w-full max-w-lg flex-col bg-white shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
           <div className="flex items-center gap-2">
-            <UserPlus size={20} weight="duotone" color="#2B5CE6" />
+            <UserPlus size={20} weight="duotone" color="#1B2A4A" />
             <h2 className="font-extrabold text-gray-900">Manual Booking</h2>
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
@@ -110,11 +110,11 @@ export function ManualBookingModal({ slotId, onClose, onSuccess }: Props) {
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-            <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm">
+            <div className="rounded-xl border border-admin-primary/10 bg-admin-primary/5 px-4 py-3 text-sm">
               <p className="font-semibold text-brand-blue">
                 Lane {slot.lane}
               </p>
-              <p className="text-blue-600">
+              <p className="text-admin-primary">
                 {formatDateShort(slot.date)} &middot; {formatTimeShort(slot.startTime)} &ndash; {formatTimeShort(slot.endTime)}
               </p>
             </div>
@@ -267,7 +267,7 @@ export function ManualBookingModal({ slotId, onClose, onSuccess }: Props) {
             <button
               onClick={handleSubmit}
               disabled={pending}
-              className="flex items-center gap-2 rounded-lg bg-brand-blue px-5 py-2 text-sm font-extrabold uppercase tracking-wide text-white hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-brand-blue px-5 py-2 text-sm font-extrabold uppercase tracking-wide text-white hover:bg-brand-blue-dark disabled:opacity-50"
             >
               <UserPlus size={15} weight="duotone" />
               {pending ? "Creating..." : "Create Booking"}

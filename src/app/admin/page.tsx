@@ -202,7 +202,7 @@ export default async function AdminDashboard() {
         </div>
         <Link
           href="/admin/schedule"
-          className="inline-flex items-center justify-center gap-2 self-start rounded-[10px] bg-admin-accent px-5 py-3 font-display text-[13px] uppercase tracking-[1px] text-white shadow-[0_6px_16px_rgba(255,46,136,0.35)] transition-[filter] hover:brightness-110 md:self-auto"
+          className="inline-flex items-center justify-center gap-2 self-start rounded-[10px] bg-admin-accent px-5 py-3 font-display text-[13px] uppercase tracking-[1px] text-white shadow-[0_6px_16px_rgba(212,57,28,0.30)] transition-[filter] hover:brightness-110 md:self-auto"
         >
           <CalendarPlus size={15} weight="bold" color="white" />
           Manage Schedule
@@ -230,7 +230,7 @@ export default async function AdminDashboard() {
               <card.Icon
                 size={16}
                 weight="regular"
-                color={card.highlight ? "#ffffff" : "#4a7bff"}
+                color={card.highlight ? "#ffffff" : "#2d4a7a"}
               />
               {card.label}
             </div>
@@ -269,8 +269,8 @@ export default async function AdminDashboard() {
 
           {data.todaySlots.length === 0 ? (
             <div className="mt-[18px] rounded-[10px] border border-dashed border-admin-line px-5 py-10 text-center text-[13px] text-admin-text-sub">
-              <div className="mx-auto mb-3 grid h-[42px] w-[42px] place-items-center rounded-[10px] bg-[#f2f4fb]">
-                <CalendarBlank size={20} weight="regular" color="#2B5CE6" />
+              <div className="mx-auto mb-3 grid h-[42px] w-[42px] place-items-center rounded-[10px] bg-[#f0f2f5]">
+                <CalendarBlank size={20} weight="regular" color="#1B2A4A" />
               </div>
               No booked sessions today.
               <br />
@@ -294,8 +294,8 @@ export default async function AdminDashboard() {
                       i < data.todaySlots.length - 1 && "border-b border-admin-line"
                     )}
                   >
-                    <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef1fb]">
-                      <BaseballCap size={16} weight="regular" color="#2B5CE6" />
+                    <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef0f4]">
+                      <BaseballCap size={16} weight="regular" color="#1B2A4A" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-semibold tracking-[-0.1px] text-admin-ink">
@@ -345,8 +345,8 @@ export default async function AdminDashboard() {
                       i < data.recentBookings.length - 1 && "border-b border-admin-line"
                     )}
                   >
-                    <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef1fb]">
-                      <User size={16} weight="regular" color="#2B5CE6" />
+                    <div className="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-[#eef0f4]">
+                      <User size={16} weight="regular" color="#1B2A4A" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-semibold tracking-[-0.1px] text-admin-ink">

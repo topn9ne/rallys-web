@@ -70,7 +70,7 @@ export default async function PricingPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
-                  <card.Icon size={18} weight="duotone" color="#2B5CE6" />
+                  <card.Icon size={18} weight="duotone" color="#1B2A4A" />
                   {card.label}
                 </h2>
                 {card.config && (

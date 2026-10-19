@@ -94,14 +94,14 @@ export function AdminSidebar() {
                     expanded ? "gap-3 px-2" : "justify-center",
                     isActive
                       ? "bg-admin-primary text-white"
-                      : "text-admin-primary hover:bg-[#f2f4fb]"
+                      : "text-admin-primary hover:bg-[#f0f2f5]"
                   )}
                 >
                   <item.Icon
                     size={17}
                     weight="regular"
                     className="shrink-0"
-                    color={isActive ? "#ffffff" : "#2B5CE6"}
+                    color={isActive ? "#ffffff" : "#1B2A4A"}
                   />
                   {expanded && (
                     <span
@@ -124,7 +124,7 @@ export function AdminSidebar() {
                     <item.Icon
                       size={17}
                       weight="regular"
-                      color={isActive ? "#ffffff" : "#2B5CE6"}
+                      color={isActive ? "#ffffff" : "#1B2A4A"}
                       className="shrink-0"
                     />
                     <span
@@ -156,24 +156,24 @@ export function AdminSidebar() {
           <button
             onClick={() => setExpanded((v) => !v)}
             className={cn(
-              "flex h-9 w-full items-center rounded-lg text-admin-primary transition-colors hover:bg-[#f2f4fb]",
+              "flex h-9 w-full items-center rounded-lg text-admin-primary transition-colors hover:bg-[#f0f2f5]",
               expanded ? "gap-3 px-2" : "justify-center"
             )}
           >
             {expanded ? (
               <>
-                <CaretDoubleLeft size={17} weight="regular" color="#2B5CE6" className="shrink-0" />
+                <CaretDoubleLeft size={17} weight="regular" color="#1B2A4A" className="shrink-0" />
                 <span className="whitespace-nowrap text-sm font-semibold text-admin-ink">
                   Collapse
                 </span>
               </>
             ) : (
-              <CaretDoubleRight size={17} weight="regular" color="#2B5CE6" />
+              <CaretDoubleRight size={17} weight="regular" color="#1B2A4A" />
             )}
           </button>
           {!expanded && (
             <div className="pointer-events-none absolute left-0 top-0 z-50 flex h-9 -translate-x-1 items-center gap-2.5 whitespace-nowrap rounded-full bg-white pl-2 pr-4 opacity-0 shadow-lg transition-all duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100">
-              <CaretDoubleRight size={17} weight="regular" color="#2B5CE6" className="shrink-0" />
+              <CaretDoubleRight size={17} weight="regular" color="#1B2A4A" className="shrink-0" />
               <span className="text-sm font-semibold text-admin-ink">Expand</span>
             </div>
           )}

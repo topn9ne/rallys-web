@@ -82,7 +82,7 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
         {bookings.map((b) => (
           <li
             key={b.id}
-            className="flex items-start justify-between gap-3 px-4 py-4 cursor-pointer even:bg-gray-100 hover:bg-blue-50 active:bg-blue-50"
+            className="flex items-start justify-between gap-3 px-4 py-4 cursor-pointer even:bg-gray-100 hover:bg-admin-primary/5 active:bg-admin-primary/5"
             onClick={() => setSelectedId(b.id)}
           >
             <div className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
           {bookings.map((b) => (
             <tr
               key={b.id}
-              className="cursor-pointer even:bg-gray-100 hover:bg-blue-50"
+              className="cursor-pointer even:bg-gray-100 hover:bg-admin-primary/5"
               onClick={() => setSelectedId(b.id)}
             >
               <td className="px-5 py-3">
@@ -153,7 +153,7 @@ export function BookingsTable({ bookings, sort, dir }: Props) {
                 <button
                   onClick={() => setSelectedId(b.id)}
                   title="View booking"
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-line bg-[#f2f4fb] text-admin-primary transition-colors hover:bg-admin-primary hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-admin-line bg-[#f0f2f5] text-admin-primary transition-colors hover:bg-admin-primary hover:text-white"
                 >
                   <ArrowSquareOut size={14} weight="regular" />
                 </button>

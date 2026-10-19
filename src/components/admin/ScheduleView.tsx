@@ -118,7 +118,7 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
       <CardHeader>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
-            <BaseballCap size={22} weight="duotone" color="#2B5CE6" />
+            <BaseballCap size={22} weight="duotone" color="#1B2A4A" />
             Upcoming Sessions
           </h2>
           <div className="flex w-full overflow-hidden rounded-lg border border-gray-200 sm:w-auto">
@@ -207,7 +207,7 @@ export function ScheduleView({ slots }: { slots: Slot[] }) {
                   onClick={() => setSelectedDay(isSelected ? null : key)}
                   className={cn(
                     "min-h-16 bg-white p-1.5 text-left align-top transition-colors",
-                    isSelected && "bg-blue-50",
+                    isSelected && "bg-admin-primary/5",
                     !isSelected && daySlots.length > 0 && "hover:bg-gray-50"
                   )}
                 >
@@ -292,7 +292,7 @@ function SlotRow({ slot, showDate }: { slot: Slot; showDate: boolean }) {
           {isAvailable && (
             <button
               onClick={() => setManualOpen(true)}
-              className="group flex h-8 items-center gap-0 overflow-hidden rounded-lg pl-2 pr-2 text-brand-blue transition-all hover:bg-blue-50 hover:gap-1.5 hover:pr-3"
+              className="group flex h-8 items-center gap-0 overflow-hidden rounded-lg pl-2 pr-2 text-brand-blue transition-all hover:bg-admin-primary/5 hover:gap-1.5 hover:pr-3"
             >
               <UserPlus size={18} weight="duotone" className="shrink-0" />
               <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs font-semibold transition-all duration-200 group-hover:max-w-[80px]">

@@ -93,8 +93,7 @@ export function BookingFilters({ status, bookingType, dateFrom, dateTo, q }: Pro
       {hasFilters && (
         <a
           href="/admin/bookings"
-          style={{ backgroundColor: "rgb(30 58 138 / 0.5)" }}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-blue-400/60 px-4 py-2 text-xs font-extrabold tracking-widest text-blue-400 transition-colors hover:bg-blue-400 hover:border-blue-400 hover:text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-rally-red/60 bg-rally-red/10 px-4 py-2 text-xs font-extrabold tracking-widest text-rally-red transition-colors hover:bg-rally-red hover:border-rally-red hover:text-white"
         >
           <X size={15} />
           CLEAR

@@ -33,18 +33,18 @@
   --color-landing-accent: #E04020;
   --color-landing-ink: #1B2A4A;
 
-  /* Admin — kept from previous build */
-  --color-brand-blue: #2B5CE6;
-  --color-brand-blue-dark: #1e47c8;
-  --color-brand-orange: #E8722A;
-  --color-brand-orange-dark: #c95f1e;
-  --color-admin-ink: #0b1232;
-  --color-admin-bg-mid: #14225a;
-  --color-admin-primary: #2b5ce6;
-  --color-admin-primary-bright: #4a7bff;
-  --color-admin-accent: #ff2e88;
+  /* Admin — Rally's brand */
+  --color-brand-blue: #1B2A4A;
+  --color-brand-blue-dark: #12203d;
+  --color-brand-orange: #D4391C;
+  --color-brand-orange-dark: #b83019;
+  --color-admin-ink: #0f1a33;
+  --color-admin-bg-mid: #142240;
+  --color-admin-primary: #1B2A4A;
+  --color-admin-primary-bright: #2d4a7a;
+  --color-admin-accent: #D4391C;
   --color-admin-text-sub: #5b6684;
-  --color-admin-line: #e5e8f2;
+  --color-admin-line: #e5e8f0;
 }
 
 @media (prefers-color-scheme: dark) {

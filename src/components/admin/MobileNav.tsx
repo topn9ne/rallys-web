@@ -66,7 +66,7 @@ export function MobileNav() {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
-            <List size={20} weight="duotone" color="#2B5CE6" />
+            <List size={20} weight="duotone" color="#1B2A4A" />
             <span className="text-sm font-extrabold uppercase tracking-widest text-brand-blue">Menu</span>
           </div>
           <button
@@ -95,7 +95,7 @@ export function MobileNav() {
                     <Icon
                       size={20}
                       weight="duotone"
-                      color={active ? "white" : "#2B5CE6"}
+                      color={active ? "white" : "#1B2A4A"}
                     />
                     <span className="text-sm font-semibold">{label}</span>
                   </Link>
@@ -109,7 +109,7 @@ export function MobileNav() {
                 type="submit"
                 className="flex items-center gap-3 h-12 rounded-xl px-3 w-full text-gray-600 hover:bg-gray-100 transition-colors"
               >
-                <SignOut size={20} weight="duotone" color="#2B5CE6" />
+                <SignOut size={20} weight="duotone" color="#1B2A4A" />
                 <span className="text-sm font-semibold">Sign out</span>
               </button>
             </form>
@@ -129,7 +129,7 @@ export function MobileNav() {
                 active ? "text-brand-blue" : "text-gray-400"
               )}
             >
-              <Icon size={22} weight="duotone" color={active ? "#2B5CE6" : "#9ca3af"} />
+              <Icon size={22} weight="duotone" color={active ? "#1B2A4A" : "#9ca3af"} />
               <span className="text-[10px] font-semibold leading-none">{label}</span>
             </Link>
           );
@@ -141,7 +141,7 @@ export function MobileNav() {
             open ? "text-brand-blue" : "text-gray-400"
           )}
         >
-          <List size={22} weight="duotone" color={open ? "#2B5CE6" : "#9ca3af"} />
+          <List size={22} weight="duotone" color={open ? "#1B2A4A" : "#9ca3af"} />
           <span className="text-[10px] font-semibold leading-none">More</span>
         </button>
       </nav>

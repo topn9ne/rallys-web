@@ -17,7 +17,7 @@ export default async function NotificationsPage() {
           <Card>
             <CardHeader>
               <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
-                <Bell size={18} weight="duotone" color="#2B5CE6" />
+                <Bell size={18} weight="duotone" color="#1B2A4A" />
                 Notification Channels
               </h2>
               <p className="mt-1 text-sm text-gray-500">

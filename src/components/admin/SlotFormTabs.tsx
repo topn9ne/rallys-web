@@ -15,7 +15,7 @@ export function SlotFormTabs() {
       <CardHeader className="px-8 py-5">
         <div className="flex flex-col gap-3">
           <h2 className="flex items-center gap-2 font-extrabold text-brand-blue">
-            <CalendarPlus size={22} weight="duotone" color="#2B5CE6" />
+            <CalendarPlus size={22} weight="duotone" color="#1B2A4A" />
             Create Slots
           </h2>
 
