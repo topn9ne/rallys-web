@@ -17,7 +17,7 @@ export function Hero() {
       <div className="absolute inset-0 bg-navy/75" />
 
       <div className="relative mx-auto max-w-3xl text-center">
-        <div className="flex flex-col items-center gap-1 md:flex-row md:items-start md:justify-center md:gap-0">
+        <div className="flex flex-col items-center gap-1 [filter:drop-shadow(0_4px_12px_rgba(0,0,0,0.5))] md:flex-row md:items-start md:justify-center md:gap-0">
           <StartABlock
             className="h-12 w-auto sm:h-16 md:h-20 lg:h-28"
             fill="#ffffff"
