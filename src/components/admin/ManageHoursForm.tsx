@@ -60,9 +60,9 @@ export function ManageHoursForm({ initialHours }: ManageHoursFormProps) {
         {hours.map((row) => (
           <div
             key={row.dayOfWeek}
-            className="flex items-center gap-3 rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5"
+            className="rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5"
           >
-            <label className="flex w-24 shrink-0 items-center gap-2">
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={row.isOpen}
@@ -72,26 +72,27 @@ export function ManageHoursForm({ initialHours }: ManageHoursFormProps) {
               <span className="text-sm font-semibold text-gray-700">
                 {DAY_NAMES[row.dayOfWeek].slice(0, 3)}
               </span>
+              {!row.isOpen && (
+                <span className="ml-auto text-xs text-gray-400">Closed</span>
+              )}
             </label>
 
-            {row.isOpen ? (
-              <div className="flex items-center gap-1.5">
+            {row.isOpen && (
+              <div className="mt-1.5 flex items-center gap-1.5 pl-6">
                 <input
                   type="time"
                   value={row.openTime}
                   onChange={(e) => updateRow(row.dayOfWeek, { openTime: e.target.value })}
-                  className="rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                  className="w-full min-w-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
                 />
-                <span className="text-xs text-gray-400">to</span>
+                <span className="shrink-0 text-xs text-gray-400">to</span>
                 <input
                   type="time"
                   value={row.closeTime}
                   onChange={(e) => updateRow(row.dayOfWeek, { closeTime: e.target.value })}
-                  className="rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                  className="w-full min-w-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
                 />
               </div>
-            ) : (
-              <span className="text-sm text-gray-400">Closed</span>
             )}
           </div>
         ))}
