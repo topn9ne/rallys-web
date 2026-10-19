@@ -19,7 +19,7 @@ export function WhatYouGet() {
     <section className="bg-white px-6 py-24 md:px-14">
       <div className="mx-auto max-w-3xl">
         <div className="text-xl text-gold">
-          <span className="font-condensed font-extrabold uppercase">What You</span> <span className="font-script">Get</span>
+          <span className="font-condensed font-extrabold uppercase">What You</span> <span className="font-script text-3xl">Get</span>
         </div>
         <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl">
           Just the Cage Time
