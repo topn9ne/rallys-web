@@ -2,8 +2,8 @@ export function Story() {
   return (
     <section id="the-story" className="bg-white px-6 py-24 md:px-14">
       <div className="mx-auto max-w-3xl">
-        <div className="font-script text-xl text-gold">
-          The Story
+        <div className="text-xl text-gold">
+          The <span className="font-script">Story</span>
         </div>
         <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl lg:text-[56px]">
           Get Your Reps

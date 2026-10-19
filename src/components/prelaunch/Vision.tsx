@@ -2,8 +2,8 @@ export function Vision() {
   return (
     <section className="bg-navy px-6 py-24 md:px-14">
       <div className="mx-auto max-w-3xl text-center">
-        <div className="font-script text-xl text-gold">
-          The Vision
+        <div className="text-xl text-gold">
+          The <span className="font-script">Vision</span>
         </div>
         <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-white sm:text-5xl lg:text-[56px]">
           Even a Bunt Can

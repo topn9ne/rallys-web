@@ -25,8 +25,8 @@ export function HowItWorks() {
   return (
     <section id="how-it-works" className="bg-navy px-6 py-24 md:px-14">
       <div className="mx-auto max-w-4xl">
-        <div className="font-script text-xl text-gold">
-          How It Works
+        <div className="text-xl text-gold">
+          How It <span className="font-script">Works</span>
         </div>
         <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-white sm:text-5xl lg:text-[56px]">
           Book. Show Up. Swing.
