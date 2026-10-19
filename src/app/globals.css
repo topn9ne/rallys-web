@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Rallington Script";
+  src: url("../fonts/RallingtonScript.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -10,7 +16,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-barlow), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-barlow), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-script: var(--font-rallington), cursive;
+  --font-script: "Rallington Script", cursive;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Rally's brand */
