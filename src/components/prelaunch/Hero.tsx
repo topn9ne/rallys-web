@@ -1,3 +1,4 @@
+import { StartABlock } from "@/components/ui/StartABlock";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { WaitlistForm } from "./WaitlistForm";
 
@@ -5,8 +6,17 @@ export function Hero() {
   return (
     <section className="relative bg-navy px-6 pb-20 pt-20 md:px-14 md:pt-28">
       <div className="mx-auto max-w-3xl text-center">
-        <Wordmark className="mx-auto h-16 w-auto sm:h-24 lg:h-32" fill="#ffffff" />
-        <h1 className="sr-only">Rally&apos;s Indoor Training</h1>
+        <div className="flex flex-col items-center gap-2 sm:gap-3">
+          <StartABlock
+            className="h-8 w-auto sm:h-10 lg:h-14"
+            fill="#ffffff"
+          />
+          <Wordmark
+            className="h-16 w-auto sm:h-24 lg:h-32"
+            gradient={{ from: "#df4226", to: "#ce232a", angle: 90 }}
+          />
+        </div>
+        <h1 className="sr-only">Start a Rally&apos;s</h1>
 
         <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
           Self-service batting cages. Coming to Hastings.
