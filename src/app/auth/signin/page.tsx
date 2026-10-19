@@ -62,7 +62,7 @@ function SignInContent() {
       password,
       options: {
         data: { name, phone },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(callbackUrl)}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/confirmed")}`,
       },
     });
 
