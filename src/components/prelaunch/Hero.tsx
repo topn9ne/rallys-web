@@ -8,11 +8,11 @@ export function Hero() {
       <div className="mx-auto max-w-3xl text-center">
         <div className="flex flex-col items-center gap-1 md:flex-row md:items-start md:justify-center md:gap-0">
           <StartABlock
-            className="h-12 w-auto sm:h-14 md:h-16 lg:h-20"
+            className="h-12 w-auto sm:h-16 md:h-20 lg:h-28"
             fill="#ffffff"
           />
           <RallyScript
-            className="h-24 w-auto sm:h-28 md:mt-4 md:h-36 lg:mt-5 lg:h-44"
+            className="h-20 w-auto sm:h-24 md:-ml-6 md:mt-1 md:h-28 lg:-ml-8 lg:mt-2 lg:h-36"
             gradient={{ from: "#df4226", to: "#ce232a", angle: 90 }}
           />
         </div>
