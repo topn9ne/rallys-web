@@ -138,7 +138,7 @@ function SignInContent() {
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
           />
-          <Button type="submit" variant="primary" className="w-full" disabled={loading}>
+          <Button type="submit" variant="secondary" className="w-full" disabled={loading}>
             {loading
               ? "Please wait..."
               : mode === "signin"
@@ -155,7 +155,7 @@ function SignInContent() {
             <button
               type="button"
               onClick={() => { setMode("signup"); setError(""); setMessage(""); }}
-              className="font-medium text-admin-primary hover:underline"
+              className="font-semibold text-brand-blue hover:text-brand-orange"
             >
               Create an account
             </button>
@@ -166,7 +166,7 @@ function SignInContent() {
             <button
               type="button"
               onClick={() => { setMode("signin"); setError(""); setMessage(""); }}
-              className="font-medium text-admin-primary hover:underline"
+              className="font-semibold text-brand-blue hover:text-brand-orange"
             >
               Sign in
             </button>
@@ -176,9 +176,9 @@ function SignInContent() {
 
       <p className="text-center text-xs text-gray-400">
         By continuing, you agree to our{" "}
-        <a href="/terms" className="hover:underline">Terms</a>{" "}
+        <a href="/terms" className="text-gray-500 hover:text-brand-blue hover:underline">Terms</a>{" "}
         and{" "}
-        <a href="/privacy" className="hover:underline">Privacy Policy</a>.
+        <a href="/privacy" className="text-gray-500 hover:text-brand-blue hover:underline">Privacy Policy</a>.
       </p>
     </AuthCard>
   );
