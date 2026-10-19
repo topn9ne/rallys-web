@@ -61,9 +61,7 @@ export function AdminSidebar() {
           expanded ? "gap-2 px-1 pb-2" : "justify-center pb-1"
         )}
       >
-        <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-admin-primary">
-          <img src="/logo-r-stroked.svg" alt="Rally's" className="h-6 w-6" />
-        </div>
+        <img src="/logo-r.svg" alt="Rally's" className="h-9 w-9 shrink-0" />
         {expanded && (
           <div className="overflow-hidden">
             <div className="whitespace-nowrap text-sm font-semibold leading-tight text-admin-ink">
