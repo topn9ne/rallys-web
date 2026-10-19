@@ -16,7 +16,7 @@ export function Nav() {
 
   return (
     <header
-      className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 transition-colors duration-300 md:px-14"
+      className="fixed inset-x-0 top-0 z-50 flex items-center justify-between px-6 py-3 transition-colors duration-300 md:px-14"
       style={{
         borderBottom: "1px solid rgba(255,255,255,0.08)",
         background: scrolled
