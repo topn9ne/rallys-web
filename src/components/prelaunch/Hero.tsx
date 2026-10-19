@@ -4,8 +4,19 @@ import { WaitlistForm } from "./WaitlistForm";
 
 export function Hero() {
   return (
-    <section className="relative bg-navy px-6 pb-20 pt-20 md:px-14 md:pt-28">
-      <div className="mx-auto max-w-3xl text-center">
+    <section className="relative overflow-hidden bg-navy px-6 pb-20 pt-20 md:px-14 md:pt-28">
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 h-full w-full object-cover"
+      >
+        <source src="/hero-video.mp4" type="video/mp4" />
+      </video>
+      <div className="absolute inset-0 bg-navy/75" />
+
+      <div className="relative mx-auto max-w-3xl text-center">
         <div className="flex flex-col items-center gap-1 md:flex-row md:items-start md:justify-center md:gap-0">
           <StartABlock
             className="h-12 w-auto sm:h-16 md:h-20 lg:h-28"
