@@ -5,10 +5,10 @@ export function Vision() {
         <div className="text-xl text-gold">
           <span className="font-condensed font-extrabold uppercase">The</span> <span className="font-script text-[26px] pt-1 inline-block">Vision</span>
         </div>
-        <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-white sm:text-5xl lg:text-[56px]">
-          Even a Bunt Can
+        <h2 className="mt-3 text-4xl uppercase leading-[0.95] tracking-[-1px] text-white sm:text-5xl lg:text-[56px]">
+          <span className="font-semibold">Even a Bunt Can</span>
           <br />
-          <span className="text-rally-red-bright">Start a Rally.</span>
+          <span className="font-black text-rally-red-bright">Start a Rally.</span>
         </h2>
 
         <div className="mx-auto mt-10 max-w-2xl space-y-6 text-lg leading-relaxed text-white/70">

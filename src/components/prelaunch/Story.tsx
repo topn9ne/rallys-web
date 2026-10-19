@@ -5,8 +5,9 @@ export function Story() {
         <div className="text-xl text-gold">
           <span className="font-condensed font-extrabold uppercase">The</span> <span className="font-script text-[26px] pt-1 inline-block">Story</span>
         </div>
-        <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl lg:text-[56px]">
-          Get Your Reps
+        <h2 className="mt-3 text-4xl uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl lg:text-[56px]">
+          <span className="font-semibold">Get Your</span>{" "}
+          <span className="font-black">Reps</span>
         </h2>
 
         <div className="mt-10 space-y-6 text-lg leading-relaxed text-navy/80">

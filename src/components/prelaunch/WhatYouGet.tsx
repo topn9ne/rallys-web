@@ -21,8 +21,9 @@ export function WhatYouGet() {
         <div className="text-xl text-gold">
           <span className="font-condensed font-extrabold uppercase">What You</span> <span className="font-script text-[26px] pt-1 inline-block">Get</span>
         </div>
-        <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl">
-          Just the Cage Time
+        <h2 className="mt-3 text-4xl uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl">
+          <span className="font-semibold">Just the</span>{" "}
+          <span className="font-black">Cage Time</span>
         </h2>
 
         <ul className="mt-12 space-y-6">

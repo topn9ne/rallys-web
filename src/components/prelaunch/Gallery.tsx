@@ -18,8 +18,9 @@ export function Gallery() {
         <div className="text-xl text-gold">
           <span className="font-condensed font-extrabold uppercase">The</span> <span className="font-script text-[26px] pt-1 inline-block">Build</span>
         </div>
-        <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl">
-          From Shop Bay to Batting Cage
+        <h2 className="mt-3 text-4xl uppercase leading-[0.95] tracking-[-1px] text-navy sm:text-5xl">
+          <span className="font-semibold">From Shop Bay to</span>{" "}
+          <span className="font-black">Batting Cage</span>
         </h2>
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

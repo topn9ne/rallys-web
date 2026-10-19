@@ -28,8 +28,9 @@ export function HowItWorks() {
         <div className="text-xl text-gold">
           <span className="font-condensed font-extrabold uppercase">How It</span> <span className="font-script text-[26px] pt-1 inline-block">Works</span>
         </div>
-        <h2 className="mt-3 text-4xl font-bold uppercase leading-[0.95] tracking-[-1px] text-white sm:text-5xl lg:text-[56px]">
-          Book. Show Up. Swing.
+        <h2 className="mt-3 text-4xl uppercase leading-[0.95] tracking-[-1px] text-white sm:text-5xl lg:text-[56px]">
+          <span className="font-semibold">Book. Show Up.</span>{" "}
+          <span className="font-black">Swing.</span>
         </h2>
 
         <div className="mt-14 grid gap-10 sm:grid-cols-2">
