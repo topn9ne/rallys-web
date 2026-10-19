@@ -17,19 +17,14 @@ export function Nav() {
   return (
     <header
       className="sticky top-0 z-50 flex items-center justify-between px-6 py-3 transition-colors duration-300 md:px-14"
-      style={
-        scrolled
-          ? {
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
-              background: "rgba(27,42,74,0.92)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }
-          : {
-              borderBottom: "1px solid transparent",
-              background: "transparent",
-            }
-      }
+      style={{
+        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        background: scrolled
+          ? "rgba(12,22,45,0.88)"
+          : "rgba(12,22,45,0.55)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
     >
       <Link href="/" className="block">
         <Wordmark className="h-8 w-auto md:h-10" fill="#ffffff" />
