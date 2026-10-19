@@ -6,13 +6,13 @@ export function Hero() {
   return (
     <section className="relative bg-navy px-6 pb-20 pt-20 md:px-14 md:pt-28">
       <div className="mx-auto max-w-3xl text-center">
-        <div className="flex flex-col items-center gap-1 md:flex-row md:items-end md:justify-center md:gap-0">
+        <div className="flex flex-col items-center gap-1 md:flex-row md:items-start md:justify-center md:gap-0">
           <StartABlock
             className="h-12 w-auto sm:h-16 md:h-20 lg:h-28"
             fill="#ffffff"
           />
           <Wordmark
-            className="h-24 w-auto sm:h-32 md:-ml-5 md:h-40 lg:-ml-7 lg:h-48"
+            className="h-24 w-auto sm:h-32 md:-ml-2 md:mt-6 md:h-40 lg:-ml-3 lg:mt-8 lg:h-48"
             gradient={{ from: "#df4226", to: "#ce232a", angle: 90 }}
           />
         </div>
