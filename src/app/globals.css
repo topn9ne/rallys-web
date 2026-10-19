@@ -10,6 +10,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-barlow), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-display: var(--font-barlow), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-script: var(--font-rallington), cursive;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
   /* Rally's brand */
