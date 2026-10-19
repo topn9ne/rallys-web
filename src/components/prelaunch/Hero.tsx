@@ -30,7 +30,8 @@ export function Hero() {
         <h1 className="sr-only">Start a Rally&apos;s</h1>
 
         <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-          Indoor training for baseball and softball. Coming to Hastings.
+          Indoor training for baseball and softball.{" "}
+          <span className="font-bold text-white">Coming to Hastings.</span>
         </p>
 
         <p className="mt-10 text-sm font-semibold uppercase tracking-[1px] text-white/60">
