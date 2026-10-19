@@ -13,14 +13,13 @@ export function Vision() {
 
         <div className="mx-auto mt-10 max-w-2xl space-y-6 text-lg leading-relaxed text-white/70">
           <p>
-            This is where it starts. A cage in a shop bay. Two lanes and a
-            pitching machine. It&apos;s not the final destination&nbsp;&mdash;
-            it&apos;s the opening play.
+            This is where it starts. Two lanes in a shop bay. It&apos;s not the
+            final out&nbsp;&mdash; it&apos;s the first pitch.
           </p>
           <p>
-            Your membership isn&apos;t just cage time. It&apos;s a vote for what
-            this becomes. More cages. More space. More programming. The people
-            who show up first are the ones who build it.
+            Your membership isn&apos;t just training time. It&apos;s a vote for
+            what this becomes. More space. More lanes. More programming. The
+            players who show up first are the ones who start the rally.
           </p>
         </div>
       </div>
