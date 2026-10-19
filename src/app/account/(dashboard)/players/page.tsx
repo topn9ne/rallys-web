@@ -12,7 +12,10 @@ export default async function PlayersPage() {
 
   const players = await prisma.player.findMany({
     where: { memberId: user.id },
-    include: { hours: { select: { totalMinutes: true } } },
+    include: {
+      hours: { select: { totalMinutes: true, lastSessionAt: true } },
+      milestones: { select: { milestoneKey: true, achievedAt: true }, orderBy: { achievedAt: "desc" } },
+    },
     orderBy: { createdAt: "asc" },
   });
 
@@ -24,6 +27,8 @@ export default async function PlayersPage() {
     school: p.school,
     travelTeam: p.travelTeam,
     totalMinutes: p.hours?.totalMinutes ?? 0,
+    lastSessionAt: p.hours?.lastSessionAt?.toISOString() ?? null,
+    milestones: p.milestones.map((m: typeof p.milestones[number]) => m.milestoneKey),
   }));
 
   return (

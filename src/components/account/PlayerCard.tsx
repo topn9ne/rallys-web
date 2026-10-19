@@ -13,6 +13,21 @@ interface Player {
   school: string | null;
   travelTeam: string | null;
   totalMinutes: number;
+  lastSessionAt: string | null;
+  milestones: string[];
+}
+
+const MILESTONE_LABELS: Record<string, string> = {
+  "10hr": "10 hrs",
+  "25hr": "25 hrs",
+  "50hr": "50 hrs",
+  "100hr": "100 hrs",
+};
+
+function getMilestoneLabel(key: string) {
+  if (MILESTONE_LABELS[key]) return MILESTONE_LABELS[key];
+  if (key.startsWith("cage_rats_")) return `Cage Rat ${key.replace("cage_rats_", "")}`;
+  return key;
 }
 
 export function PlayerCard({ player }: { player: Player }) {
@@ -43,6 +58,18 @@ export function PlayerCard({ player }: { player: Player }) {
             <p className="mt-1 text-xs font-medium text-brand-blue">
               {hours}h {mins > 0 ? `${mins}m` : ""} cage time
             </p>
+          )}
+          {player.milestones.length > 0 && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {player.milestones.map((key) => (
+                <span
+                  key={key}
+                  className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700"
+                >
+                  {getMilestoneLabel(key)}
+                </span>
+              ))}
+            </div>
           )}
         </div>
         <div className="flex gap-1">

@@ -16,6 +16,7 @@ interface CreateBookingInput {
   phone: string;
   smsOptIn: boolean;
   notes?: string;
+  playerIds?: string[];
 }
 
 export async function createBooking(input: CreateBookingInput) {
@@ -85,6 +86,21 @@ export async function createBooking(input: CreateBookingInput) {
       notes: input.notes ?? null,
     },
   });
+
+  if (input.playerIds && input.playerIds.length > 0) {
+    const ownedPlayers = await prisma.player.findMany({
+      where: { id: { in: input.playerIds }, memberId: user.id },
+      select: { id: true },
+    });
+    if (ownedPlayers.length > 0) {
+      await prisma.bookingPlayer.createMany({
+        data: ownedPlayers.map((p) => ({
+          bookingId: booking.id,
+          playerId: p.id,
+        })),
+      });
+    }
+  }
 
   try {
     const { pin } = await createAccessCode(booking.id);

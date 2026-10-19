@@ -39,6 +39,7 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
   let isMember = false;
   let memberName: string | undefined;
   let memberPhone: string | undefined;
+  let memberPlayers: { id: string; name: string }[] = [];
 
   if (isLoggedIn) {
     const member = await prisma.member.findUnique({
@@ -50,6 +51,13 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
       memberName = member.name ?? user.user_metadata?.name ?? undefined;
       memberPhone = member.phone ?? undefined;
     }
+
+    const players = await prisma.player.findMany({
+      where: { memberId: user.id },
+      select: { id: true, name: true },
+      orderBy: { createdAt: "asc" },
+    });
+    memberPlayers = players;
   }
 
   const pricingTier = bookingType === "BOTH_LANES"
@@ -124,6 +132,7 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
           isMember={isMember}
           memberName={memberName ?? user?.email}
           memberPhone={memberPhone}
+          players={memberPlayers}
         />
       </div>
     </>

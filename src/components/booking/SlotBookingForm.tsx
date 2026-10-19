@@ -7,6 +7,11 @@ import { formatCents } from "@/lib/utils";
 import { createBooking, createDropInCheckout } from "@/server/actions/booking";
 import type { CageSlot } from "@prisma/client";
 
+interface PlayerOption {
+  id: string;
+  name: string;
+}
+
 interface SlotBookingFormProps {
   slotA: CageSlot;
   slotB?: CageSlot;
@@ -17,6 +22,7 @@ interface SlotBookingFormProps {
   isMember: boolean;
   memberName?: string;
   memberPhone?: string;
+  players?: PlayerOption[];
 }
 
 export function SlotBookingForm({
@@ -29,6 +35,7 @@ export function SlotBookingForm({
   isMember,
   memberName,
   memberPhone,
+  players = [],
 }: SlotBookingFormProps) {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
@@ -36,8 +43,17 @@ export function SlotBookingForm({
   const [phone, setPhone] = useState(memberPhone ?? "");
   const [smsOptIn, setSmsOptIn] = useState(!!memberPhone);
   const [notes, setNotes] = useState("");
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(
+    players.map((p) => p.id),
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  function togglePlayer(id: string) {
+    setSelectedPlayerIds((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id],
+    );
+  }
 
   const taxAmount = Math.round(priceCents * (taxRatePercent / 100));
   const total = priceCents + taxAmount;
@@ -56,6 +72,7 @@ export function SlotBookingForm({
             phone,
             smsOptIn,
             notes: notes || undefined,
+            playerIds: selectedPlayerIds.length > 0 ? selectedPlayerIds : undefined,
           });
           if (result?.error) {
             setSubmitError(result.error);
@@ -194,6 +211,45 @@ export function SlotBookingForm({
               Send me text message reminders about my booking. Msg &amp; data rates may apply.
             </span>
           </label>
+        </div>
+      )}
+
+      {/* Player selection (members with players, single-lane only) */}
+      {isLoggedIn && isMember && players.length > 0 && bookingType === "SINGLE_LANE" && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-1 font-semibold text-gray-900">Who&apos;s hitting?</h2>
+          <p className="mb-3 text-xs text-gray-500">
+            Select the players for this session to track their Cage Rats hours.
+          </p>
+          <div className="space-y-2">
+            {players.map((player) => (
+              <label key={player.id} className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={selectedPlayerIds.includes(player.id)}
+                  onChange={() => togglePlayer(player.id)}
+                  className="h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+                />
+                <span className="text-sm text-gray-700">{player.name}</span>
+              </label>
+            ))}
+          </div>
+          {selectedPlayerIds.length === 0 && (
+            <p className="mt-2 text-xs text-amber-600">
+              No players selected — cage time won&apos;t be tracked for this session.
+            </p>
+          )}
+        </div>
+      )}
+
+      {isLoggedIn && isMember && players.length === 0 && bookingType === "SINGLE_LANE" && (
+        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
+          <p className="text-sm text-gray-500">
+            <a href="/account/players" className="font-medium text-brand-blue hover:underline">
+              Add players
+            </a>{" "}
+            to track Cage Rats hours for this session.
+          </p>
         </div>
       )}
 
