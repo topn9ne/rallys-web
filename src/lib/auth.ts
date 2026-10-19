@@ -26,12 +26,26 @@ export async function requireUser(callbackUrl = "/account/bookings") {
 }
 
 /**
- * Get the Member record for the current user. Returns null if not found.
+ * Get the Member record for the current user, creating it if it doesn't exist.
+ * Returns null only if the user is not authenticated.
  */
 export async function getMember() {
   const user = await getUser();
   if (!user) return null;
-  return prisma.member.findUnique({ where: { id: user.id } });
+
+  const existing = await prisma.member.findUnique({ where: { id: user.id } });
+  if (existing) return existing;
+
+  return prisma.member.create({
+    data: {
+      id: user.id,
+      name: user.user_metadata?.name ?? "",
+      email: user.email ?? "",
+      phone: user.user_metadata?.phone ?? "",
+      tier: "FAMILY",
+      subscriptionStatus: "NONE",
+    },
+  });
 }
 
 /**

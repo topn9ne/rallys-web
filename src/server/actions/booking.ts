@@ -30,6 +30,21 @@ export async function createBooking(input: CreateBookingInput) {
     return { error: "Active membership required. Subscribe or use drop-in booking." };
   }
 
+  const maxBookingsSetting = await prisma.siteSetting.findUnique({
+    where: { key: "max_active_bookings" },
+  });
+  const maxBookings = parseInt(maxBookingsSetting?.value ?? "5", 10);
+
+  const activeCount = await prisma.booking.count({
+    where: {
+      memberId: user.id,
+      status: { in: ["CONFIRMED", "PENDING"] },
+    },
+  });
+  if (activeCount >= maxBookings) {
+    return { error: `You can have up to ${maxBookings} active bookings. Cancel an existing booking to make room.` };
+  }
+
   const allowed = rateLimit(`booking:${user.id}`, { limit: 5, windowSecs: 60 });
   if (!allowed) return { error: "Too many requests. Please wait a moment." };
 
@@ -225,7 +240,21 @@ export async function cancelBooking(bookingId: string) {
     return { error: "Only confirmed bookings can be cancelled." };
   }
 
-  if (booking.stripeSessionId && booking.totalAmountCents > 0) {
+  const cancelDeadlineSetting = await prisma.siteSetting.findUnique({
+    where: { key: "cancellation_deadline_hours" },
+  });
+  const deadlineHours = parseInt(cancelDeadlineSetting?.value ?? "2", 10);
+
+  const slotA = await prisma.cageSlot.findUnique({
+    where: { id: booking.slotIdA },
+    select: { startTime: true },
+  });
+  const hoursUntilStart = slotA
+    ? (slotA.startTime.getTime() - Date.now()) / (1000 * 60 * 60)
+    : Infinity;
+  const withinDeadline = hoursUntilStart < deadlineHours;
+
+  if (booking.stripeSessionId && booking.totalAmountCents > 0 && !withinDeadline) {
     try {
       const stripeSession = await stripe.checkout.sessions.retrieve(booking.stripeSessionId);
       if (stripeSession.payment_intent) {

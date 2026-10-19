@@ -11,10 +11,6 @@
     {
       "path": "/api/cron/slot-status",
       "schedule": "*/5 * * * *"
-    },
-    {
-      "path": "/api/cron/generate-slots",
-      "schedule": "0 6 * * *"
     }
   ]
 }

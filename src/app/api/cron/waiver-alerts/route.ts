@@ -28,13 +28,14 @@ export async function GET(req: NextRequest) {
 
   for (const waiver of unsigned) {
     const phone = waiver.booking?.guestPhone ?? waiver.booking?.member?.phone;
-    if (!phone) continue;
+    const bookingId = waiver.bookingId;
+    if (!phone || !bookingId) continue;
 
     try {
       await twilioClient.messages.create({
         from: getTwilioFrom(),
         to: phone,
-        body: `Rally's reminder: Please sign your waiver before your session. ${appUrl}/waiver/${waiver.id}`,
+        body: `Rally's reminder: Please sign your waiver before your session. ${appUrl}/waiver/${bookingId}`,
       });
       sent++;
     } catch (err) {
