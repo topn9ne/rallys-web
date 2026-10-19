@@ -78,20 +78,25 @@ export function ManageHoursForm({ initialHours }: ManageHoursFormProps) {
             </label>
 
             {row.isOpen && (
-              <div className="mt-1.5 flex items-center gap-1.5 pl-6">
-                <input
-                  type="time"
-                  value={row.openTime}
-                  onChange={(e) => updateRow(row.dayOfWeek, { openTime: e.target.value })}
-                  className="w-full min-w-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
-                />
-                <span className="shrink-0 text-xs text-gray-400">to</span>
-                <input
-                  type="time"
-                  value={row.closeTime}
-                  onChange={(e) => updateRow(row.dayOfWeek, { closeTime: e.target.value })}
-                  className="w-full min-w-0 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
-                />
+              <div className="mt-2 space-y-1.5 pl-6">
+                <div>
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">Open</span>
+                  <input
+                    type="time"
+                    value={row.openTime}
+                    onChange={(e) => updateRow(row.dayOfWeek, { openTime: e.target.value })}
+                    className="mt-0.5 block w-full rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                  />
+                </div>
+                <div>
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">Close</span>
+                  <input
+                    type="time"
+                    value={row.closeTime}
+                    onChange={(e) => updateRow(row.dayOfWeek, { closeTime: e.target.value })}
+                    className="mt-0.5 block w-full rounded-md border border-gray-200 px-2 py-1.5 text-sm text-gray-700 focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+                  />
+                </div>
               </div>
             )}
           </div>
