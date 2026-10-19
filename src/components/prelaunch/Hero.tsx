@@ -30,16 +30,16 @@ export function Hero() {
         <h1 className="sr-only">Start a Rally&apos;s</h1>
 
         <p className="mx-auto mt-8 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl">
-          Self-service batting cages. Coming to Hastings.
+          Indoor training for baseball and softball. Coming to Hastings.
         </p>
 
-        <div className="mt-10 flex justify-center">
+        <p className="mt-10 text-sm font-semibold uppercase tracking-[1px] text-white/60">
+          Be first through the door &rarr;
+        </p>
+
+        <div className="mt-4 flex justify-center">
           <WaitlistForm variant="dark" />
         </div>
-
-        <p className="mt-4 text-sm text-white/40">
-          Get notified when we open. No spam. Just a heads up.
-        </p>
       </div>
     </section>
   );
