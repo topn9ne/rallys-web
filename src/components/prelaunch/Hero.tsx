@@ -4,7 +4,7 @@ import { WaitlistForm } from "./WaitlistForm";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-navy px-6 pb-20 pt-20 md:px-14 md:pt-28">
+    <section className="relative overflow-hidden bg-navy px-6 pb-20 pt-28 md:px-14 md:pt-36">
       <video
         autoPlay
         loop
