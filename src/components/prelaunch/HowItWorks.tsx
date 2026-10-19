@@ -2,7 +2,7 @@ const STEPS = [
   {
     num: "01",
     title: "Book online",
-    desc: "Pick your lane, date, and time. Done in 30 seconds.",
+    desc: "Pick your time. Done in 30 seconds.",
   },
   {
     num: "02",
@@ -11,13 +11,13 @@ const STEPS = [
   },
   {
     num: "03",
-    title: "Walk in and hit",
-    desc: "Punch the code, grab your lane, and swing. No staff. No waiting.",
+    title: "Walk in and train",
+    desc: "Punch the code, set up your lane, and get to work. No staff. No waiting.",
   },
   {
     num: "04",
     title: "That’s it",
-    desc: "When your time’s up, the code expires. Lock up and head out.",
+    desc: "When your time’s up, the code expires. Pack up and head out.",
   },
 ];
 
