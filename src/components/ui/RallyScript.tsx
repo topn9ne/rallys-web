@@ -16,7 +16,7 @@ export function RallyScript({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="395 15 437 225"
+      viewBox="390 0 442 240"
       className={className}
       aria-hidden="true"
     >
