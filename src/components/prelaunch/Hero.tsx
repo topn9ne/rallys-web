@@ -1,5 +1,5 @@
+import { RallyScript } from "@/components/ui/RallyScript";
 import { StartABlock } from "@/components/ui/StartABlock";
-import { Wordmark } from "@/components/ui/Wordmark";
 import { WaitlistForm } from "./WaitlistForm";
 
 export function Hero() {
@@ -11,7 +11,7 @@ export function Hero() {
             className="h-12 w-auto sm:h-16 md:h-20 lg:h-28"
             fill="#ffffff"
           />
-          <Wordmark
+          <RallyScript
             className="h-24 w-auto sm:h-32 md:-ml-2 md:mt-6 md:h-40 lg:-ml-3 lg:mt-8 lg:h-48"
             gradient={{ from: "#df4226", to: "#ce232a", angle: 90 }}
           />
