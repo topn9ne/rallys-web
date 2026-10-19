@@ -43,6 +43,12 @@ export function Nav() {
         >
           The Story
         </Link>
+        <Link
+          href="#notify-me"
+          className="text-[13px] font-semibold uppercase tracking-[1px] text-white/70 transition-colors hover:text-white"
+        >
+          Notify Me
+        </Link>
       </nav>
     </header>
   );
