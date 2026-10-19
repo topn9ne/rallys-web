@@ -17,8 +17,8 @@ export function Vision() {
             final out&nbsp;&mdash; it&apos;s the first pitch.
           </p>
           <p>
-            Your membership isn&apos;t just training time. It&apos;s a vote for
-            what this becomes. More space. More lanes. More programming. The
+            Your membership isn&apos;t just training time. It&apos;s driving us
+            to the next phase. More space. More lanes. More programming. The
             players who show up first are the ones who start the rally.
           </p>
         </div>
