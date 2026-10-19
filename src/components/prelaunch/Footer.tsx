@@ -1,18 +1,11 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 export function Footer() {
   return (
     <footer className="bg-navy px-6 py-10 md:px-14">
       <div className="flex flex-wrap items-start justify-between gap-8">
-        <div className="flex items-center gap-3">
-          {/* TODO: Replace with Rally Cat SVG mark */}
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rally-red text-xs font-bold text-white">
-            R
-          </div>
-          <span className="text-sm font-bold uppercase tracking-[0.5px] text-white">
-            Rally&apos;s Indoor Training
-          </span>
-        </div>
+        <Wordmark className="h-6 w-auto md:h-7" fill="#ffffff" />
 
         <div className="text-right text-[13px] leading-[1.8] text-white/50">
           Hastings, NE &middot; rallysindoor.com

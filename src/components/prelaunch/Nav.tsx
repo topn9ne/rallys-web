@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 export function Nav() {
   return (
@@ -11,14 +12,8 @@ export function Nav() {
         WebkitBackdropFilter: "blur(12px)",
       }}
     >
-      <Link href="/" className="flex items-center gap-3">
-        {/* TODO: Replace with Rally Cat SVG mark */}
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rally-red text-xs font-bold text-white">
-          R
-        </div>
-        <span className="whitespace-nowrap text-sm font-bold uppercase tracking-[0.5px] text-white md:text-lg">
-          Rally&apos;s
-        </span>
+      <Link href="/" className="block">
+        <Wordmark className="h-7 w-auto md:h-8" fill="#ffffff" />
       </Link>
 
       <nav className="hidden items-center gap-6 sm:flex">
