@@ -23,7 +23,7 @@ export function Hero() {
             fill="#ffffff"
           />
           <RallyScript
-            className="h-24 w-auto sm:h-28 md:-ml-3.5 md:-mt-7 md:h-36 lg:-ml-6 lg:-mt-9 lg:h-44"
+            className="h-24 w-auto sm:h-28 md:-ml-3.5 md:-mt-7 md:h-36 lg:-ml-4 lg:-mt-7 lg:h-44"
             gradient={{ from: "#df4226", to: "#ce232a", angle: 90 }}
           />
         </div>
