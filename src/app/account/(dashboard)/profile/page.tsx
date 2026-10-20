@@ -27,58 +27,53 @@ export default async function AccountProfilePage() {
   const contacts = await getNotificationContacts();
 
   return (
-    <div className="space-y-8">
-      {/* Profile info */}
-      <div className="max-w-md">
+    <div className="grid gap-8 md:grid-cols-2">
+      {/* Left column — Profile + Password */}
+      <div className="space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
           <p className="mt-1 text-sm text-gray-600">
-            Your account info and notification preferences.
+            Your account info.
           </p>
+
+          <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <form action={updateMemberProfile} className="space-y-4">
+              <Input
+                label="Full Name"
+                name="name"
+                defaultValue={member.name}
+                required
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+                  {member.email}
+                </p>
+                <p className="mt-1 text-xs text-gray-400">
+                  Email cannot be changed here.
+                </p>
+              </div>
+              <Input
+                label="Phone number"
+                name="phone"
+                type="tel"
+                defaultValue={member.phone ?? ""}
+                placeholder="+1 (555) 000-0000"
+              />
+              <Button type="submit" variant="primary" className="w-full">
+                Save changes
+              </Button>
+            </form>
+          </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <form action={updateMemberProfile} className="space-y-4">
-            <Input
-              label="Full Name"
-              name="name"
-              defaultValue={member.name}
-              required
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
-              <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                {member.email}
-              </p>
-              <p className="mt-1 text-xs text-gray-400">
-                Email cannot be changed here.
-              </p>
-            </div>
-            <Input
-              label="Phone number"
-              name="phone"
-              type="tel"
-              defaultValue={member.phone ?? ""}
-              placeholder="+1 (555) 000-0000"
-            />
-            <Button type="submit" variant="primary" className="w-full">
-              Save changes
-            </Button>
-          </form>
-        </div>
-      </div>
-
-      {/* Notification contacts */}
-      <div className="max-w-md">
-        <NotificationContacts contacts={contacts} />
-      </div>
-
-      {/* Password */}
-      <div className="max-w-md">
         <PasswordReset />
       </div>
+
+      {/* Right column — Notifications */}
+      <NotificationContacts contacts={contacts} />
     </div>
   );
 }

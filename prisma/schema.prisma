@@ -326,6 +326,8 @@ model NotificationContact {
   sendCodes    Boolean  @default(true)
   sendBookings Boolean  @default(true)
   sendBilling  Boolean  @default(false)
+  viaSms       Boolean  @default(true)
+  viaEmail     Boolean  @default(true)
   isPrimary    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import {
   addNotificationContact,
   updateNotificationContact,
+  updateNotificationPreferences,
   removeNotificationContact,
 } from "@/server/actions/notificationContacts";
 
@@ -18,10 +19,101 @@ interface Contact {
   sendCodes: boolean;
   sendBookings: boolean;
   sendBilling: boolean;
+  viaSms: boolean;
+  viaEmail: boolean;
   isPrimary: boolean;
 }
 
 const RELATIONSHIPS = ["Parent", "Player", "Coach", "Other"];
+
+function PreferencesCard({ contact }: { contact: Contact }) {
+  function action(
+    _prev: { error?: string; success?: boolean } | null,
+    formData: FormData
+  ) {
+    return updateNotificationPreferences(formData);
+  }
+
+  const [state, formAction, isPending] = useActionState(action, null);
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+      <form action={formAction} className="space-y-4">
+        <input type="hidden" name="contactId" value={contact.id} />
+
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Message types</h3>
+          <p className="text-xs text-gray-500">What notifications you receive.</p>
+          <div className="mt-2 space-y-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="sendCodes"
+                defaultChecked={contact.sendCodes}
+                className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              Door codes
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="sendBookings"
+                defaultChecked={contact.sendBookings}
+                className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              Booking confirmations
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="sendBilling"
+                defaultChecked={contact.sendBilling}
+                className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              Billing &amp; receipts
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Channels</h3>
+          <p className="text-xs text-gray-500">How you receive them.</p>
+          <div className="mt-2 space-y-2">
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="viaSms"
+                defaultChecked={contact.viaSms}
+                className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              Text message (SMS)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                name="viaEmail"
+                defaultChecked={contact.viaEmail}
+                className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              Email
+            </label>
+          </div>
+        </div>
+
+        {state?.error && (
+          <p className="text-sm text-red-600">{state.error}</p>
+        )}
+        {state?.success && (
+          <p className="text-sm text-green-700">Saved!</p>
+        )}
+
+        <Button type="submit" variant="primary" size="sm" loading={isPending}>
+          Save preferences
+        </Button>
+      </form>
+    </div>
+  );
+}
 
 function ContactForm({
   contact,
@@ -111,7 +203,7 @@ function ContactForm({
               defaultChecked={contact?.sendBookings ?? true}
               className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
             />
-            Booking confirmations
+            Bookings
           </label>
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input
@@ -121,6 +213,32 @@ function ContactForm({
               className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
             />
             Billing
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="text-sm font-medium text-gray-700 mb-1.5">
+          Via
+        </legend>
+        <div className="flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="viaSms"
+              defaultChecked={contact?.viaSms ?? true}
+              className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+            />
+            Text
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              name="viaEmail"
+              defaultChecked={contact?.viaEmail ?? true}
+              className="rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+            />
+            Email
           </label>
         </div>
       </fieldset>
@@ -154,10 +272,15 @@ function ContactCard({ contact }: { contact: Contact }) {
     );
   }
 
-  const badges = [
+  const types = [
     contact.sendCodes && "Codes",
     contact.sendBookings && "Bookings",
     contact.sendBilling && "Billing",
+  ].filter(Boolean);
+
+  const channels = [
+    contact.viaSms && "SMS",
+    contact.viaEmail && "Email",
   ].filter(Boolean);
 
   return (
@@ -168,71 +291,99 @@ function ContactCard({ contact }: { contact: Contact }) {
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
             {contact.relationship}
           </span>
-          {contact.isPrimary && (
-            <span className="rounded-full bg-brand-blue/10 px-2 py-0.5 text-[10px] font-bold text-brand-blue">
-              You
-            </span>
-          )}
         </div>
         <div className="mt-1 flex flex-wrap gap-x-4 text-sm text-gray-500">
           {contact.phone && <span>{contact.phone}</span>}
           {contact.email && <span>{contact.email}</span>}
         </div>
-        {badges.length > 0 && (
+        {types.length > 0 && (
           <div className="mt-1.5 flex flex-wrap gap-1">
-            {badges.map((b) => (
+            {types.map((t) => (
               <span
-                key={b}
+                key={t}
                 className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700"
               >
-                {b}
+                {t}
+              </span>
+            ))}
+            <span className="text-[10px] text-gray-400 px-1">via</span>
+            {channels.map((c) => (
+              <span
+                key={c}
+                className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700"
+              >
+                {c}
               </span>
             ))}
           </div>
         )}
       </div>
-      {!contact.isPrimary && (
-        <div className="flex gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-            Edit
+      <div className="flex gap-1">
+        <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+          Edit
+        </Button>
+        <form action={removeNotificationContact}>
+          <input type="hidden" name="contactId" value={contact.id} />
+          <Button variant="ghost" size="sm" type="submit">
+            Remove
           </Button>
-          <form action={removeNotificationContact}>
-            <input type="hidden" name="contactId" value={contact.id} />
-            <Button variant="ghost" size="sm" type="submit">
-              Remove
-            </Button>
-          </form>
-        </div>
-      )}
+        </form>
+      </div>
     </div>
   );
 }
 
 export function NotificationContacts({ contacts }: { contacts: Contact[] }) {
   const [adding, setAdding] = useState(false);
+  const primaryContact = contacts.find((c) => c.isPrimary);
+  const additionalContacts = contacts.filter((c) => !c.isPrimary);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-bold text-gray-900">Notification contacts</h2>
-        <p className="mt-0.5 text-sm text-gray-500">
-          Who gets door codes, booking confirmations, and billing notifications.
+        <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
+        <p className="mt-1 text-sm text-gray-600">
+          Choose what you receive and how, and add contacts who should also get
+          notified.
         </p>
       </div>
 
-      {contacts.map((c) => (
-        <ContactCard key={c.id} contact={c} />
-      ))}
-
-      {adding ? (
-        <div className="rounded-xl border border-brand-blue/30 bg-blue-50 p-4">
-          <ContactForm onDone={() => setAdding(false)} />
+      {/* Your preferences */}
+      {primaryContact && (
+        <div>
+          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+            Your preferences
+          </h3>
+          <PreferencesCard contact={primaryContact} />
         </div>
-      ) : (
-        <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
-          + Add a contact
-        </Button>
       )}
+
+      {/* Additional contacts */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
+          Additional contacts
+        </h3>
+        <p className="text-sm text-gray-500 mb-3">
+          Other people who should receive door codes, booking info, or billing
+          notifications.
+        </p>
+
+        <div className="space-y-3">
+          {additionalContacts.map((c) => (
+            <ContactCard key={c.id} contact={c} />
+          ))}
+
+          {adding ? (
+            <div className="rounded-xl border border-brand-blue/30 bg-blue-50 p-4">
+              <ContactForm onDone={() => setAdding(false)} />
+            </div>
+          ) : (
+            <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
+              + Add a contact
+            </Button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

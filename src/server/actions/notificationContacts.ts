@@ -24,6 +24,8 @@ export async function addNotificationContact(formData: FormData) {
   const sendCodes = formData.get("sendCodes") === "on";
   const sendBookings = formData.get("sendBookings") === "on";
   const sendBilling = formData.get("sendBilling") === "on";
+  const viaSms = formData.get("viaSms") === "on";
+  const viaEmail = formData.get("viaEmail") === "on";
 
   if (!name) return { error: "Name is required." };
   if (!phone && !email) return { error: "Phone or email is required." };
@@ -38,6 +40,8 @@ export async function addNotificationContact(formData: FormData) {
       sendCodes,
       sendBookings,
       sendBilling,
+      viaSms,
+      viaEmail,
     },
   });
 
@@ -62,13 +66,15 @@ export async function updateNotificationContact(formData: FormData) {
   const sendCodes = formData.get("sendCodes") === "on";
   const sendBookings = formData.get("sendBookings") === "on";
   const sendBilling = formData.get("sendBilling") === "on";
+  const viaSms = formData.get("viaSms") === "on";
+  const viaEmail = formData.get("viaEmail") === "on";
 
   if (!name) return { error: "Name is required." };
   if (!phone && !email) return { error: "Phone or email is required." };
 
   await prisma.notificationContact.update({
     where: { id: contactId },
-    data: { name, phone, email, relationship, sendCodes, sendBookings, sendBilling },
+    data: { name, phone, email, relationship, sendCodes, sendBookings, sendBilling, viaSms, viaEmail },
   });
 
   revalidatePath("/account/profile");
@@ -86,6 +92,30 @@ export async function removeNotificationContact(formData: FormData) {
   if (contact.isPrimary) return { error: "Cannot remove the primary contact." };
 
   await prisma.notificationContact.delete({ where: { id: contactId } });
+
+  revalidatePath("/account/profile");
+  return { success: true };
+}
+
+export async function updateNotificationPreferences(formData: FormData) {
+  const user = await requireUser();
+  const contactId = formData.get("contactId") as string;
+
+  const contact = await prisma.notificationContact.findFirst({
+    where: { id: contactId, memberId: user.id },
+  });
+  if (!contact) return { error: "Contact not found." };
+
+  await prisma.notificationContact.update({
+    where: { id: contactId },
+    data: {
+      sendCodes: formData.get("sendCodes") === "on",
+      sendBookings: formData.get("sendBookings") === "on",
+      sendBilling: formData.get("sendBilling") === "on",
+      viaSms: formData.get("viaSms") === "on",
+      viaEmail: formData.get("viaEmail") === "on",
+    },
+  });
 
   revalidatePath("/account/profile");
   return { success: true };
