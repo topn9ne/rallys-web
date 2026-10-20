@@ -55,7 +55,7 @@ export default async function AccountProfilePage() {
               Required for door code delivery.
             </p>
             <Input
-              label="Notification email"
+              label="Secondary email"
               name="contactEmail"
               type="email"
               defaultValue={member.contactEmail ?? ""}
