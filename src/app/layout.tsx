@@ -17,11 +17,24 @@ const barlowCondensed = Barlow_Condensed({
 export const metadata: Metadata = {
   title: "Rally's Indoor Training — Start a Rally",
   description:
-    "Self-service batting cages coming to Hastings, NE. Get on the list.",
+    "Self-service batting cages in Hastings, NE. Book a cage, get a door code, hit.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Rally's",
+  },
+  icons: {
+    icon: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   openGraph: {
     title: "Rally's Indoor Training — Start a Rally",
     description:
-      "Self-service batting cages coming to Hastings, NE. Get on the list.",
+      "Self-service batting cages in Hastings, NE. Book a cage, get a door code, hit.",
     type: "website",
     siteName: "Rally's Indoor Training",
   },
@@ -37,6 +50,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${barlow.variable} ${barlowCondensed.variable} h-full antialiased`}>
+      <head>
+        <meta name="theme-color" content="#1B2A4A" />
+      </head>
       <body className="min-h-full flex flex-col text-foreground">
         {children}
       </body>
