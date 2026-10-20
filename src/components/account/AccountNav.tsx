@@ -58,10 +58,10 @@ export function AccountNav({ userName, signOutAction }: Props) {
               <Link
                 key={t.href}
                 href={t.href}
-                className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm transition-colors ${
                   active
-                    ? "bg-gray-50 text-brand-blue rounded-t-lg"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-gray-50 text-brand-blue font-bold rounded-t-lg"
+                    : "text-brand-blue/60 font-medium hover:text-brand-blue/80"
                 }`}
               >
                 <Icon size={18} weight={active ? "fill" : "regular"} />
