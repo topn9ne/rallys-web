@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import type { MemberTier } from "@prisma/client";
 
-export async function createSubscriptionCheckout(tier: MemberTier) {
+export async function createSubscriptionCheckout(tier: MemberTier, annual = false) {
   const user = await getUser();
   if (!user) return { error: "You must be signed in." };
 
@@ -16,10 +16,19 @@ export async function createSubscriptionCheckout(tier: MemberTier) {
     return { error: "You already have an active subscription." };
   }
 
-  const priceId =
-    tier === "TEAM"
-      ? process.env.STRIPE_TEAM_PRICE_ID
-      : process.env.STRIPE_MEMBER_PRICE_ID;
+  let priceId: string | undefined;
+  if (annual) {
+    priceId =
+      tier === "TEAM"
+        ? process.env.STRIPE_TEAM_ANNUAL_PRICE_ID
+        : process.env.STRIPE_FAMILY_ANNUAL_PRICE_ID;
+  }
+  if (!priceId) {
+    priceId =
+      tier === "TEAM"
+        ? process.env.STRIPE_TEAM_PRICE_ID
+        : process.env.STRIPE_MEMBER_PRICE_ID;
+  }
 
   if (!priceId) {
     return { error: "Subscription pricing not configured." };

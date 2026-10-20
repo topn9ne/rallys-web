@@ -11,12 +11,14 @@ import type { MemberTier, SubscriptionStatus } from "@prisma/client";
 interface MembershipActionsProps {
   status: SubscriptionStatus | "NONE";
   tier?: MemberTier;
+  annual?: boolean;
   hasStripeCustomer: boolean;
 }
 
 export function MembershipActions({
   status,
   tier,
+  annual,
   hasStripeCustomer,
 }: MembershipActionsProps) {
   const [pending, startTransition] = useTransition();
@@ -24,7 +26,7 @@ export function MembershipActions({
   function handleSubscribe() {
     if (!tier) return;
     startTransition(async () => {
-      const result = await createSubscriptionCheckout(tier);
+      const result = await createSubscriptionCheckout(tier, annual);
       if (result?.url) {
         window.location.href = result.url;
       }

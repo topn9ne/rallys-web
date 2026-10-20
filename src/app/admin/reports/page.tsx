@@ -3,6 +3,7 @@ import { formatCents } from "@/lib/utils";
 import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { ChartBar } from "@phosphor-icons/react/dist/ssr";
+import { getActivePricing } from "@/server/queries/slots";
 
 interface Props {
   searchParams: Promise<{ from?: string; to?: string }>;
@@ -17,17 +18,25 @@ export default async function ReportsPage({ searchParams }: Props) {
   const from = params.from ? new Date(params.from) : defaultFrom;
   const to = params.to ? new Date(params.to + "T23:59:59") : defaultTo;
 
-  const bookings = await prisma.booking.findMany({
-    where: {
-      status: { in: ["CONFIRMED", "COMPLETED"] },
-      createdAt: { gte: from, lte: to },
-    },
-    include: {
-      member: { select: { name: true, subscriptionStatus: true } },
-      slotA: { select: { lane: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const [bookings, activePricing, memberCounts] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        status: { in: ["CONFIRMED", "COMPLETED"] },
+        createdAt: { gte: from, lte: to },
+      },
+      include: {
+        member: { select: { name: true, subscriptionStatus: true } },
+        slotA: { select: { lane: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    getActivePricing(),
+    prisma.member.groupBy({
+      by: ["tier"],
+      where: { subscriptionStatus: "ACTIVE" },
+      _count: true,
+    }),
+  ]);
 
   const totalRevenue = bookings.reduce((s: number, b: any) => s + b.totalAmountCents, 0);
   const singleLane = bookings.filter((b: any) => b.bookingType === "SINGLE_LANE");
@@ -38,6 +47,13 @@ export default async function ReportsPage({ searchParams }: Props) {
   const bothRevenue = bothLanes.reduce((s: number, b: any) => s + b.totalAmountCents, 0);
   const memberRevenue = memberBookings.reduce((s: number, b: any) => s + b.totalAmountCents, 0);
   const dropinRevenue = dropinBookings.reduce((s: number, b: any) => s + b.totalAmountCents, 0);
+
+  const familyCount = memberCounts.find((m) => m.tier === "FAMILY")?._count ?? 0;
+  const teamCount = memberCounts.find((m) => m.tier === "TEAM")?._count ?? 0;
+  const familyPrice = activePricing["FAMILY"]?.amountCents ?? 5000;
+  const teamPriceMo = activePricing["TEAM"]?.amountCents ?? 7500;
+  const mrr = familyCount * familyPrice + teamCount * teamPriceMo;
+  const totalActiveMembers = familyCount + teamCount;
 
   const csvUrl = `/api/reports/export?from=${from.toISOString().split("T")[0]}&to=${to.toISOString().split("T")[0]}`;
 
@@ -84,9 +100,11 @@ export default async function ReportsPage({ searchParams }: Props) {
         </button>
       </form>
 
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {[
-          { label: "Total Revenue", value: formatCents(totalRevenue) },
+          { label: "Drop-in Revenue", value: formatCents(totalRevenue) },
+          { label: "Subscription MRR", value: formatCents(mrr) },
+          { label: "Active Members", value: totalActiveMembers.toString() },
           { label: "Total Bookings", value: bookings.length.toString() },
           { label: "Member Bookings", value: memberBookings.length.toString() },
           { label: "Drop-in Bookings", value: dropinBookings.length.toString() },
@@ -153,6 +171,43 @@ export default async function ReportsPage({ searchParams }: Props) {
                   <td className="py-2 font-medium">Drop-ins</td>
                   <td className="py-2 text-right">{dropinBookings.length}</td>
                   <td className="py-2 text-right font-semibold">{formatCents(dropinRevenue)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-gray-900">Subscription Revenue</h2>
+          </CardHeader>
+          <CardBody>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-gray-500">
+                  <th className="pb-2 font-medium">Tier</th>
+                  <th className="pb-2 font-medium text-right">Members</th>
+                  <th className="pb-2 font-medium text-right">Rate</th>
+                  <th className="pb-2 font-medium text-right">MRR</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                <tr>
+                  <td className="py-2 font-medium">Family</td>
+                  <td className="py-2 text-right">{familyCount}</td>
+                  <td className="py-2 text-right">{formatCents(familyPrice)}/mo</td>
+                  <td className="py-2 text-right font-semibold">{formatCents(familyCount * familyPrice)}</td>
+                </tr>
+                <tr>
+                  <td className="py-2 font-medium">Team</td>
+                  <td className="py-2 text-right">{teamCount}</td>
+                  <td className="py-2 text-right">{formatCents(teamPriceMo)}/mo</td>
+                  <td className="py-2 text-right font-semibold">{formatCents(teamCount * teamPriceMo)}</td>
+                </tr>
+                <tr className="font-semibold">
+                  <td className="py-2">Total MRR</td>
+                  <td className="py-2 text-right">{totalActiveMembers}</td>
+                  <td className="py-2" />
+                  <td className="py-2 text-right">{formatCents(mrr)}</td>
                 </tr>
               </tbody>
             </table>

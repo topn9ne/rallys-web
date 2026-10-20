@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatCents } from "@/lib/utils";
 import { createBooking, createDropInCheckout } from "@/server/actions/booking";
+import { validatePromoCode } from "@/server/actions/promoCodes";
 import type { CageSlot } from "@prisma/client";
 
 interface PlayerOption {
@@ -46,6 +47,11 @@ export function SlotBookingForm({
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>(
     players.map((p) => p.id),
   );
+  const [promoInput, setPromoInput] = useState("");
+  const [promoCodeId, setPromoCodeId] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState<{ type: "PERCENT" | "FIXED"; amount: number; description: string | null } | null>(null);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -55,8 +61,49 @@ export function SlotBookingForm({
     );
   }
 
-  const taxAmount = Math.round(priceCents * (taxRatePercent / 100));
-  const total = priceCents + taxAmount;
+  async function handleApplyPromo() {
+    if (!promoInput.trim()) return;
+    setPromoError(null);
+    setPromoLoading(true);
+    try {
+      const result = await validatePromoCode(promoInput);
+      if (result.error) {
+        setPromoError(result.error);
+        setPromoCodeId(null);
+        setPromoDiscount(null);
+      } else if (result.valid) {
+        setPromoCodeId(result.id!);
+        setPromoDiscount({
+          type: result.discountType as "PERCENT" | "FIXED",
+          amount: result.discountAmount!,
+          description: result.description ?? null,
+        });
+      }
+    } catch {
+      setPromoError("Failed to validate code.");
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  function clearPromo() {
+    setPromoCodeId(null);
+    setPromoDiscount(null);
+    setPromoInput("");
+    setPromoError(null);
+  }
+
+  let discountCents = 0;
+  if (promoDiscount) {
+    discountCents =
+      promoDiscount.type === "PERCENT"
+        ? Math.round((priceCents * promoDiscount.amount) / 100)
+        : promoDiscount.amount;
+    discountCents = Math.min(discountCents, priceCents);
+  }
+  const adjustedBase = priceCents - discountCents;
+  const taxAmount = Math.round(adjustedBase * (taxRatePercent / 100));
+  const total = adjustedBase + taxAmount;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -89,6 +136,7 @@ export function SlotBookingForm({
             phone: isLoggedIn ? phone : guestPhone,
             smsOptIn,
             notes: notes || undefined,
+            promoCodeId: promoCodeId ?? undefined,
           });
           if (result?.error) {
             setSubmitError(result.error);
@@ -114,6 +162,12 @@ export function SlotBookingForm({
             </dt>
             <dd className="text-gray-900">{formatCents(priceCents)}</dd>
           </div>
+          {discountCents > 0 && (
+            <div className="flex justify-between">
+              <dt className="text-green-600">Promo discount</dt>
+              <dd className="text-green-600">−{formatCents(discountCents)}</dd>
+            </div>
+          )}
           {taxAmount > 0 && (
             <div className="flex justify-between">
               <dt className="text-gray-500">Tax ({taxRatePercent}%)</dt>
@@ -131,6 +185,55 @@ export function SlotBookingForm({
           )}
         </dl>
       </div>
+
+      {/* Promo code — drop-in only */}
+      {!(isLoggedIn && isMember) && (
+        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-3 font-semibold text-gray-900">Promo Code</h2>
+          {promoCodeId && promoDiscount ? (
+            <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-4 py-2.5">
+              <div>
+                <span className="text-sm font-medium text-green-800">
+                  {promoInput.toUpperCase()}
+                </span>
+                <span className="ml-2 text-sm text-green-600">
+                  {promoDiscount.type === "PERCENT"
+                    ? `${promoDiscount.amount}% off`
+                    : `${formatCents(promoDiscount.amount)} off`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={clearPromo}
+                className="text-sm font-medium text-green-700 hover:text-green-900"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                label=""
+                value={promoInput}
+                onChange={(e) => setPromoInput(e.target.value)}
+                placeholder="Enter code"
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                disabled={promoLoading || !promoInput.trim()}
+                className="shrink-0 rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {promoLoading ? "..." : "Apply"}
+              </button>
+            </div>
+          )}
+          {promoError && (
+            <p className="mt-2 text-sm text-red-600">{promoError}</p>
+          )}
+        </div>
+      )}
 
       {/* Identity — member banner or guest fields */}
       {isLoggedIn ? (

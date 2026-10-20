@@ -121,6 +121,7 @@ interface CreateDropInInput {
   phone: string;
   smsOptIn: boolean;
   notes?: string;
+  promoCodeId?: string;
 }
 
 export async function createDropInCheckout(input: CreateDropInInput) {
@@ -175,9 +176,18 @@ export async function createDropInCheckout(input: CreateDropInInput) {
     orderBy: { effectiveFrom: "desc" },
   });
   const baseCents = pricing?.amountCents ?? (input.bookingType === "BOTH_LANES" ? 2500 : 1500);
+
+  let discountCents = 0;
+  if (input.promoCodeId) {
+    const { applyPromoCode } = await import("./promoCodes");
+    const result = await applyPromoCode(input.promoCodeId, baseCents);
+    discountCents = result.discountCents;
+  }
+  const adjustedBase = baseCents - discountCents;
+
   const taxRate = (pricing?.taxRatePercent ?? 7) / 100;
-  const taxCents = Math.round(baseCents * taxRate);
-  const totalCents = baseCents + taxCents;
+  const taxCents = Math.round(adjustedBase * taxRate);
+  const totalCents = adjustedBase + taxCents;
 
   const booking = await prisma.booking.create({
     data: {
@@ -187,8 +197,10 @@ export async function createDropInCheckout(input: CreateDropInInput) {
       bookingType: input.bookingType,
       status: "PENDING",
       totalAmountCents: totalCents,
-      baseAmountCents: baseCents,
+      baseAmountCents: adjustedBase,
       taxAmountCents: taxCents,
+      discountAmountCents: discountCents,
+      promoCodeId: input.promoCodeId ?? null,
       guestName: !memberId ? input.guestName : null,
       guestEmail: !memberId ? input.guestEmail : null,
       guestPhone: input.phone,
@@ -208,7 +220,7 @@ export async function createDropInCheckout(input: CreateDropInInput) {
             ? "Batting Cage — Both Lanes (1 hr)"
             : "Batting Cage — Single Lane (1 hr)",
         },
-        unit_amount: baseCents,
+        unit_amount: adjustedBase,
       },
       quantity: 1,
       ...(STRIPE_TAX_RATE_ID ? { tax_rates: [STRIPE_TAX_RATE_ID] } : {}),
