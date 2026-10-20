@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authGuard";
+import { notifyWaiverResignRequired } from "@/server/services/notify";
 
 const SINGLETON_ID = "default";
 
@@ -40,7 +41,46 @@ export async function getWaiverTemplateWithMeta() {
   return {
     body: template?.body ?? FALLBACK_WAIVER_TEXT,
     updatedAt: template?.updatedAt ?? new Date(0),
+    resignRequiredAt: template?.resignRequiredAt ?? null,
   };
+}
+
+export async function requireResign() {
+  await requireAdmin();
+
+  const now = new Date();
+
+  await prisma.waiverTemplate.update({
+    where: { id: SINGLETON_ID },
+    data: { resignRequiredAt: now },
+  });
+
+  const staleWaivers = await prisma.waiver.findMany({
+    where: {
+      bookingId: null,
+      status: "SIGNED",
+      signedAt: { lt: now },
+    },
+    select: { memberId: true },
+    distinct: ["memberId"],
+  });
+
+  const memberIds = staleWaivers
+    .map((w) => w.memberId)
+    .filter((id): id is string => id !== null);
+
+  let notified = 0;
+  for (const memberId of memberIds) {
+    try {
+      await notifyWaiverResignRequired(memberId);
+      notified++;
+    } catch (err) {
+      console.error(`[requireResign] Failed to notify member ${memberId}:`, err);
+    }
+  }
+
+  revalidatePath("/admin/waivers");
+  return { success: true, notified, total: memberIds.length };
 }
 
 const FALLBACK_WAIVER_TEXT = `RALLY'S INDOOR TRAINING — PARTICIPANT WAIVER AND RELEASE OF LIABILITY

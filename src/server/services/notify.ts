@@ -110,6 +110,17 @@ export async function notifyNewMember(memberId: string) {
   }
 }
 
+export async function notifyMemberWaiverNeeded(memberId: string) {
+  const member = await prisma.member.findUnique({ where: { id: memberId } });
+  if (!member?.email) return;
+
+  await sendEmail(
+    member.email,
+    "Sign Your Participation Waiver",
+    signWaiverHtml(member.name)
+  );
+}
+
 // ── Subscription alerts ──────────────────────────────────────────────────────
 
 export async function notifyPaymentFailed(memberId: string) {
@@ -148,6 +159,28 @@ export async function notifySubscriptionCancelled(memberId: string) {
       member.email,
       "Membership Cancelled",
       `<p>Hey ${member.name},</p><p>Your Rally's membership has been cancelled. You can still book drop-in cage sessions anytime at <a href="${APP_URL}/book">rallysindoor.com/book</a>.</p><p>If you'd like to resubscribe, visit your <a href="${APP_URL}/account/membership">membership page</a>.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`
+    );
+  }
+}
+
+// ── Waiver re-sign required (admin-triggered) ──────────────────────────────
+
+export async function notifyWaiverResignRequired(memberId: string) {
+  const member = await prisma.member.findUnique({ where: { id: memberId } });
+  if (!member) return;
+
+  if (member.phone) {
+    await sendSms(
+      member.phone,
+      `Rally's: Our participation waiver has been updated. Please re-sign before your next session: ${APP_URL}/waiver/member`
+    );
+  }
+
+  if (member.email) {
+    await sendEmail(
+      member.email,
+      "Action Required — Updated Waiver",
+      resignWaiverHtml(member.name)
     );
   }
 }
@@ -221,13 +254,52 @@ function welcomeHtml(name: string) {
       <p>Your membership is now active. You can book 1-hour cage sessions anytime during operating hours (6 AM – 10 PM daily).</p>
       <p>Here's how it works:</p>
       <ol style="color: #444; line-height: 1.6;">
+        <li><strong>Sign your waiver</strong> — one-time, covers all future sessions</li>
         <li>Book a session from the calendar</li>
         <li>You'll get a door code via text before your slot</li>
         <li>Enter the code on the keypad and you're in</li>
       </ol>
       <p>
-        <a href="${APP_URL}/book" style="display: inline-block; background: #1a56db; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-          Book Your First Session
+        <a href="${APP_URL}/waiver/member" style="display: inline-block; background: #1a56db; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          Sign Waiver &amp; Book
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #888; margin-top: 24px;">
+        Rally's Indoor Training<br>
+        203 S Woodland Ave, Bay 5, Hastings, NE 68901
+      </p>
+    </div>
+  `;
+}
+
+function signWaiverHtml(name: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="font-size: 24px; color: #1a1a1a;">Sign Your Participation Waiver</h1>
+      <p>Hey ${name},</p>
+      <p>Before your first session, you'll need to sign our participation waiver. It only takes a minute and covers all your future sessions.</p>
+      <p>
+        <a href="${APP_URL}/waiver/member" style="display: inline-block; background: #1a56db; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          Sign Waiver Now
+        </a>
+      </p>
+      <p style="font-size: 13px; color: #888; margin-top: 24px;">
+        Rally's Indoor Training<br>
+        203 S Woodland Ave, Bay 5, Hastings, NE 68901
+      </p>
+    </div>
+  `;
+}
+
+function resignWaiverHtml(name: string) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="font-size: 24px; color: #1a1a1a;">Updated Participation Waiver</h1>
+      <p>Hey ${name},</p>
+      <p>Our participation waiver has been updated. Please review and re-sign it before your next session.</p>
+      <p>
+        <a href="${APP_URL}/waiver/member" style="display: inline-block; background: #1a56db; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          Review &amp; Re-sign
         </a>
       </p>
       <p style="font-size: 13px; color: #888; margin-top: 24px;">

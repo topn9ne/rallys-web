@@ -3,7 +3,7 @@ import { Card, CardHeader, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SettingsTabs } from "@/components/admin/SettingsTabs";
 import { WaiverTemplateForm } from "@/components/admin/WaiverTemplateForm";
-import { getWaiverTemplate } from "@/server/actions/waiverTemplate";
+import { getWaiverTemplateWithMeta } from "@/server/actions/waiverTemplate";
 import { FileText, Signature } from "@phosphor-icons/react/dist/ssr";
 
 function formatDate(d: Date) {
@@ -25,7 +25,7 @@ function formatDateTime(d: Date) {
 }
 
 export default async function WaiversPage() {
-  const [waivers, templateBody] = await Promise.all([
+  const [waivers, templateMeta] = await Promise.all([
     prisma.waiver.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -38,7 +38,7 @@ export default async function WaiversPage() {
         },
       },
     }),
-    getWaiverTemplate(),
+    getWaiverTemplateWithMeta(),
   ]);
 
   const signed = waivers.filter((w: any) => w.status === "SIGNED").length;
@@ -158,7 +158,7 @@ export default async function WaiversPage() {
             </h2>
           </CardHeader>
           <CardBody className="pb-6">
-            <WaiverTemplateForm currentBody={templateBody} />
+            <WaiverTemplateForm currentBody={templateMeta.body} resignRequiredAt={templateMeta.resignRequiredAt} />
           </CardBody>
         </Card>
       </div>

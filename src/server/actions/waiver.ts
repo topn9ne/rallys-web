@@ -157,7 +157,8 @@ export async function getMemberWaiverStatus(memberId: string) {
   }
 
   const template = await getWaiverTemplateWithMeta();
-  const needsResign = template.updatedAt > latestMemberWaiver.signedAt;
+  const needsResign = template.resignRequiredAt !== null
+    && template.resignRequiredAt > latestMemberWaiver.signedAt;
 
   return {
     signed: true,

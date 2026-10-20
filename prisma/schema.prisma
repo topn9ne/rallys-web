@@ -256,9 +256,10 @@ model OperatingHours {
 }
 
 model WaiverTemplate {
-  id        String   @id @default(uuid())
-  body      String   @db.Text
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(uuid())
+  body             String    @db.Text
+  updatedAt        DateTime  @updatedAt
+  resignRequiredAt DateTime?
 
   @@map("waiver_templates")
 }
