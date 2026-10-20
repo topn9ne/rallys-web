@@ -33,14 +33,13 @@ export default async function PlayersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div>
         <h1 className="text-2xl font-bold text-gray-900">Players</h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Add the players in your family or on your team. You&apos;ll select who&apos;s
+          training when you book a session.
+        </p>
       </div>
-
-      <p className="text-sm text-gray-600">
-        Add the players in your family or on your team. You&apos;ll select which
-        players are hitting when you book a session.
-      </p>
 
       {mapped.length > 0 && (
         <div className="space-y-3">
