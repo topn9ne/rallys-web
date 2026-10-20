@@ -49,7 +49,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
       </header>
 
       {/* Desktop tab bar */}
-      <nav className="hidden md:block bg-gray-100 border-b border-gray-200 shadow-sm">
+      <nav className="hidden md:block bg-gray-200">
         <div className="mx-auto flex max-w-3xl">
           {tabs.map((t) => {
             const active = pathname === t.href;
@@ -60,7 +60,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
                 href={t.href}
                 className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
                   active
-                    ? "text-brand-blue border-b-2 border-brand-blue"
+                    ? "bg-gray-50 text-brand-blue rounded-t-lg"
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
