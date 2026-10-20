@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { addPlayer, updatePlayer } from "@/server/actions/players";
+
+const POSITIONS = ["C", "P", "1B", "SS/2B", "3B", "OF"] as const;
 
 interface Player {
   id: string;
@@ -27,6 +29,18 @@ export function PlayerForm({
   onDone?: () => void;
 }) {
   const [state, action, isPending] = useActionState(formAction, null);
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(player?.positions?.split(", ").filter(Boolean) ?? [])
+  );
+
+  function toggle(pos: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(pos)) next.delete(pos);
+      else next.add(pos);
+      return next;
+    });
+  }
 
   if (state?.success && onDone) {
     onDone();
@@ -35,6 +49,7 @@ export function PlayerForm({
   return (
     <form action={action} className="space-y-3">
       {player && <input type="hidden" name="playerId" value={player.id} />}
+      <input type="hidden" name="positions" value={POSITIONS.filter((p) => selected.has(p)).join(", ")} />
 
       <Input
         label="Player name"
@@ -51,12 +66,25 @@ export function PlayerForm({
         defaultValue={player?.dateOfBirth ?? ""}
       />
 
-      <Input
-        label="Positions"
-        name="positions"
-        defaultValue={player?.positions ?? ""}
-        placeholder="e.g. SS, CF"
-      />
+      <fieldset>
+        <legend className="text-sm font-medium text-gray-700 mb-1.5">Positions</legend>
+        <div className="flex flex-wrap gap-2">
+          {POSITIONS.map((pos) => (
+            <button
+              key={pos}
+              type="button"
+              onClick={() => toggle(pos)}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition-colors ${
+                selected.has(pos)
+                  ? "border-brand-blue bg-brand-blue text-white"
+                  : "border-gray-300 bg-white text-gray-600 hover:border-brand-blue/50 hover:text-brand-blue"
+              }`}
+            >
+              {pos}
+            </button>
+          ))}
+        </div>
+      </fieldset>
 
       <Input
         label="School"
