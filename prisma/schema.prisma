@@ -89,9 +89,10 @@ model Member {
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 
-  bookings Booking[]
-  waivers  Waiver[]
-  players  Player[]
+  bookings             Booking[]
+  waivers              Waiver[]
+  players              Player[]
+  notificationContacts NotificationContact[]
 
   @@map("members")
 }
@@ -313,6 +314,25 @@ model PlayerMilestones {
 
   @@unique([playerId, milestoneKey])
   @@map("player_milestones")
+}
+
+model NotificationContact {
+  id           String   @id @default(uuid())
+  memberId     String
+  name         String
+  phone        String?
+  email        String?
+  relationship String
+  sendCodes    Boolean  @default(true)
+  sendBookings Boolean  @default(true)
+  sendBilling  Boolean  @default(false)
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  member Member @relation(fields: [memberId], references: [id])
+
+  @@map("notification_contacts")
 }
 
 model Waitlist {
