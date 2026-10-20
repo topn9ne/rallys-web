@@ -34,22 +34,6 @@ export function AccountNav({ userName, signOutAction }: Props) {
             <Wordmark className="h-7 w-auto" fill="#ffffff" />
           </Link>
 
-          <nav className="flex items-center gap-4 text-sm">
-            {tabs.map((t) => (
-              <Link
-                key={t.href}
-                href={t.href}
-                className={
-                  pathname === t.href
-                    ? "text-white font-semibold"
-                    : "text-blue-100 hover:text-white transition-colors"
-                }
-              >
-                {t.label}
-              </Link>
-            ))}
-          </nav>
-
           <div className="flex items-center gap-3 text-sm">
             <span className="text-blue-200">{userName}</span>
             <form action={signOutAction}>
@@ -62,6 +46,29 @@ export function AccountNav({ userName, signOutAction }: Props) {
             </form>
           </div>
         </div>
+
+        <nav className="border-t border-white/10">
+          <div className="mx-auto flex max-w-3xl">
+            {tabs.map((t) => {
+              const active = pathname === t.href;
+              const Icon = t.icon;
+              return (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                    active
+                      ? "text-white border-b-2 border-white"
+                      : "text-blue-200 hover:text-white"
+                  }`}
+                >
+                  <Icon size={18} weight={active ? "fill" : "regular"} />
+                  {t.label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
       </header>
 
       {/* Mobile top bar */}
