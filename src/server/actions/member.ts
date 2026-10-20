@@ -14,6 +14,7 @@ export async function updateMemberProfile(formData: FormData): Promise<void> {
   const phone = (formData.get("phone") as string)?.trim() || "";
 
   if (!name) throw new Error("Name is required.");
+  if (!phone) throw new Error("Phone number is required for door code delivery.");
 
   await prisma.member.update({
     where: { id: user.id },

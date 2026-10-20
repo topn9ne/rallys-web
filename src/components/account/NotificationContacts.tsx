@@ -12,7 +12,8 @@ import {
 
 interface Contact {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   phone: string | null;
   email: string | null;
   relationship: string;
@@ -141,12 +142,20 @@ function ContactForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Name"
-          name="name"
-          defaultValue={contact?.name ?? ""}
+          label="First name"
+          name="firstName"
+          defaultValue={contact?.firstName ?? ""}
           required
-          placeholder="First Last"
         />
+        <Input
+          label="Last name"
+          name="lastName"
+          defaultValue={contact?.lastName ?? ""}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Relationship
@@ -163,9 +172,6 @@ function ContactForm({
             ))}
           </select>
         </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
         <Input
           label="Phone"
           name="phone"
@@ -173,14 +179,15 @@ function ContactForm({
           defaultValue={contact?.phone ?? ""}
           placeholder="+1 (555) 000-0000"
         />
-        <Input
-          label="Email"
-          name="email"
-          type="email"
-          defaultValue={contact?.email ?? ""}
-          placeholder="email@example.com"
-        />
       </div>
+
+      <Input
+        label="Email"
+        name="email"
+        type="email"
+        defaultValue={contact?.email ?? ""}
+        placeholder="email@example.com"
+      />
 
       <fieldset>
         <legend className="text-sm font-medium text-gray-700 mb-1.5">
@@ -287,7 +294,7 @@ function ContactCard({ contact }: { contact: Contact }) {
     <div className="flex items-start justify-between rounded-xl border border-gray-200 bg-white p-4">
       <div>
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-gray-900">{contact.name}</span>
+          <span className="font-semibold text-gray-900">{contact.firstName} {contact.lastName}</span>
           <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
             {contact.relationship}
           </span>

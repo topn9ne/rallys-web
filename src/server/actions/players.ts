@@ -8,8 +8,10 @@ export async function addPlayer(formData: FormData) {
   const user = await getUser();
   if (!user) return { error: "You must be signed in." };
 
-  const name = (formData.get("name") as string)?.trim();
-  if (!name) return { error: "Player name is required." };
+  const firstName = (formData.get("firstName") as string)?.trim();
+  const lastName = (formData.get("lastName") as string)?.trim();
+  if (!firstName) return { error: "First name is required." };
+  if (!lastName) return { error: "Last name is required." };
 
   const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
   const positions = (formData.get("positions") as string)?.trim() || null;
@@ -19,7 +21,8 @@ export async function addPlayer(formData: FormData) {
   await prisma.player.create({
     data: {
       memberId: user.id,
-      name,
+      firstName,
+      lastName,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       positions,
       school,
@@ -46,8 +49,10 @@ export async function updatePlayer(formData: FormData) {
     return { error: "Player not found." };
   }
 
-  const name = (formData.get("name") as string)?.trim();
-  if (!name) return { error: "Player name is required." };
+  const firstName = (formData.get("firstName") as string)?.trim();
+  const lastName = (formData.get("lastName") as string)?.trim();
+  if (!firstName) return { error: "First name is required." };
+  if (!lastName) return { error: "Last name is required." };
 
   const dateOfBirth = (formData.get("dateOfBirth") as string)?.trim() || null;
   const positions = (formData.get("positions") as string)?.trim() || null;
@@ -57,7 +62,8 @@ export async function updatePlayer(formData: FormData) {
   await prisma.player.update({
     where: { id: playerId },
     data: {
-      name,
+      firstName,
+      lastName,
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       positions,
       school,

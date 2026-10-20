@@ -100,7 +100,8 @@ model Member {
 model Player {
   id          String   @id @default(uuid())
   memberId    String
-  name        String
+  firstName   String
+  lastName    String
   dateOfBirth DateTime? @db.Date
   positions   String?
   school      String?
@@ -319,7 +320,8 @@ model PlayerMilestones {
 model NotificationContact {
   id           String   @id @default(uuid())
   memberId     String
-  name         String
+  firstName    String
+  lastName     String
   phone        String?
   email        String?
   relationship String

@@ -17,7 +17,8 @@ export async function getNotificationContacts() {
 export async function addNotificationContact(formData: FormData) {
   const user = await requireUser();
 
-  const name = (formData.get("name") as string)?.trim();
+  const firstName = (formData.get("firstName") as string)?.trim();
+  const lastName = (formData.get("lastName") as string)?.trim();
   const phone = (formData.get("phone") as string)?.trim() || null;
   const email = (formData.get("email") as string)?.trim() || null;
   const relationship = (formData.get("relationship") as string)?.trim() || "Other";
@@ -27,13 +28,15 @@ export async function addNotificationContact(formData: FormData) {
   const viaSms = formData.get("viaSms") === "on";
   const viaEmail = formData.get("viaEmail") === "on";
 
-  if (!name) return { error: "Name is required." };
+  if (!firstName) return { error: "First name is required." };
+  if (!lastName) return { error: "Last name is required." };
   if (!phone && !email) return { error: "Phone or email is required." };
 
   await prisma.notificationContact.create({
     data: {
       memberId: user.id,
-      name,
+      firstName,
+      lastName,
       phone,
       email,
       relationship,
@@ -59,7 +62,8 @@ export async function updateNotificationContact(formData: FormData) {
   if (!contact) return { error: "Contact not found." };
   if (contact.isPrimary) return { error: "Cannot edit the primary contact here." };
 
-  const name = (formData.get("name") as string)?.trim();
+  const firstName = (formData.get("firstName") as string)?.trim();
+  const lastName = (formData.get("lastName") as string)?.trim();
   const phone = (formData.get("phone") as string)?.trim() || null;
   const email = (formData.get("email") as string)?.trim() || null;
   const relationship = (formData.get("relationship") as string)?.trim() || "Other";
@@ -69,12 +73,13 @@ export async function updateNotificationContact(formData: FormData) {
   const viaSms = formData.get("viaSms") === "on";
   const viaEmail = formData.get("viaEmail") === "on";
 
-  if (!name) return { error: "Name is required." };
+  if (!firstName) return { error: "First name is required." };
+  if (!lastName) return { error: "Last name is required." };
   if (!phone && !email) return { error: "Phone or email is required." };
 
   await prisma.notificationContact.update({
     where: { id: contactId },
-    data: { name, phone, email, relationship, sendCodes, sendBookings, sendBilling, viaSms, viaEmail },
+    data: { firstName, lastName, phone, email, relationship, sendCodes, sendBookings, sendBilling, viaSms, viaEmail },
   });
 
   revalidatePath("/account/profile");
@@ -134,10 +139,15 @@ export async function ensurePrimaryContact() {
   });
 
   if (!existing) {
+    const parts = member.name.split(" ");
+    const firstName = parts[0] || "";
+    const lastName = parts.slice(1).join(" ") || "";
+
     await prisma.notificationContact.create({
       data: {
         memberId: user.id,
-        name: member.name,
+        firstName,
+        lastName,
         phone: member.phone,
         email: member.email,
         relationship: "Self",

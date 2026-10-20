@@ -9,7 +9,8 @@ const POSITIONS = ["C", "P", "1B", "SS/2B", "3B", "OF"] as const;
 
 interface Player {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   dateOfBirth: string | null;
   positions: string | null;
   school: string | null;
@@ -51,13 +52,20 @@ export function PlayerForm({
       {player && <input type="hidden" name="playerId" value={player.id} />}
       <input type="hidden" name="positions" value={POSITIONS.filter((p) => selected.has(p)).join(", ")} />
 
-      <Input
-        label="Player name"
-        name="name"
-        defaultValue={player?.name ?? ""}
-        required
-        placeholder="First Last"
-      />
+      <div className="grid grid-cols-2 gap-3">
+        <Input
+          label="First name"
+          name="firstName"
+          defaultValue={player?.firstName ?? ""}
+          required
+        />
+        <Input
+          label="Last name"
+          name="lastName"
+          defaultValue={player?.lastName ?? ""}
+          required
+        />
+      </div>
 
       <Input
         label="Date of birth"

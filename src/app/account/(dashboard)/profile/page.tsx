@@ -49,6 +49,7 @@ export default async function AccountProfilePage() {
               type="tel"
               defaultValue={member.phone ?? ""}
               placeholder="+1 (555) 000-0000"
+              required
             />
             <Button type="submit" variant="primary" className="w-full">
               Save changes

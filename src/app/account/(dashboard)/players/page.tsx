@@ -21,7 +21,8 @@ export default async function PlayersPage() {
 
   const mapped = players.map((p: typeof players[number]) => ({
     id: p.id,
-    name: p.name,
+    firstName: p.firstName,
+    lastName: p.lastName,
     dateOfBirth: p.dateOfBirth ? p.dateOfBirth.toISOString().split("T")[0] : null,
     positions: p.positions,
     school: p.school,
