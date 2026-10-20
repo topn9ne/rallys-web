@@ -45,15 +45,23 @@ export async function getWaiverTemplateWithMeta() {
 
 const FALLBACK_WAIVER_TEXT = `RALLY'S INDOOR TRAINING — PARTICIPANT WAIVER AND RELEASE OF LIABILITY
 
-By signing this waiver, I acknowledge that using batting cage facilities at Rally's Indoor Training involves inherent risks including but not limited to physical injury from pitched baseballs, bat vibration, and other unforeseen circumstances. I voluntarily assume all such risks.
+ASSUMPTION OF RISK. By signing this waiver, I acknowledge that using batting cage and training facilities at Rally's Indoor Training involves inherent risks including but not limited to: being struck by pitched or batted baseballs or softballs, injury from swinging bats, bat vibration, muscle or joint strain, slips and falls, equipment malfunction, and contact with netting, structures, or other participants. I voluntarily assume all such risks and full responsibility for any injury, loss, or damage that may result from my participation.
 
-I hereby release, waive, discharge, and covenant not to sue Rally's Indoor Training LLC, its owners, operators, and agents from any and all claims, damages, or causes of action arising from my use of the batting cage facilities.
+RELEASE OF LIABILITY. I hereby release, waive, discharge, and covenant not to sue Rally's Indoor Training LLC, its owners, members, operators, agents, and their respective heirs, successors, and assigns from any and all claims, demands, damages, or causes of action arising from my use of the facility, including claims of negligence.
 
-I confirm that I will follow all posted safety rules and use provided safety equipment, including a batting helmet, at all times while in the cage. I understand that the facility is self-service and unstaffed, and I accept full responsibility for my safety and the safety of any minors under my supervision.
+INDEMNIFICATION. I agree to indemnify and hold harmless Rally's Indoor Training LLC from any claims, damages, attorney's fees, judgments, or costs arising from my use of the facility, the use by any minors listed below, or any breach of this waiver.
 
-For participants under 18: A parent or legal guardian must sign this waiver on behalf of the minor participant. The signing adult assumes all responsibility for the minor's safety and compliance with facility rules.
+FACILITY RULES AND SAFETY EQUIPMENT. I confirm that I will follow all posted safety rules and use provided safety equipment, including a batting helmet, at all times while in the cage area. I understand that failure to follow posted rules may result in revocation of facility access.
 
-This waiver is binding upon me and my heirs, executors, administrators, and assigns.
+SELF-SERVICE FACILITY. I understand that the facility is self-service and may be unstaffed during my session. I accept full responsibility for my safety and the safety of any minors under my supervision. I acknowledge that the facility is monitored by security cameras for safety purposes and consent to being recorded while on the premises.
+
+MEDICAL ACKNOWLEDGMENT. I represent that I (and any minors listed below) am physically capable of participating in batting cage activities and have no medical conditions that would make participation unsafe. I authorize emergency medical treatment in the event I am unable to provide consent, and I accept financial responsibility for any medical costs incurred.
+
+MINORS. For participants under 18 years of age: A parent or legal guardian must sign this waiver on behalf of the minor participant. The signing adult assumes all responsibility for the minor's safety, conduct, and compliance with facility rules. A coach's signature does not satisfy this requirement.
+
+GOVERNING LAW. This waiver shall be governed by and construed in accordance with the laws of the State of Nebraska.
+
+This waiver is binding upon me, my heirs, executors, administrators, and assigns. I have read and understand this waiver in its entirety and sign it voluntarily.
 
 Rally's Indoor Training LLC
 203 S Woodland Ave, Bay 5

@@ -19,7 +19,6 @@ export function WaiverForm({ bookingId }: { bookingId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const hasMinor = participants.some((p) => p.isMinor);
 
   function addParticipant() {
     setParticipants((prev) => [...prev, { name: "", isMinor: false }]);
@@ -128,9 +127,7 @@ export function WaiverForm({ bookingId }: { bookingId: string }) {
             required
           />
           <span className="text-sm text-gray-700">
-            {hasMinor
-              ? "I am the parent/guardian of the minor participant(s) listed above. I have read and understand the waiver above. I voluntarily agree to its terms and release Rally's Indoor Training from all liability on behalf of myself and all listed participants."
-              : "I have read and understand the waiver above. I voluntarily agree to its terms and release Rally's Indoor Training from all liability on behalf of all listed participants. I confirm this signature is my own."}
+            I have read and understand the waiver above. I voluntarily agree to its terms and release Rally&apos;s Indoor Training from all liability on behalf of all listed participants. I confirm this signature is my own.
           </span>
         </label>
       </div>
