@@ -61,7 +61,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
                 className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm transition-colors ${
                   active
                     ? "bg-gray-50 text-brand-blue font-bold rounded-t-lg"
-                    : "text-brand-blue/60 font-medium hover:text-brand-blue/80"
+                    : "text-brand-blue/60 font-semibold hover:text-blue-500"
                 }`}
               >
                 <Icon size={18} weight={active ? "fill" : "regular"} />
