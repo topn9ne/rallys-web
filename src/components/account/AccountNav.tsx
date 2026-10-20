@@ -29,7 +29,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
     <>
       {/* Desktop top bar */}
       <header className="hidden md:block bg-brand-blue text-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <Link href="/account/bookings" className="shrink-0">
             <Wordmark className="h-7 w-auto" fill="#ffffff" />
           </Link>
@@ -50,7 +50,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
 
       {/* Desktop tab bar */}
       <nav className="hidden md:block bg-gray-200">
-        <div className="mx-auto flex max-w-3xl">
+        <div className="mx-auto flex max-w-5xl">
           {tabs.map((t) => {
             const active = pathname === t.href;
             const Icon = t.icon;

@@ -29,7 +29,7 @@ export default async function AccountLayout({
         userName={user.user_metadata?.name ?? user.email ?? ""}
         signOutAction={handleSignOut}
       />
-      <main className="mx-auto max-w-3xl px-4 py-8 pb-24 md:pb-8">
+      <main className="mx-auto max-w-5xl px-4 py-8 pb-24 md:pb-8">
         <WaiverStatusBanner signed={waiverStatus.signed} needsResign={waiverStatus.needsResign} />
         {(!waiverStatus.signed || waiverStatus.needsResign) && <div className="mt-4" />}
         {children}
