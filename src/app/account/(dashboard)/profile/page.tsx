@@ -13,7 +13,7 @@ export default async function AccountProfilePage() {
   const user = await requireUser("/account/profile");
   const member = await prisma.member.findUnique({
     where: { id: user.id },
-    select: { name: true, email: true, phone: true },
+    select: { name: true, email: true, phone: true, contactEmail: true },
   });
 
   if (!member) return null;
@@ -51,6 +51,19 @@ export default async function AccountProfilePage() {
               placeholder="+1 (555) 000-0000"
               required
             />
+            <p className="text-xs text-gray-400 -mt-2">
+              Required for door code delivery.
+            </p>
+            <Input
+              label="Notification email"
+              name="contactEmail"
+              type="email"
+              defaultValue={member.contactEmail ?? ""}
+              placeholder={member.email}
+            />
+            <p className="text-xs text-gray-400 -mt-2">
+              Optional. Booking confirmations and receipts go here instead of your login email.
+            </p>
             <Button type="submit" variant="primary" className="w-full">
               Save changes
             </Button>

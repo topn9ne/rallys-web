@@ -81,6 +81,7 @@ model Member {
   name                  String
   email                 String             @unique
   phone                 String
+  contactEmail          String?
   tier                  MemberTier         @default(FAMILY)
   stripeCustomerId      String?            @unique
   stripeSubscriptionId  String?
