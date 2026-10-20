@@ -73,7 +73,7 @@ export default async function ReportsPage({ searchParams }: Props) {
         }
       />
 
-      <form method="GET" className="mb-6 flex items-end gap-3">
+      <form method="GET" className="mb-6 flex flex-col gap-3 rounded-[14px] border border-white/10 bg-white/[0.04] p-4 sm:flex-row sm:flex-wrap sm:items-end">
         <label className="flex flex-col gap-1">
           <span className="pl-1 text-[10px] font-semibold uppercase tracking-wide text-white/60">From</span>
           <input
