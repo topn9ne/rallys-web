@@ -18,8 +18,8 @@ interface Props {
 
 const tabs = [
   { href: "/account/bookings", label: "Bookings", icon: CalendarDots },
-  { href: "/account/membership", label: "Membership", icon: Medal },
   { href: "/account/players", label: "Players", icon: BaseballHelmet },
+  { href: "/account/membership", label: "Membership", icon: Medal },
   { href: "/account/notifications", label: "Notifications", icon: Bell },
   { href: "/account/profile", label: "Profile", icon: UserCircle },
 ];
