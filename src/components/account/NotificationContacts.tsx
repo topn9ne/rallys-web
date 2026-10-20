@@ -343,8 +343,7 @@ export function NotificationContacts({ contacts }: { contacts: Contact[] }) {
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Notifications</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Choose what you receive and how, and add contacts who should also get
-          notified.
+          Set your communication preferences.
         </p>
       </div>
 
