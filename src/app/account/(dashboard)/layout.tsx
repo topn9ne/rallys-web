@@ -2,6 +2,8 @@ import { getUser } from "@/lib/auth";
 import { signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getMemberWaiverStatus } from "@/server/actions/waiver";
+import { WaiverStatusBanner } from "@/components/account/WaiverStatusBanner";
 
 export default async function AccountLayout({
   children,
@@ -13,6 +15,8 @@ export default async function AccountLayout({
   if (!user) {
     redirect("/auth/signin?callbackUrl=/account/bookings");
   }
+
+  const waiverStatus = await getMemberWaiverStatus(user.id);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -65,7 +69,11 @@ export default async function AccountLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-4 py-8">{children}</main>
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <WaiverStatusBanner signed={waiverStatus.signed} needsResign={waiverStatus.needsResign} />
+        {(!waiverStatus.signed || waiverStatus.needsResign) && <div className="mt-4" />}
+        {children}
+      </main>
     </div>
   );
 }

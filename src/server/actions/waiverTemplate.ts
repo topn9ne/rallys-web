@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authGuard";
 
-const SINGLETON_ID = "singleton";
+const SINGLETON_ID = "default";
 
 const TemplateSchema = z.object({
   body: z.string().min(20, "Waiver text must be at least 20 characters"),
@@ -31,6 +31,16 @@ export async function getWaiverTemplate(): Promise<string> {
     where: { id: SINGLETON_ID },
   });
   return template?.body ?? FALLBACK_WAIVER_TEXT;
+}
+
+export async function getWaiverTemplateWithMeta() {
+  const template = await prisma.waiverTemplate.findUnique({
+    where: { id: SINGLETON_ID },
+  });
+  return {
+    body: template?.body ?? FALLBACK_WAIVER_TEXT,
+    updatedAt: template?.updatedAt ?? new Date(0),
+  };
 }
 
 const FALLBACK_WAIVER_TEXT = `RALLY'S INDOOR TRAINING — PARTICIPANT WAIVER AND RELEASE OF LIABILITY
