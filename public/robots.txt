@@ -1,8 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /operator/
 Disallow: /api/
 Disallow: /auth/
 
-Sitemap: https://railsiderides.com/sitemap.xml
+Sitemap: https://rallysindoor.com/sitemap.xml
