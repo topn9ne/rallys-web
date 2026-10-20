@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authGuard";
+import { toE164 } from "@/lib/phone";
 import { createAccessCode } from "@/server/services/seam";
 import { notifyBookingConfirmed } from "@/server/services/notify";
 import { resolveSlot, materializeSlot, pairedVirtualSlotId } from "@/server/services/virtualSlots";
@@ -68,7 +69,7 @@ export async function createManualBooking(input: ManualBookingInput) {
       memberId,
       guestName: memberId ? null : input.guestName?.trim() || null,
       guestEmail: memberId ? null : input.guestEmail?.toLowerCase().trim() || null,
-      guestPhone: memberId ? null : input.guestPhone?.trim() || null,
+      guestPhone: memberId ? null : (input.guestPhone?.trim() ? toE164(input.guestPhone.trim()) : null),
       bookingType: input.bookingType as any,
       slotIdA: materializedA.id,
       slotIdB: materializedB?.id ?? null,

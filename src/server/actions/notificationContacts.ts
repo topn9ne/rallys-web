@@ -3,8 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { toE164, isValidUSPhone } from "@/lib/phone";
 
 const RELATIONSHIPS = ["Parent", "Player", "Coach", "Other"] as const;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function getNotificationContacts() {
   const user = await requireUser();
@@ -31,13 +33,15 @@ export async function addNotificationContact(formData: FormData) {
   if (!firstName) return { error: "First name is required." };
   if (!lastName) return { error: "Last name is required." };
   if (!phone && !email) return { error: "Phone or email is required." };
+  if (phone && !isValidUSPhone(phone)) return { error: "Enter a valid 10-digit phone number." };
+  if (email && !EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
 
   await prisma.notificationContact.create({
     data: {
       memberId: user.id,
       firstName,
       lastName,
-      phone,
+      phone: phone ? toE164(phone) : null,
       email,
       relationship,
       sendCodes,
@@ -76,10 +80,12 @@ export async function updateNotificationContact(formData: FormData) {
   if (!firstName) return { error: "First name is required." };
   if (!lastName) return { error: "Last name is required." };
   if (!phone && !email) return { error: "Phone or email is required." };
+  if (phone && !isValidUSPhone(phone)) return { error: "Enter a valid 10-digit phone number." };
+  if (email && !EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
 
   await prisma.notificationContact.update({
     where: { id: contactId },
-    data: { firstName, lastName, phone, email, relationship, sendCodes, sendBookings, sendBilling, viaSms, viaEmail },
+    data: { firstName, lastName, phone: phone ? toE164(phone) : null, email, relationship, sendCodes, sendBookings, sendBilling, viaSms, viaEmail },
   });
 
   revalidatePath("/account/profile");

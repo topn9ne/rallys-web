@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { updateMemberProfile } from "@/server/actions/member";
 import { PasswordReset } from "@/components/account/PasswordReset";
 
@@ -43,17 +44,13 @@ export default async function AccountProfilePage() {
                 Email cannot be changed here.
               </p>
             </div>
-            <Input
+            <PhoneInput
               label="Phone number"
               name="phone"
-              type="tel"
               defaultValue={member.phone ?? ""}
-              placeholder="+1 (555) 000-0000"
+              hint="Required for door code delivery."
               required
             />
-            <p className="text-xs text-gray-400 -mt-2">
-              Required for door code delivery.
-            </p>
             <Input
               label="Secondary email"
               name="contactEmail"

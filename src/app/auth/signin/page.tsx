@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
+import { toE164 } from "@/lib/phone";
 
 export default function SignInPage() {
   return (
@@ -61,7 +63,7 @@ function SignInContent() {
       email,
       password,
       options: {
-        data: { name, phone },
+        data: { name, phone: toE164(phone) },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/confirmed")}`,
       },
     });
@@ -109,14 +111,13 @@ function SignInContent() {
                 value={name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
               />
-              <Input
+              <PhoneInput
                 label="Phone"
                 name="phone"
-                type="tel"
                 autoComplete="tel"
                 required
                 value={phone}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
+                onChange={setPhone}
               />
             </>
           )}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { createManualBooking, getSlotForManualBooking } from "@/server/actions/manualBookings";
 import { X, UserPlus, CurrencyDollar, Ticket, Signature } from "@phosphor-icons/react/dist/ssr";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 
 type SlotInfo = NonNullable<Awaited<ReturnType<typeof getSlotForManualBooking>>>;
 
@@ -201,12 +202,9 @@ export function ManualBookingModal({ slotId, onClose, onSuccess }: Props) {
                     onChange={(e) => setGuestEmail(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
                   />
-                  <input
-                    type="tel"
-                    placeholder="Phone (optional)"
+                  <PhoneInput
                     value={guestPhone}
-                    onChange={(e) => setGuestPhone(e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+                    onChange={setGuestPhone}
                   />
                 </div>
               )}

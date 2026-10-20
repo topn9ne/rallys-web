@@ -8,6 +8,7 @@ import { createAccessCode, deleteAccessCode } from "@/server/services/seam";
 import { notifyBookingConfirmed, notifyBookingCancelled } from "@/server/services/notify";
 import type { BookingType } from "@prisma/client";
 import { resolveSlot, materializeSlot } from "@/server/services/virtualSlots";
+import { toE164, isValidUSPhone } from "@/lib/phone";
 
 interface CreateBookingInput {
   slotIdA: string;
@@ -64,7 +65,7 @@ export async function createBooking(input: CreateBookingInput) {
 
   await prisma.member.update({
     where: { id: user.id },
-    data: { phone: input.phone },
+    data: { phone: toE164(input.phone) },
   });
 
   const materializedA = await materializeSlot(input.slotIdA, "BOOKED");
@@ -135,7 +136,7 @@ export async function createDropInCheckout(input: CreateDropInInput) {
     customerEmail = user.email ?? undefined;
     await prisma.member.update({
       where: { id: user.id },
-      data: { phone: input.phone },
+      data: { phone: toE164(input.phone) },
     });
   } else {
     if (!input.guestName || !input.guestEmail) {
@@ -203,7 +204,7 @@ export async function createDropInCheckout(input: CreateDropInInput) {
       promoCodeId: input.promoCodeId ?? null,
       guestName: !memberId ? input.guestName : null,
       guestEmail: !memberId ? input.guestEmail : null,
-      guestPhone: input.phone,
+      guestPhone: toE164(input.phone),
       notes: input.notes ?? null,
     },
   });
@@ -236,7 +237,7 @@ export async function createDropInCheckout(input: CreateDropInInput) {
       slotIdA: materializedA.id,
       slotIdB: materializedB?.id ?? "",
       bookingType: input.bookingType,
-      guestPhone: input.phone,
+      guestPhone: toE164(input.phone),
     },
     customer_email: customerEmail,
     success_url: `${appUrl}/book/confirmation?session_id={CHECKOUT_SESSION_ID}`,

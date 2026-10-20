@@ -3,6 +3,7 @@
 import { useState, useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import {
   addNotificationContact,
   updateNotificationContact,
@@ -172,12 +173,10 @@ function ContactForm({
             ))}
           </select>
         </div>
-        <Input
+        <PhoneInput
           label="Phone"
           name="phone"
-          type="tel"
           defaultValue={contact?.phone ?? ""}
-          placeholder="+1 (555) 000-0000"
         />
       </div>
 

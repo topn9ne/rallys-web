@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PhoneInput } from "@/components/ui/PhoneInput";
 import { formatCents } from "@/lib/utils";
 import { createBooking, createDropInCheckout } from "@/server/actions/booking";
 import { validatePromoCode } from "@/server/actions/promoCodes";
@@ -246,12 +247,10 @@ export function SlotBookingForm({
               My bookings
             </a>
           </div>
-          <Input
+          <PhoneInput
             label="Phone"
-            type="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="(308) 555-0100"
+            onChange={setPhone}
             hint="Required — your door code will be texted here."
             required
           />
@@ -294,12 +293,10 @@ export function SlotBookingForm({
             hint="We'll send your confirmation here."
             required
           />
-          <Input
+          <PhoneInput
             label="Phone"
-            type="tel"
             value={guestPhone}
-            onChange={(e) => setGuestPhone(e.target.value)}
-            placeholder="(308) 555-0100"
+            onChange={setGuestPhone}
             hint="Required — your door code will be texted here."
             required
           />
