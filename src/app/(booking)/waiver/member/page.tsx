@@ -22,7 +22,7 @@ export default async function MemberWaiverPage() {
           <div className="mb-4 text-5xl text-green-600">&#10003;</div>
           <h1 className="text-2xl font-bold text-gray-900">Waiver Already Signed</h1>
           <p className="mt-2 text-gray-500">
-            Your membership waiver was signed on{" "}
+            Your participation waiver was signed on{" "}
             {status.signedAt?.toLocaleDateString()}. You&apos;re all set!
           </p>
           <a
@@ -47,7 +47,7 @@ export default async function MemberWaiverPage() {
       <div className="mx-auto max-w-2xl px-4 py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900">
-            {status.needsResign ? "Updated Waiver — Re-sign Required" : "Membership Waiver"}
+            {status.needsResign ? "Updated Waiver — Re-sign Required" : "Participation Waiver"}
           </h1>
           <p className="mt-1 text-gray-500 text-sm">
             {status.needsResign

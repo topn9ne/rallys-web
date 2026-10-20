@@ -9,7 +9,7 @@ export default function MemberWaiverCompletePage() {
         <div className="mb-4 text-5xl font-bold text-green-600">&#10003;</div>
         <h1 className="text-2xl font-bold text-gray-900">Waiver Signed!</h1>
         <p className="mt-3 text-gray-500">
-          Your membership waiver is on file. You&apos;re covered for all future
+          Your participation waiver is on file. You&apos;re covered for all future
           sessions — no need to sign again unless our terms change.
         </p>
         <p className="mt-6 font-semibold text-brand-blue text-lg">

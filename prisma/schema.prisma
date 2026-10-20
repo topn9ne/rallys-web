@@ -189,6 +189,7 @@ model Waiver {
   agreementTextSnapshot String       @db.Text
   isMinor               Boolean      @default(false)
   guardianName          String?
+  participants          Json?
   status                WaiverStatus @default(PENDING)
   createdAt             DateTime     @default(now())
 

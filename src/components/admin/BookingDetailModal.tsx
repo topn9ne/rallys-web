@@ -140,8 +140,17 @@ export function BookingDetailModal({ bookingId, onClose }: Props) {
                 <>
                   <Row label="Status" value={<Badge variant={booking.waiver.status === "SIGNED" ? "green" : "amber"}>{toTitleCase(booking.waiver.status)}</Badge>} />
                   <Row label="Signer" value={booking.waiver.signerName} />
-                  {booking.waiver.isMinor && <Row label="Minor" value="Yes" />}
-                  {booking.waiver.guardianName && <Row label="Guardian" value={booking.waiver.guardianName} />}
+                  {booking.waiver.participants && Array.isArray(booking.waiver.participants) && (booking.waiver.participants as any[]).length > 0 && (
+                    <Row label="Participants" value={
+                      <div className="flex flex-wrap gap-1 justify-end">
+                        {(booking.waiver.participants as any[]).map((p: any, i: number) => (
+                          <span key={i} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs">
+                            {p.name}{p.isMinor && <span className="text-amber-600">(minor)</span>}
+                          </span>
+                        ))}
+                      </div>
+                    } />
+                  )}
                   {booking.waiver.signedAt && <Row label="Signed at" value={new Date(booking.waiver.signedAt).toLocaleString()} />}
                 </>
               ) : (

@@ -29,6 +29,7 @@ export default async function WaiversPage() {
     prisma.waiver.findMany({
       orderBy: { createdAt: "desc" },
       include: {
+        member: { select: { name: true, email: true } },
         booking: {
           include: {
             member: { select: { name: true, email: true } },
@@ -64,11 +65,14 @@ export default async function WaiversPage() {
           <CardBody className="p-0">
             <ul className="divide-y divide-gray-100">
               {waivers.map((waiver: any) => {
-                const name = waiver.booking?.member?.name ?? waiver.booking?.guestName ?? "Guest";
-                const email = waiver.booking?.member?.email ?? waiver.booking?.guestEmail ?? "";
-                const lane = waiver.booking?.bookingType === "BOTH_LANES"
-                  ? "Both Lanes"
-                  : `Lane ${waiver.booking?.slotA?.lane ?? "?"}`;
+                const isMemberWaiver = !waiver.bookingId;
+                const name = waiver.member?.name ?? waiver.booking?.member?.name ?? waiver.booking?.guestName ?? "Guest";
+                const email = waiver.member?.email ?? waiver.booking?.member?.email ?? waiver.booking?.guestEmail ?? "";
+                const lane = isMemberWaiver
+                  ? null
+                  : waiver.booking?.bookingType === "BOTH_LANES"
+                    ? "Both Lanes"
+                    : `Lane ${waiver.booking?.slotA?.lane ?? "?"}`;
 
                 return (
                   <li key={waiver.id} className="px-6 py-4">
@@ -87,19 +91,32 @@ export default async function WaiversPage() {
                           <p className="mt-0.5 text-sm text-gray-500 truncate">{email}</p>
                         )}
                         <p className="mt-0.5 text-xs text-gray-400">
-                          {lane} &middot;{" "}
-                          {waiver.booking?.slotA?.date
-                            ? formatDate(new Date(waiver.booking.slotA.date))
-                            : "—"}
+                          {isMemberWaiver ? (
+                            <span className="font-medium text-brand-blue">Membership waiver</span>
+                          ) : (
+                            <>
+                              {lane} &middot;{" "}
+                              {waiver.booking?.slotA?.date
+                                ? formatDate(new Date(waiver.booking.slotA.date))
+                                : "—"}
+                            </>
+                          )}
                         </p>
                         {waiver.status === "SIGNED" && waiver.signerName && (
                           <p className="mt-0.5 text-xs text-gray-500">
                             Signed by <span className="font-medium">{waiver.signerName}</span>
-                            {waiver.guardianName && (
-                              <> (guardian: {waiver.guardianName})</>
-                            )}
                             {waiver.signedAt && <> &middot; {formatDateTime(new Date(waiver.signedAt))}</>}
                           </p>
+                        )}
+                        {waiver.participants && Array.isArray(waiver.participants) && (waiver.participants as any[]).length > 0 && (
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {(waiver.participants as any[]).map((p: any, i: number) => (
+                              <span key={i} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-700">
+                                {p.name}
+                                {p.isMinor && <span className="text-amber-600">(minor)</span>}
+                              </span>
+                            ))}
+                          </div>
                         )}
                       </div>
                     </div>

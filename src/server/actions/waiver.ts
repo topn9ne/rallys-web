@@ -7,26 +7,34 @@ import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { getWaiverTemplateWithMeta } from "./waiverTemplate";
 
-const WaiverSchema = z.object({
-  bookingId: z.string().min(1),
-  signerName: z.string().min(2, "Full name is required"),
-  isMinor: z.enum(["true", "false"]),
-  guardianName: z.string().optional(),
-  acknowledged: z.literal("true", "You must acknowledge the waiver"),
+const ParticipantSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  isMinor: z.boolean(),
 });
 
-export async function signWaiver(formData: FormData) {
-  const result = WaiverSchema.safeParse(Object.fromEntries(formData));
+export type WaiverParticipant = z.infer<typeof ParticipantSchema>;
+
+// ─── Drop-in / booking waiver ────────────────────────────────────────────────
+
+const WaiverInput = z.object({
+  bookingId: z.string().min(1),
+  signerName: z.string().min(2, "Full name is required"),
+  participants: z.array(ParticipantSchema).min(1, "At least one participant is required"),
+  acknowledged: z.boolean(),
+});
+
+export async function signWaiver(input: z.infer<typeof WaiverInput>) {
+  const result = WaiverInput.safeParse(input);
   if (!result.success) {
-    return { error: result.error.flatten().fieldErrors };
+    return { error: { _form: [result.error.issues[0]?.message ?? "Invalid input."] } };
   }
 
-  const { bookingId, signerName, isMinor, guardianName } = result.data;
-  const minor = isMinor === "true";
-
-  if (minor && (!guardianName || guardianName.trim().length < 2)) {
-    return { error: { guardianName: ["Parent/guardian name is required for minors."] } };
+  const { bookingId, signerName, participants, acknowledged } = result.data;
+  if (!acknowledged) {
+    return { error: { _form: ["You must acknowledge the waiver."] } };
   }
+
+  const hasMinor = participants.some((p) => p.isMinor);
 
   const headersList = await headers();
   const ip =
@@ -56,8 +64,9 @@ export async function signWaiver(formData: FormData) {
       where: { bookingId },
       update: {
         signerName,
-        isMinor: minor,
-        guardianName: minor ? guardianName?.trim() : null,
+        isMinor: hasMinor,
+        guardianName: hasMinor ? signerName : null,
+        participants,
         signedAt: new Date(),
         ipAddress: ip,
         status: "SIGNED",
@@ -66,8 +75,9 @@ export async function signWaiver(formData: FormData) {
         bookingId,
         memberId: booking.memberId,
         signerName,
-        isMinor: minor,
-        guardianName: minor ? guardianName?.trim() : null,
+        isMinor: hasMinor,
+        guardianName: hasMinor ? signerName : null,
+        participants,
         signedAt: new Date(),
         ipAddress: ip,
         status: "SIGNED",
@@ -81,28 +91,27 @@ export async function signWaiver(formData: FormData) {
 
 // ─── Member waiver (sign once, covers all future bookings) ───────────────────
 
-const MemberWaiverSchema = z.object({
+const MemberWaiverInput = z.object({
   signerName: z.string().min(2, "Full name is required"),
-  isMinor: z.enum(["true", "false"]),
-  guardianName: z.string().optional(),
-  acknowledged: z.literal("true", "You must acknowledge the waiver"),
+  participants: z.array(ParticipantSchema).min(1, "At least one participant is required"),
+  acknowledged: z.boolean(),
 });
 
-export async function signMemberWaiver(formData: FormData) {
+export async function signMemberWaiver(input: z.infer<typeof MemberWaiverInput>) {
   const user = await getUser();
   if (!user) return { error: { _form: ["You must be signed in."] } };
 
-  const result = MemberWaiverSchema.safeParse(Object.fromEntries(formData));
+  const result = MemberWaiverInput.safeParse(input);
   if (!result.success) {
-    return { error: result.error.flatten().fieldErrors };
+    return { error: { _form: [result.error.issues[0]?.message ?? "Invalid input."] } };
   }
 
-  const { signerName, isMinor, guardianName } = result.data;
-  const minor = isMinor === "true";
-
-  if (minor && (!guardianName || guardianName.trim().length < 2)) {
-    return { error: { guardianName: ["Parent/guardian name is required for minors."] } };
+  const { signerName, participants, acknowledged } = result.data;
+  if (!acknowledged) {
+    return { error: { _form: ["You must acknowledge the waiver."] } };
   }
+
+  const hasMinor = participants.some((p) => p.isMinor);
 
   const headersList = await headers();
   const ip =
@@ -117,8 +126,9 @@ export async function signMemberWaiver(formData: FormData) {
       memberId: user.id,
       bookingId: null,
       signerName,
-      isMinor: minor,
-      guardianName: minor ? guardianName?.trim() : null,
+      isMinor: hasMinor,
+      guardianName: hasMinor ? signerName : null,
+      participants,
       signedAt: new Date(),
       ipAddress: ip,
       status: "SIGNED",
