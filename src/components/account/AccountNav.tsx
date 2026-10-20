@@ -28,7 +28,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
   return (
     <>
       {/* Desktop top bar */}
-      <header className="hidden md:block bg-brand-blue text-white shadow-sm">
+      <header className="hidden md:block bg-brand-blue text-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
           <Link href="/account/bookings" className="shrink-0">
             <Wordmark className="h-7 w-auto" fill="#ffffff" />
@@ -46,30 +46,31 @@ export function AccountNav({ userName, signOutAction }: Props) {
             </form>
           </div>
         </div>
-
-        <nav className="border-t border-white/10">
-          <div className="mx-auto flex max-w-3xl">
-            {tabs.map((t) => {
-              const active = pathname === t.href;
-              const Icon = t.icon;
-              return (
-                <Link
-                  key={t.href}
-                  href={t.href}
-                  className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
-                    active
-                      ? "text-white border-b-2 border-white"
-                      : "text-blue-200 hover:text-white"
-                  }`}
-                >
-                  <Icon size={18} weight={active ? "fill" : "regular"} />
-                  {t.label}
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
       </header>
+
+      {/* Desktop tab bar */}
+      <nav className="hidden md:block bg-gray-100 border-b border-gray-200 shadow-sm">
+        <div className="mx-auto flex max-w-3xl">
+          {tabs.map((t) => {
+            const active = pathname === t.href;
+            const Icon = t.icon;
+            return (
+              <Link
+                key={t.href}
+                href={t.href}
+                className={`flex flex-1 items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                  active
+                    ? "text-brand-blue border-b-2 border-brand-blue"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Icon size={18} weight={active ? "fill" : "regular"} />
+                {t.label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* Mobile top bar */}
       <header className="md:hidden bg-brand-blue text-white shadow-sm">
