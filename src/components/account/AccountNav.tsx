@@ -7,6 +7,7 @@ import {
   CalendarDots,
   Medal,
   BaseballHelmet,
+  Bell,
   UserCircle,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -19,6 +20,7 @@ const tabs = [
   { href: "/account/bookings", label: "Bookings", icon: CalendarDots },
   { href: "/account/membership", label: "Membership", icon: Medal },
   { href: "/account/players", label: "Players", icon: BaseballHelmet },
+  { href: "/account/notifications", label: "Notifications", icon: Bell },
   { href: "/account/profile", label: "Profile", icon: UserCircle },
 ];
 
@@ -94,7 +96,7 @@ export function AccountNav({ userName, signOutAction }: Props) {
 
       {/* Mobile bottom tab bar */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)]">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {tabs.map((t) => {
             const active = pathname === t.href;
             const Icon = t.icon;
