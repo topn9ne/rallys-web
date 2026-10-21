@@ -1,25 +1,27 @@
-import { Nav } from "@/components/prelaunch/Nav";
-import { Hero } from "@/components/prelaunch/Hero";
+import { SiteNav } from "@/components/site/SiteNav";
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { Hero } from "@/components/landing/Hero";
+import { HowItWorks } from "@/components/landing/HowItWorks";
+import { Pricing } from "@/components/landing/Pricing";
+import { Teams } from "@/components/landing/Teams";
+import { Vision } from "@/components/landing/Vision";
+import { Faq } from "@/components/landing/Faq";
 import { Story } from "@/components/prelaunch/Story";
-import { HowItWorks } from "@/components/prelaunch/HowItWorks";
 import { WhatYouGet } from "@/components/prelaunch/WhatYouGet";
-import { Vision } from "@/components/prelaunch/Vision";
-import { Gallery } from "@/components/prelaunch/Gallery";
-import { WaitlistCta } from "@/components/prelaunch/WaitlistCta";
-import { Footer } from "@/components/prelaunch/Footer";
 
 export default function Home() {
   return (
     <div className="min-h-screen font-sans">
-      <Nav />
+      <SiteNav />
       <Hero />
       <Story />
       <HowItWorks />
       <WhatYouGet />
+      <Pricing />
+      <Teams />
       <Vision />
-      <Gallery />
-      <WaitlistCta />
-      <Footer />
+      <Faq />
+      <SiteFooter />
     </div>
   );
 }

@@ -1,5 +1,5 @@
-import { Nav } from "@/components/landing/Nav";
-import { FooterCta } from "@/components/landing/FooterCta";
+import { SiteNav } from "@/components/site/SiteNav";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export default function PrivacyPage() {
       className="min-h-screen font-sans"
       style={{ background: "var(--color-landing-bg)", color: "var(--color-landing-fg)" }}
     >
-      <Nav />
+      <SiteNav />
 
       <section className="px-6 py-16 md:px-14 max-w-3xl">
         <p
@@ -67,7 +67,7 @@ export default function PrivacyPage() {
         </div>
       </section>
 
-      <FooterCta />
+      <SiteFooter />
     </div>
   );
 }
