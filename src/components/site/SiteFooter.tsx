@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { FacebookLogo } from "@phosphor-icons/react/dist/ssr";
+import { Wordmark } from "@/components/ui/Wordmark";
 
 export function SiteFooter() {
   return (
     <>
       {/* CTA strip */}
       <section className="bg-rally-red-bright px-6 py-16 text-center md:px-14">
-        <h2 className="text-4xl font-bold uppercase leading-tight tracking-[-1px] text-white sm:text-5xl lg:text-[64px] lg:leading-[0.95]">
-          Ready to Rally?
+        <h2 className="flex flex-col items-center text-white">
+          <span className="font-condensed text-3xl font-extrabold uppercase tracking-[2px] sm:text-4xl lg:text-5xl">
+            Ready to
+          </span>
+          <span className="font-script text-6xl sm:text-7xl lg:text-8xl">
+            Rally?
+          </span>
         </h2>
         <div className="mt-8">
           <Link
@@ -22,13 +28,8 @@ export function SiteFooter() {
       {/* Footer */}
       <footer className="bg-navy px-6 py-10 md:px-14">
         <div className="flex flex-wrap items-start justify-between gap-8">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rally-red text-xs font-bold text-white">
-              R
-            </div>
-            <span className="text-sm font-bold uppercase tracking-[0.5px] text-white">
-              Rally&apos;s Indoor Training
-            </span>
+          <Link href="/" className="block">
+            <Wordmark className="h-8 w-auto" fill="#ffffff" />
           </Link>
 
           <div className="flex items-center gap-5">
