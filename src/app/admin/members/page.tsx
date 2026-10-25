@@ -12,7 +12,6 @@ export const metadata = { title: "Members | Admin | Rally's Indoor Training" };
 const PAGE_SIZE = 25;
 
 const MILESTONE_LABELS: Record<string, string> = {
-  "10hr": "10 hrs",
   "25hr": "25 hrs",
   "50hr": "50 hrs",
   "100hr": "100 hrs",

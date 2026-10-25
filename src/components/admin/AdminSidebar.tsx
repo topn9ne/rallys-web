@@ -11,6 +11,7 @@ import {
   Ticket,
   UsersThree,
   ChartBar,
+  Fire,
   Gear,
   CaretDoubleRight,
   CaretDoubleLeft,
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { label: "Schedule",   href: "/admin/schedule",  Icon: CalendarBlank },
   { label: "Bookings",   href: "/admin/bookings",  Icon: Ticket },
   { label: "Members",    href: "/admin/members",   Icon: UsersThree },
+  { label: "Cage Rats",  href: "/admin/cage-rats",  Icon: Fire },
   { label: "Reports",    href: "/admin/reports",    Icon: ChartBar },
   { label: "Settings",   href: "/admin/pricing",    Icon: Gear, activePaths: SETTINGS_PATHS },
 ];
