@@ -310,6 +310,7 @@ model PlayerMilestones {
   playerId     String
   milestoneKey String
   achievedAt   DateTime @default(now())
+  fulfilled    Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   player Player @relation(fields: [playerId], references: [id])

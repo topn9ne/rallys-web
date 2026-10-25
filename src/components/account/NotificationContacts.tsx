@@ -282,12 +282,12 @@ function ContactCard({ contact }: { contact: Contact }) {
     contact.sendCodes && "Codes",
     contact.sendBookings && "Bookings",
     contact.sendBilling && "Billing",
-  ].filter(Boolean);
+  ].filter((v): v is string => Boolean(v));
 
   const channels = [
     contact.viaSms && "SMS",
     contact.viaEmail && "Email",
-  ].filter(Boolean);
+  ].filter((v): v is string => Boolean(v));
 
   return (
     <div className="flex items-start justify-between rounded-xl border border-gray-200 bg-white p-4">
@@ -328,7 +328,7 @@ function ContactCard({ contact }: { contact: Contact }) {
         <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
           Edit
         </Button>
-        <form action={removeNotificationContact}>
+        <form action={async (fd) => { await removeNotificationContact(fd); }}>
           <input type="hidden" name="contactId" value={contact.id} />
           <Button variant="ghost" size="sm" type="submit">
             Remove

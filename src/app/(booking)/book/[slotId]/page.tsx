@@ -40,6 +40,7 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
   let memberName: string | undefined;
   let memberPhone: string | undefined;
   let memberPlayers: { id: string; name: string }[] = [];
+  // Player model has firstName/lastName — map to { id, name } for the booking form
 
   if (isLoggedIn) {
     const member = await prisma.member.findUnique({
@@ -54,10 +55,13 @@ export default async function SlotDetailPage({ params, searchParams }: Props) {
 
     const players = await prisma.player.findMany({
       where: { memberId: user.id },
-      select: { id: true, name: true },
+      select: { id: true, firstName: true, lastName: true },
       orderBy: { createdAt: "asc" },
     });
-    memberPlayers = players;
+    memberPlayers = players.map((p) => ({
+      id: p.id,
+      name: `${p.firstName} ${p.lastName}`.trim(),
+    }));
   }
 
   const pricingTier = bookingType === "BOTH_LANES"

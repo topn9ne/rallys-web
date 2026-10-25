@@ -138,7 +138,7 @@ export default async function AdminMembersPage({ searchParams }: Props) {
                       const mins = (player.hours?.totalMinutes ?? 0) % 60;
                       return (
                         <div key={player.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                          <span className="font-medium text-gray-900">{player.name}</span>
+                          <span className="font-medium text-gray-900">{player.firstName} {player.lastName}</span>
                           {player.positions && (
                             <span className="text-xs text-gray-500">{player.positions}</span>
                           )}
@@ -221,7 +221,7 @@ export default async function AdminMembersPage({ searchParams }: Props) {
                           const mins = (player.hours?.totalMinutes ?? 0) % 60;
                           return (
                             <div key={player.id} className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-2.5 py-1">
-                              <span className="text-xs font-medium text-gray-700">{player.name}</span>
+                              <span className="text-xs font-medium text-gray-700">{player.firstName} {player.lastName}</span>
                               {(player.hours?.totalMinutes ?? 0) > 0 && (
                                 <span className="text-[10px] font-semibold text-brand-blue">
                                   {hours}h{mins > 0 ? `${mins}m` : ""}

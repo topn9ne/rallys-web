@@ -872,6 +872,7 @@ Every milestone achievement is logged once. Milestones are never deleted or upda
 | playerId | uuid FK → Player | |
 | milestoneKey | string | "25hr", "50hr", "100hr", "cage_rats_2027", "5x_club" |
 | achievedAt | timestamp | When the milestone was reached |
+| fulfilled | boolean default false | Whether the physical reward has been given (shirt, hoodie, wall plaque) |
 | createdAt | timestamp | |
 
 **@@unique([playerId, milestoneKey])** — each milestone earned once per player.

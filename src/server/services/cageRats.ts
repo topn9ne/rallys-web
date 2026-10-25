@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
 const HOUR_MILESTONES = [
-  { key: "10hr", minutes: 600 },
   { key: "25hr", minutes: 1500 },
   { key: "50hr", minutes: 3000 },
   { key: "100hr", minutes: 6000 },
