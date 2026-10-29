@@ -39,7 +39,7 @@ Last updated: 2026-10-29
 
 ### Opt-in keywords
 
-> JOIN, START, YES, SUBSCRIBE
+*(Leave blank — opt-in is web form only, not text-to-join. Twilio auto-handles START/YES/UNSTOP for re-subscribing after STOP.)*
 
 ### Opt-out keywords
 
@@ -49,6 +49,10 @@ Last updated: 2026-10-29
 
 > HELP, INFO
 
+### Opt-in message
+
+*(Leave blank — "If text opt-in is not supported, leave blank." Our opt-in is via web form checkbox during account creation.)*
+
 ### Opt-out message (auto-reply to STOP)
 
 > You've been unsubscribed from Rally's Indoor Training messages. No more messages will be sent. Reply START to re-subscribe or contact admin@rallysindoor.com.
@@ -56,6 +60,14 @@ Last updated: 2026-10-29
 ### Help message (auto-reply to HELP)
 
 > Rally's Indoor Training: For help, visit rallysindoor.com/sms or email admin@rallysindoor.com. Reply STOP to unsubscribe. Msg & data rates may apply.
+
+### Age gated content
+
+No
+
+### Additional information
+
+> Opt-in is collected exclusively via web form during account creation at https://rallysindoor.com/auth/signin. There is no text-to-join keyword. Users must check an unchecked consent checkbox to receive SMS. See screenshot and https://rallysindoor.com/opt-in for full documentation.
 
 ### Message frequency
 
