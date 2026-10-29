@@ -264,7 +264,10 @@ export function SlotBookingForm({
             <span className="text-xs text-gray-500 leading-relaxed">
               I agree to receive SMS booking confirmations, door codes, and reminders
               from Rally&apos;s Indoor Training. Msg frequency varies. Msg &amp; data
-              rates may apply. Reply STOP to cancel, HELP for help.
+              rates may apply. Reply STOP to cancel, HELP for help.{" "}
+              <a href="/terms" className="text-gray-600 underline hover:text-brand-blue">Terms</a>
+              {" & "}
+              <a href="/privacy" className="text-gray-600 underline hover:text-brand-blue">Privacy Policy</a>.
             </span>
           </label>
         </div>
@@ -312,7 +315,10 @@ export function SlotBookingForm({
             <span className="text-xs text-gray-500 leading-relaxed">
               I agree to receive SMS booking confirmations, door codes, and reminders
               from Rally&apos;s Indoor Training. Msg frequency varies. Msg &amp; data
-              rates may apply. Reply STOP to cancel, HELP for help.
+              rates may apply. Reply STOP to cancel, HELP for help.{" "}
+              <a href="/terms" className="text-gray-600 underline hover:text-brand-blue">Terms</a>
+              {" & "}
+              <a href="/privacy" className="text-gray-600 underline hover:text-brand-blue">Privacy Policy</a>.
             </span>
           </label>
         </div>
