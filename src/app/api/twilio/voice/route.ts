@@ -27,11 +27,8 @@ export async function POST(req: NextRequest) {
   console.log(`[twilio/voice] Inbound call from ${From}`);
 
   const isDuringHours = isBusinessHours();
-  const greeting =
-    `<Say voice="Google.en-US-Standard-J">` +
-    `Thanks for calling Rally's Indoor Training, Hastings' self-service batting cages. ` +
-    `To book a session, visit rally's indoor dot com.` +
-    `</Say>`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const greeting = `<Play>${appUrl}/audio/greeting.mp3</Play>`;
 
   let inner: string;
 
@@ -46,9 +43,9 @@ export async function POST(req: NextRequest) {
     // After hours: greet, straight to voicemail
     inner =
       greeting +
-      `<Say voice="Google.en-US-Standard-J">We're currently closed. Leave a message after the tone and we'll get back to you.</Say>` +
+      `<Play>${appUrl}/audio/after-hours.mp3</Play>` +
       `<Record maxLength="120" transcribe="true" transcribeCallback="/api/twilio/voice/transcription" />` +
-      `<Say voice="Google.en-US-Standard-J">We didn't receive a message. Goodbye.</Say>`;
+      `<Play>${appUrl}/audio/no-message.mp3</Play>`;
   }
 
   return new NextResponse(twiml(inner), {

@@ -21,23 +21,20 @@ export async function POST(req: NextRequest) {
   const dialStatus = params.DialCallStatus;
   console.log(`[twilio/voice/voicemail] Dial status: ${dialStatus}`);
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+
   // If the call was answered, no voicemail needed
   if (dialStatus === "completed") {
-    const response = twiml(
-      `<Say voice="Google.en-US-Standard-J">Goodbye.</Say><Hangup />`
-    );
-    return new NextResponse(response, {
+    return new NextResponse(twiml(`<Hangup />`), {
       headers: { "Content-Type": "text/xml" },
     });
   }
 
   // No answer / busy / failed — play voicemail prompt
   const response = twiml(
-    `<Say voice="Google.en-US-Standard-J">` +
-    `Sorry we missed you. Leave a message after the tone and we'll get back to you.` +
-    `</Say>` +
+    `<Play>${appUrl}/audio/missed-call.mp3</Play>` +
     `<Record maxLength="120" transcribe="true" transcribeCallback="/api/twilio/voice/transcription" />` +
-    `<Say voice="Google.en-US-Standard-J">We didn't receive a message. Goodbye.</Say>`
+    `<Play>${appUrl}/audio/no-message.mp3</Play>`
   );
 
   return new NextResponse(response, {
