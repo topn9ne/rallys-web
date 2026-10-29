@@ -24,6 +24,12 @@ async function sendEmail(to: string, subject: string, html: string) {
   }
 }
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function canSmsMember(member: { notificationSms: boolean; phone: string | null }): member is { notificationSms: true; phone: string } {
+  return member.notificationSms && !!member.phone;
+}
+
 // ── Booking confirmed (with door code) ───────────────────────────────────────
 
 export async function notifyBookingConfirmed(bookingId: string, pin: string) {
@@ -33,7 +39,6 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
   });
   if (!booking) return;
 
-  const phone = booking.guestPhone ?? booking.member?.phone;
   const email = booking.guestEmail ?? booking.member?.email;
   const name = booking.guestName ?? booking.member?.name ?? "there";
   const date = formatDate(booking.slotA.date);
@@ -41,6 +46,10 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
   const lane = booking.bookingType === "BOTH_LANES"
     ? "Both Lanes"
     : `Lane ${booking.slotA.lane}`;
+
+  // Guests opted in at booking; members check notificationSms
+  const phone = booking.guestPhone
+    ?? (booking.member && canSmsMember(booking.member) ? booking.member.phone : null);
 
   if (phone) {
     await sendSms(
@@ -67,7 +76,8 @@ export async function notifyBookingCancelled(bookingId: string) {
   });
   if (!booking) return;
 
-  const phone = booking.guestPhone ?? booking.member?.phone;
+  const phone = booking.guestPhone
+    ?? (booking.member && canSmsMember(booking.member) ? booking.member.phone : null);
   const email = booking.guestEmail ?? booking.member?.email;
   const date = formatDate(booking.slotA.date);
   const time = formatTime(booking.slotA.startTime);
@@ -94,7 +104,7 @@ export async function notifyNewMember(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (member.phone) {
+  if (canSmsMember(member)) {
     await sendSms(
       member.phone,
       `Welcome to Rally's! Your membership is active. Book your first session: ${APP_URL}/book`
@@ -127,7 +137,7 @@ export async function notifyPaymentFailed(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (member.phone) {
+  if (canSmsMember(member)) {
     await sendSms(
       member.phone,
       `Rally's: Your membership payment failed. Update your payment method to keep booking: ${APP_URL}/account/membership`
@@ -147,7 +157,7 @@ export async function notifySubscriptionCancelled(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (member.phone) {
+  if (canSmsMember(member)) {
     await sendSms(
       member.phone,
       `Rally's: Your membership has been cancelled. You can still book drop-in sessions anytime: ${APP_URL}/book`
@@ -169,7 +179,7 @@ export async function notifyWaiverResignRequired(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (member.phone) {
+  if (canSmsMember(member)) {
     await sendSms(
       member.phone,
       `Rally's: Our participation waiver has been updated. Please re-sign before your next session: ${APP_URL}/waiver/member`
@@ -194,7 +204,8 @@ export async function notifyBookingReminder(bookingId: string) {
   });
   if (!booking || booking.status !== "CONFIRMED") return;
 
-  const phone = booking.guestPhone ?? booking.member?.phone;
+  const phone = booking.guestPhone
+    ?? (booking.member && canSmsMember(booking.member) ? booking.member.phone : null);
   const time = formatTime(booking.slotA.startTime);
   const pin = booking.accessCodePin;
 
