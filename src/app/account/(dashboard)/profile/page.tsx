@@ -14,7 +14,7 @@ export default async function AccountProfilePage() {
   const user = await requireUser("/account/profile");
   const member = await prisma.member.findUnique({
     where: { id: user.id },
-    select: { name: true, email: true, phone: true, contactEmail: true },
+    select: { name: true, email: true, phone: true, contactEmail: true, notificationSms: true },
   });
 
   if (!member) return null;
@@ -61,6 +61,19 @@ export default async function AccountProfilePage() {
             <p className="text-xs text-gray-400 -mt-2">
               Optional. Booking confirmations and receipts go here instead of your login email.
             </p>
+            <label className="flex items-start gap-2.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="notificationSms"
+                defaultChecked={member.notificationSms}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+              />
+              <span className="text-xs text-gray-500 leading-relaxed">
+                Receive SMS booking confirmations, door codes, and reminders.
+                Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to
+                cancel, HELP for help.
+              </span>
+            </label>
             <Button type="submit" variant="primary" className="w-full">
               Save changes
             </Button>

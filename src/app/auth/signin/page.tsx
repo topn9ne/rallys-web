@@ -28,6 +28,7 @@ function SignInContent() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [smsOptIn, setSmsOptIn] = useState(false);
   const [error, setError] = useState(errorParam ? "Something went wrong. Please try again." : "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -63,7 +64,7 @@ function SignInContent() {
       email,
       password,
       options: {
-        data: { name, phone: toE164(phone) },
+        data: { name, phone: toE164(phone), smsOptIn },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent("/auth/confirmed")}`,
       },
     });
@@ -119,6 +120,19 @@ function SignInContent() {
                 value={phone}
                 onChange={setPhone}
               />
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={smsOptIn}
+                  onChange={(e) => setSmsOptIn(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
+                />
+                <span className="text-xs text-gray-500 leading-relaxed">
+                  I agree to receive SMS booking confirmations, door codes, and reminders
+                  from Rally&apos;s Indoor Training. Msg frequency varies. Msg &amp; data
+                  rates may apply. Reply STOP to cancel, HELP for help.
+                </span>
+              </label>
             </>
           )}
           <Input

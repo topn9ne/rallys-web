@@ -1,5 +1,5 @@
-import { Nav } from "@/components/landing/Nav";
-import { FooterCta } from "@/components/landing/FooterCta";
+import { SiteNav } from "@/components/site/SiteNav";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export default function OptInPage() {
       className="min-h-screen font-sans"
       style={{ background: "var(--color-landing-bg)", color: "var(--color-landing-fg)" }}
     >
-      <Nav />
+      <SiteNav />
 
       <section className="px-6 py-16 md:px-14 max-w-3xl">
         <p
@@ -26,7 +26,7 @@ export default function OptInPage() {
 
         <p className="mb-10 text-sm leading-relaxed" style={{ opacity: 0.7 }}>
           This page documents the SMS opt-in process for Rally&apos;s Indoor Training. The opt-in is collected
-          during the online booking process at <strong>rallysindoortraining.com</strong>.
+          during the online booking process at <strong>rallysindoor.com</strong>.
         </p>
 
         <div className="space-y-8 text-sm leading-relaxed" style={{ opacity: 0.85 }}>
@@ -35,7 +35,7 @@ export default function OptInPage() {
             <h2 className="mb-3 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>User Flow</h2>
             <ol className="list-decimal pl-5 space-y-2">
               {[
-                "Customer selects an available cage slot at rallysindoortraining.com/book",
+                "Customer selects an available cage slot at rallysindoor.com/book",
                 "Customer enters name, email, and phone number",
                 "Customer is presented with an unchecked SMS consent checkbox (see below)",
                 "Customer checks the box and submits the booking form",
@@ -73,20 +73,20 @@ export default function OptInPage() {
             <div className="space-y-1">
               <p><strong>Business name:</strong> Rally&apos;s Indoor Training LLC</p>
               <p><strong>Location:</strong> Hastings, NE</p>
-              <p><strong>Contact:</strong> <a href="mailto:info@rallysindoortraining.com" className="underline">info@rallysindoortraining.com</a></p>
-              <p><strong>Privacy Policy:</strong> <a href="/privacy" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoortraining.com/privacy</a></p>
-              <p><strong>Terms &amp; Conditions:</strong> <a href="/terms" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoortraining.com/terms</a></p>
-              <p><strong>SMS Program details:</strong> <a href="/sms" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoortraining.com/sms</a></p>
+              <p><strong>Contact:</strong> <a href="mailto:admin@rallysindoor.com" className="underline">admin@rallysindoor.com</a></p>
+              <p><strong>Privacy Policy:</strong> <a href="/privacy" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoor.com/privacy</a></p>
+              <p><strong>Terms &amp; Conditions:</strong> <a href="/terms" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoor.com/terms</a></p>
+              <p><strong>SMS Program details:</strong> <a href="/sms" className="underline" style={{ color: "var(--color-landing-primary)" }}>rallysindoor.com/sms</a></p>
             </div>
           </div>
 
           <p className="text-xs text-center pt-4" style={{ opacity: 0.4 }}>
-            Rally&apos;s Indoor Training &middot; Hastings, NE &middot; info@rallysindoortraining.com
+            Rally&apos;s Indoor Training &middot; Hastings, NE &middot; admin@rallysindoor.com
           </p>
         </div>
       </section>
 
-      <FooterCta />
+      <SiteFooter />
     </div>
   );
 }

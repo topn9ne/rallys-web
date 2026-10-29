@@ -261,8 +261,10 @@ export function SlotBookingForm({
               onChange={(e) => setSmsOptIn(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
             />
-            <span className="text-sm text-gray-600">
-              Send me text message reminders about my booking. Msg &amp; data rates may apply.
+            <span className="text-xs text-gray-500 leading-relaxed">
+              I agree to receive SMS booking confirmations, door codes, and reminders
+              from Rally&apos;s Indoor Training. Msg frequency varies. Msg &amp; data
+              rates may apply. Reply STOP to cancel, HELP for help.
             </span>
           </label>
         </div>
@@ -307,8 +309,10 @@ export function SlotBookingForm({
               onChange={(e) => setSmsOptIn(e.target.checked)}
               className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-blue focus:ring-brand-blue"
             />
-            <span className="text-sm text-gray-600">
-              Send me text message reminders about my booking. Msg &amp; data rates may apply.
+            <span className="text-xs text-gray-500 leading-relaxed">
+              I agree to receive SMS booking confirmations, door codes, and reminders
+              from Rally&apos;s Indoor Training. Msg frequency varies. Msg &amp; data
+              rates may apply. Reply STOP to cancel, HELP for help.
             </span>
           </label>
         </div>

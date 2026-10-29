@@ -349,8 +349,8 @@ export default function PrivacyPage() {
                 </p>
                 <p>
                   Email:{" "}
-                  <a href="mailto:hello@rallysindoor.com" className="underline">
-                    hello@rallysindoor.com
+                  <a href="mailto:admin@rallysindoor.com" className="underline">
+                    admin@rallysindoor.com
                   </a>
                 </p>
               </div>

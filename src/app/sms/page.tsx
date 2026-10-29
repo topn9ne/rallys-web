@@ -1,5 +1,5 @@
-import { Nav } from "@/components/landing/Nav";
-import { FooterCta } from "@/components/landing/FooterCta";
+import { SiteNav } from "@/components/site/SiteNav";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -13,14 +13,14 @@ export default function SmsPage() {
       className="min-h-screen font-sans"
       style={{ background: "var(--color-landing-bg)", color: "var(--color-landing-fg)" }}
     >
-      <Nav />
+      <SiteNav />
 
       <section className="px-6 py-16 md:px-14 max-w-3xl">
         <p
           className="mb-4 font-display text-xs uppercase tracking-[3px]"
           style={{ color: "var(--color-landing-primary)" }}
         >
-          Rally&apos;s Indoor Training &middot; Hastings, NE &middot; info@rallysindoortraining.com
+          Rally&apos;s Indoor Training &middot; Hastings, NE &middot; admin@rallysindoor.com
         </p>
         <h1 className="mb-10 font-display text-5xl tracking-[-1px]">SMS MESSAGING PROGRAM</h1>
 
@@ -36,7 +36,7 @@ export default function SmsPage() {
 
           <div>
             <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>How You Opt In</h2>
-            <p>Consent is collected during the online booking process at <strong>rallysindoortraining.com</strong>. After entering your name, email, and phone number, you are presented with an unchecked checkbox that reads:</p>
+            <p>Consent is collected during the online booking process at <strong>rallysindoor.com</strong>. After entering your name, email, and phone number, you are presented with an unchecked checkbox that reads:</p>
             <blockquote
               className="my-3 border-l-2 pl-4 italic"
               style={{ borderColor: "var(--color-landing-primary)" }}
@@ -55,7 +55,7 @@ export default function SmsPage() {
             <h2 className="mb-2 font-display text-xs uppercase tracking-[2px]" style={{ color: "var(--color-landing-primary)" }}>Help</h2>
             <p>Reply <strong>HELP</strong> for assistance, or contact us directly:</p>
             <ul className="mt-2 list-disc pl-5 space-y-1">
-              <li><a href="mailto:info@rallysindoortraining.com" className="underline">info@rallysindoortraining.com</a></li>
+              <li><a href="mailto:admin@rallysindoor.com" className="underline">admin@rallysindoor.com</a></li>
               <li>Hastings, NE</li>
             </ul>
           </div>
@@ -67,7 +67,7 @@ export default function SmsPage() {
         </div>
       </section>
 
-      <FooterCta />
+      <SiteFooter />
     </div>
   );
 }

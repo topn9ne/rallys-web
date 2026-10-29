@@ -23,6 +23,7 @@ export async function GET(request: Request) {
               phone: user.user_metadata?.phone ?? "",
               tier: "FAMILY",
               subscriptionStatus: "NONE",
+              notificationSms: user.user_metadata?.smsOptIn ?? false,
             },
           });
         }
