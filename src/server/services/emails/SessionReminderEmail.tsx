@@ -61,7 +61,7 @@ export function SessionReminderEmail({
               <Text style={codeLabel}>Your Door Code</Text>
               <Text style={codeValue}>{doorCode}</Text>
               <Text style={codeHint}>
-                Active 5 min before your session &mdash; expires 5 min after.
+                Active 15 min before your session &mdash; expires 15 min after.
               </Text>
             </Section>
 

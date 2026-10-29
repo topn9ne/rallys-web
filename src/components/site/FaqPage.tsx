@@ -89,7 +89,7 @@ const CATEGORIES: { label: string; items: FaqItem[] }[] = [
     items: [
       {
         q: "How do I get my door code?",
-        a: "Your unique door code is sent via text message before your session starts. It activates 5 minutes before your slot and expires 5 minutes after.",
+        a: "Your unique door code is sent via text message before your session starts. It activates 15 minutes before your slot and expires 15 minutes after.",
       },
       {
         q: "Can I share my door code?",

@@ -54,8 +54,8 @@ export async function createAccessCode(bookingId: string): Promise<{
     return { seamAccessCodeId: existingCode.seamAccessCodeId, pin: existingCode.pin };
   }
 
-  const startsAt = new Date(booking.slotA.startTime.getTime() - 5 * 60 * 1000);
-  const endsAt = new Date(booking.slotA.endTime.getTime() + 5 * 60 * 1000);
+  const startsAt = new Date(booking.slotA.startTime.getTime() - 15 * 60 * 1000);
+  const endsAt = new Date(booking.slotA.endTime.getTime() + 15 * 60 * 1000);
 
   const activePins = await getActivePins();
   const pin = generatePin(activePins);

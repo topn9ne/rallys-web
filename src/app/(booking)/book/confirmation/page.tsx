@@ -161,7 +161,7 @@ export default async function ConfirmationPage({ searchParams }: Props) {
             What to Expect
           </h2>
           <ul className="space-y-2 text-sm text-white/80">
-            <li>You'll receive a text with your door code ~5 min before your session.</li>
+            <li>Your door code is included in your booking confirmation text and activates 15 min before your session.</li>
             <li>Enter the code on the keypad at the front door.</li>
             <li>Set up the pitching machine to your preferred speed and height.</li>
             <li>Leave the cage as you found it when your time is up.</li>

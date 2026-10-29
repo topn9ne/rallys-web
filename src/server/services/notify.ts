@@ -45,7 +45,7 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
   if (phone) {
     await sendSms(
       phone,
-      `Rally's: You're booked for ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 5 min before your slot. Start a Rally!`
+      `Rally's: You're booked for ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 15 min before your slot. Start a Rally!`
     );
   }
 
@@ -229,7 +229,7 @@ function bookingConfirmedHtml(data: {
       <div style="background: #f0f7ff; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
         <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Your Door Code</p>
         <p style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 6px; color: #1a56db;">${data.pin}</p>
-        <p style="margin: 8px 0 0; color: #666; font-size: 12px;">Active 5 min before your session</p>
+        <p style="margin: 8px 0 0; color: #666; font-size: 12px;">Active 15 min before your session</p>
       </div>
       <h3 style="font-size: 16px;">What to do</h3>
       <ol style="color: #444; line-height: 1.6;">

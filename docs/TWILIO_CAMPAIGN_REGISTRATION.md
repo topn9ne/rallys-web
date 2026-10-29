@@ -66,7 +66,7 @@ Last updated: 2026-10-29
 ## Sample Messages (paste all 5)
 
 ### 1. Booking confirmation + door code
-> Rally's: You're booked for Sat, Nov 14 at 5:00 PM, Lane A. Door code: 4821. Code active 5 min before your slot. Start a Rally!
+> Rally's: You're booked for Sat, Nov 14 at 5:00 PM, Lane A. Door code: 4821. Code active 15 min before your slot. Start a Rally!
 
 ### 2. Session reminder
 > Rally's reminder: Your cage session is at 5:00 PM today. Door code: 4821. See you soon!

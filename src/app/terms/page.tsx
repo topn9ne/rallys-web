@@ -114,8 +114,8 @@ export default function TermsPage() {
               </h2>
               <p className="mt-4 text-[15px] leading-relaxed text-navy/80">
                 Upon booking, you will receive a time-limited door code via SMS.
-                This code is valid only during your scheduled session window (5
-                minutes before start through 5 minutes after end). Door codes are
+                This code is valid only during your scheduled session window (15
+                minutes before start through 15 minutes after end). Door codes are
                 personal and non-transferable. Sharing your door code with
                 non-members or entering the facility outside your booked window is
                 a violation of these terms and may result in membership

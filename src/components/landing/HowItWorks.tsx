@@ -7,7 +7,7 @@ const STEPS = [
   {
     n: "02",
     t: "Get your code",
-    d: "A unique door code hits your phone via text. It activates five minutes before your slot.",
+    d: "A unique door code hits your phone via text. It activates fifteen minutes before your slot.",
   },
   {
     n: "03",
