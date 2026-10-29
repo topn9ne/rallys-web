@@ -60,10 +60,16 @@ export function SiteFooter() {
               href="/privacy"
               className="transition-opacity hover:opacity-80"
             >
-              Privacy Policy
+              Privacy
             </Link>
             <Link href="/terms" className="transition-opacity hover:opacity-80">
-              Terms &amp; Conditions
+              Terms
+            </Link>
+            <Link
+              href="/waiver"
+              className="transition-opacity hover:opacity-80"
+            >
+              Waiver
             </Link>
           </div>
         </div>
