@@ -26,11 +26,18 @@ async function sendEmail(to: string, subject: string, html: string) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function canSmsMember(member: { notificationSms: boolean; phone: string | null }): member is { notificationSms: true; phone: string } {
-  return member.notificationSms && !!member.phone;
+// Transactional: door codes, confirmations, payment failures — always send
+function memberPhone(member: { phone: string | null }): string | null {
+  return member.phone || null;
+}
+
+// Non-critical: reminders, welcome — respect notificationSms preference
+function memberPhoneIfOptedIn(member: { phone: string | null; notificationSms: boolean }): string | null {
+  return member.notificationSms && member.phone ? member.phone : null;
 }
 
 // ── Booking confirmed (with door code) ───────────────────────────────────────
+// TRANSACTIONAL — always send. They need the door code to enter.
 
 export async function notifyBookingConfirmed(bookingId: string, pin: string) {
   const booking = await prisma.booking.findUnique({
@@ -47,9 +54,8 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
     ? "Both Lanes"
     : `Lane ${booking.slotA.lane}`;
 
-  // Guests opted in at booking; members check notificationSms
   const phone = booking.guestPhone
-    ?? (booking.member && canSmsMember(booking.member) ? booking.member.phone : null);
+    ?? (booking.member ? memberPhone(booking.member) : null);
 
   if (phone) {
     await sendSms(
@@ -76,8 +82,9 @@ export async function notifyBookingCancelled(bookingId: string) {
   });
   if (!booking) return;
 
+  // TRANSACTIONAL — always send
   const phone = booking.guestPhone
-    ?? (booking.member && canSmsMember(booking.member) ? booking.member.phone : null);
+    ?? (booking.member ? memberPhone(booking.member) : null);
   const email = booking.guestEmail ?? booking.member?.email;
   const date = formatDate(booking.slotA.date);
   const time = formatTime(booking.slotA.startTime);
@@ -104,7 +111,7 @@ export async function notifyNewMember(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (canSmsMember(member)) {
+  if (memberPhoneIfOptedIn(member)) {
     await sendSms(
       member.phone,
       `Welcome to Rally's! Your membership is active. Book your first session: ${APP_URL}/book`
@@ -137,7 +144,8 @@ export async function notifyPaymentFailed(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (canSmsMember(member)) {
+  // TRANSACTIONAL — always send, they need to fix payment
+  if (memberPhone(member)) {
     await sendSms(
       member.phone,
       `Rally's: Your membership payment failed. Update your payment method to keep booking: ${APP_URL}/account/membership`
@@ -157,7 +165,8 @@ export async function notifySubscriptionCancelled(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (canSmsMember(member)) {
+  // TRANSACTIONAL — account status change
+  if (memberPhone(member)) {
     await sendSms(
       member.phone,
       `Rally's: Your membership has been cancelled. You can still book drop-in sessions anytime: ${APP_URL}/book`
@@ -179,7 +188,8 @@ export async function notifyWaiverResignRequired(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
 
-  if (canSmsMember(member)) {
+  // TRANSACTIONAL — required action before next session
+  if (memberPhone(member)) {
     await sendSms(
       member.phone,
       `Rally's: Our participation waiver has been updated. Please re-sign before your next session: ${APP_URL}/waiver/member`
@@ -204,8 +214,9 @@ export async function notifyBookingReminder(bookingId: string) {
   });
   if (!booking || booking.status !== "CONFIRMED") return;
 
+  // Reminders are non-critical — respect opt-in
   const phone = booking.guestPhone
-    ?? (booking.member && canSmsMember(booking.member) ? booking.member.phone : null);
+    ?? (booking.member ? memberPhoneIfOptedIn(booking.member) : null);
   const time = formatTime(booking.slotA.startTime);
   const pin = booking.accessCodePin;
 

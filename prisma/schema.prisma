@@ -87,6 +87,8 @@ model Member {
   stripeSubscriptionId  String?
   subscriptionStatus    SubscriptionStatus @default(NONE)
   notificationSms       Boolean            @default(true)
+  marketingSms          Boolean            @default(false)
+  marketingEmail        Boolean            @default(false)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
 
