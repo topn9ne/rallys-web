@@ -9,6 +9,7 @@ import { notifyBookingConfirmed, notifyBookingCancelled } from "@/server/service
 import type { BookingType } from "@prisma/client";
 import { resolveSlot, materializeSlot } from "@/server/services/virtualSlots";
 import { toE164, isValidUSPhone } from "@/lib/phone";
+import { getMemberWaiverStatus } from "./waiver";
 
 interface CreateBookingInput {
   slotIdA: string;
@@ -103,11 +104,18 @@ export async function createBooking(input: CreateBookingInput) {
     }
   }
 
-  try {
-    const { pin } = await createAccessCode(booking.id);
-    await notifyBookingConfirmed(booking.id, pin);
-  } catch (err) {
-    console.error("[booking] Access code / notification failed:", err);
+  const waiverStatus = await getMemberWaiverStatus(user.id);
+  const hasWaiver = waiverStatus.signed && !waiverStatus.needsResign;
+
+  if (hasWaiver) {
+    try {
+      const { pin } = await createAccessCode(booking.id);
+      await notifyBookingConfirmed(booking.id, pin);
+    } catch (err) {
+      console.error("[booking] Access code / notification failed:", err);
+    }
+  } else {
+    notifyBookingConfirmed(booking.id, null).catch(() => {});
   }
 
   return { bookingId: booking.id };

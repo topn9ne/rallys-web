@@ -9,14 +9,18 @@ export async function GET(req: NextRequest) {
   }
 
   const now = new Date();
-  const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const startOfTomorrow = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
+  const endOfTomorrow = new Date(startOfTomorrow.getTime() + 24 * 60 * 60 * 1000);
 
   const upcoming = await prisma.booking.findMany({
     where: {
       status: "CONFIRMED",
       reminderSent: false,
       slotA: {
-        startTime: { gte: now, lte: oneHourFromNow },
+        date: { gte: startOfTomorrow, lt: endOfTomorrow },
       },
     },
     select: { id: true },

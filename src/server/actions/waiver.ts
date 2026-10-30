@@ -6,7 +6,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { getWaiverTemplateWithMeta } from "./waiverTemplate";
-import { notifyWaiverSigned } from "@/server/services/notify";
+import { notifyWaiverSigned, notifyDoorCodeReady } from "@/server/services/notify";
+import { createAccessCode } from "@/server/services/seam";
 
 const ParticipantSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -87,6 +88,16 @@ export async function signWaiver(input: z.infer<typeof WaiverInput>) {
     });
   });
 
+  // Generate access code now that waiver is signed
+  if (!booking.accessCodePin) {
+    try {
+      const { pin } = await createAccessCode(booking.id);
+      await notifyDoorCodeReady(booking.id, pin);
+    } catch (err) {
+      console.error(`[waiver] Code generation failed for booking ${booking.id}:`, err);
+    }
+  }
+
   redirect(`/waiver/${bookingId}/complete`);
 }
 
@@ -139,7 +150,34 @@ export async function signMemberWaiver(input: z.infer<typeof MemberWaiverInput>)
 
   notifyWaiverSigned(user.id).catch(() => {});
 
+  generatePendingCodes(user.id).catch((err) =>
+    console.error("[waiver] Pending code generation failed:", err)
+  );
+
   redirect("/waiver/member/complete");
+}
+
+// ─── Generate codes for bookings that were made without a waiver ─────────────
+
+async function generatePendingCodes(memberId: string) {
+  const pendingBookings = await prisma.booking.findMany({
+    where: {
+      memberId,
+      status: "CONFIRMED",
+      accessCodePin: null,
+      slotA: { date: { gte: new Date() } },
+    },
+    select: { id: true },
+  });
+
+  for (const b of pendingBookings) {
+    try {
+      const { pin } = await createAccessCode(b.id);
+      await notifyDoorCodeReady(b.id, pin);
+    } catch (err) {
+      console.error(`[waiver] Code generation failed for booking ${b.id}:`, err);
+    }
+  }
 }
 
 // ─── Member waiver status check ──────────────────────────────────────────────

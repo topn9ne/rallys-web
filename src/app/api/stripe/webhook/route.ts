@@ -122,11 +122,22 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
     });
   });
 
-  try {
-    const { pin } = await createAccessCode(bookingId);
-    await notifyBookingConfirmed(bookingId, pin);
-  } catch (err) {
-    console.error("[webhook] Access code / notification failed:", err);
+  let hasWaiver = false;
+  if (existing.memberId) {
+    const { getMemberWaiverStatus } = await import("@/server/actions/waiver");
+    const status = await getMemberWaiverStatus(existing.memberId);
+    hasWaiver = status.signed && !status.needsResign;
+  }
+
+  if (hasWaiver) {
+    try {
+      const { pin } = await createAccessCode(bookingId);
+      await notifyBookingConfirmed(bookingId, pin);
+    } catch (err) {
+      console.error("[webhook] Access code / notification failed:", err);
+    }
+  } else {
+    notifyBookingConfirmed(bookingId, null).catch(() => {});
   }
 }
 

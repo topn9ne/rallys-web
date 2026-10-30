@@ -63,7 +63,7 @@ async function notifyContacts(
 // ── Booking confirmed (with door code) ───────────────────────────────────────
 // TRANSACTIONAL — always send. They need the door code to enter.
 
-export async function notifyBookingConfirmed(bookingId: string, pin: string) {
+export async function notifyBookingConfirmed(bookingId: string, pin: string | null) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
     include: { member: true, slotA: true },
@@ -81,11 +81,12 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
   const phone = booking.guestPhone
     ?? (booking.member ? memberPhone(booking.member) : null);
 
+  const smsBody = pin
+    ? `Rally's: You're booked for ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 15 min before your slot. Start a Rally!`
+    : `Rally's: You're booked for ${date} at ${time}, ${lane}. Sign your waiver to get your door code: ${APP_URL}/waiver/member`;
+
   if (phone) {
-    await sendSms(
-      phone,
-      `Rally's: You're booked for ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 15 min before your slot. Start a Rally!`
-    );
+    await sendSms(phone, smsBody);
   }
 
   if (email) {
@@ -97,12 +98,61 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
   }
 
   if (booking.memberId) {
+    const contactSms = pin
+      ? `Rally's: ${name}'s session — ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 15 min before.`
+      : `Rally's: ${name}'s session — ${date} at ${time}, ${lane}. Door code pending — waiver not yet signed.`;
     await notifyContacts(
       booking.memberId,
       "sendCodes",
-      `Rally's: ${name}'s session — ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 15 min before.`,
-      `Door Code for ${name} — ${date} at ${time}`,
+      contactSms,
+      pin ? `Door Code for ${name} — ${date} at ${time}` : `Booking Confirmed — ${name} — ${date} at ${time}`,
       bookingConfirmedHtml({ name, date, time, lane, pin, bookingId }),
+    );
+  }
+}
+
+// ── Door code ready (sent when waiver is signed after booking) ──────────────
+
+export async function notifyDoorCodeReady(bookingId: string, pin: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: { member: true, slotA: true },
+  });
+  if (!booking) return;
+
+  const name = booking.guestName ?? booking.member?.name ?? "there";
+  const date = formatDate(booking.slotA.date);
+  const time = formatTime(booking.slotA.startTime);
+  const lane = booking.bookingType === "BOTH_LANES"
+    ? "Both Lanes"
+    : `Lane ${booking.slotA.lane}`;
+
+  const phone = booking.guestPhone
+    ?? (booking.member ? memberPhone(booking.member) : null);
+
+  if (phone) {
+    await sendSms(
+      phone,
+      `Rally's: Your door code for ${date} at ${time} is ready: ${pin}. Code active 15 min before your slot.`
+    );
+  }
+
+  const email = booking.guestEmail ?? booking.member?.email;
+  if (email) {
+    await sendEmail(
+      email,
+      `Your Door Code — ${date} at ${time}`,
+      doorCodeReadyHtml({ name, date, time, lane, pin })
+    );
+  }
+
+  if (booking.memberId) {
+    await notifyContacts(
+      booking.memberId,
+      "sendCodes",
+      `Rally's: Door code for ${name}'s session ${date} at ${time}: ${pin}. Code active 15 min before.`,
+      `Door Code Ready — ${name} — ${date} at ${time}`,
+      doorCodeReadyHtml({ name, date, time, lane, pin }),
     );
   }
 }
@@ -423,9 +473,21 @@ function bookingConfirmedHtml(data: {
   date: string;
   time: string;
   lane: string;
-  pin: string;
+  pin: string | null;
   bookingId: string;
 }) {
+  const codeBlock = data.pin
+    ? `<div style="background: #f0f7ff; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+        <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Your Door Code</p>
+        <p style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 6px; color: #1a56db;">${data.pin}</p>
+        <p style="margin: 8px 0 0; color: #666; font-size: 12px;">Active 15 min before your session</p>
+      </div>`
+    : `<div style="background: #fff7ed; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+        <p style="margin: 0 0 8px; color: #92400e; font-weight: bold;">Waiver Required for Door Code</p>
+        <p style="margin: 0; color: #78350f;">Sign your participation waiver and we'll send your door code.</p>
+        <a href="${APP_URL}/waiver/member" style="display: inline-block; margin-top: 12px; background: #1a56db; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Sign Waiver</a>
+      </div>`;
+
   return `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
       <h1 style="font-size: 24px; color: #1a1a1a;">You're Booked!</h1>
@@ -436,18 +498,33 @@ function bookingConfirmedHtml(data: {
         <tr><td style="padding: 8px 0; color: #666;">Time</td><td style="padding: 8px 0; font-weight: bold;">${data.time}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Location</td><td style="padding: 8px 0; font-weight: bold;">${data.lane}</td></tr>
       </table>
+      ${codeBlock}
+      <h3 style="font-size: 16px;">What to do</h3>
+      <ol style="color: #444; line-height: 1.6;">
+        <li>${data.pin ? "Enter your code on the keypad at the front door" : "Sign your waiver — we'll text you the door code"}</li>
+        <li>Set up the pitching machine to your preferred speed</li>
+        <li>Hit! Your session is 1 hour</li>
+        <li>Leave the cage as you found it</li>
+      </ol>
+      <p style="font-size: 13px; color: #888; margin-top: 24px;">
+        Rally's Indoor Training<br>
+        203 S Woodland Ave, Bay 5, Hastings, NE 68901
+      </p>
+    </div>
+  `;
+}
+
+function doorCodeReadyHtml(data: { name: string; date: string; time: string; lane: string; pin: string }) {
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="font-size: 24px; color: #1a1a1a;">Your Door Code Is Ready!</h1>
+      <p>Hey ${data.name},</p>
+      <p>Your waiver is signed and your door code is ready for your session on <strong>${data.date}</strong> at <strong>${data.time}</strong> (${data.lane}).</p>
       <div style="background: #f0f7ff; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
         <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Your Door Code</p>
         <p style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 6px; color: #1a56db;">${data.pin}</p>
         <p style="margin: 8px 0 0; color: #666; font-size: 12px;">Active 15 min before your session</p>
       </div>
-      <h3 style="font-size: 16px;">What to do</h3>
-      <ol style="color: #444; line-height: 1.6;">
-        <li>Enter your code on the keypad at the front door</li>
-        <li>Set up the pitching machine to your preferred speed</li>
-        <li>Hit! Your session is 1 hour</li>
-        <li>Leave the cage as you found it</li>
-      </ol>
       <p style="font-size: 13px; color: #888; margin-top: 24px;">
         Rally's Indoor Training<br>
         203 S Woodland Ave, Bay 5, Hastings, NE 68901
