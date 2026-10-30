@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Pricing } from "@/components/landing/Pricing";
