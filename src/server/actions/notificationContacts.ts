@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { toE164, isValidUSPhone } from "@/lib/phone";
+import { notifyContactWelcome } from "@/server/services/notify";
 
 const RELATIONSHIPS = ["Parent", "Player", "Coach", "Other"] as const;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,7 +37,7 @@ export async function addNotificationContact(formData: FormData) {
   if (phone && !isValidUSPhone(phone)) return { error: "Enter a valid 10-digit phone number." };
   if (email && !EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
 
-  await prisma.notificationContact.create({
+  const contact = await prisma.notificationContact.create({
     data: {
       memberId: user.id,
       firstName,
@@ -51,6 +52,8 @@ export async function addNotificationContact(formData: FormData) {
       viaEmail,
     },
   });
+
+  notifyContactWelcome(contact.id).catch(() => {});
 
   revalidatePath("/account/profile");
   return { success: true };

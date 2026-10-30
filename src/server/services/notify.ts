@@ -36,6 +36,30 @@ function memberPhoneIfOptedIn(member: { phone: string | null; notificationSms: b
   return member.notificationSms && member.phone ? member.phone : null;
 }
 
+// ── NotificationContact routing ─────────────────────────────────────────────
+
+type ContactFlag = "sendCodes" | "sendBookings" | "sendBilling";
+
+async function getContacts(memberId: string, flag: ContactFlag) {
+  return prisma.notificationContact.findMany({
+    where: { memberId, [flag]: true },
+  });
+}
+
+async function notifyContacts(
+  memberId: string,
+  flag: ContactFlag,
+  sms: string,
+  emailSubject: string,
+  emailHtml: string,
+) {
+  const contacts = await getContacts(memberId, flag);
+  for (const c of contacts) {
+    if (c.viaSms && c.phone) await sendSms(c.phone, sms);
+    if (c.viaEmail && c.email) await sendEmail(c.email, emailSubject, emailHtml);
+  }
+}
+
 // ── Booking confirmed (with door code) ───────────────────────────────────────
 // TRANSACTIONAL — always send. They need the door code to enter.
 
@@ -71,6 +95,16 @@ export async function notifyBookingConfirmed(bookingId: string, pin: string) {
       bookingConfirmedHtml({ name, date, time, lane, pin, bookingId })
     );
   }
+
+  if (booking.memberId) {
+    await notifyContacts(
+      booking.memberId,
+      "sendCodes",
+      `Rally's: ${name}'s session — ${date} at ${time}, ${lane}. Door code: ${pin}. Code active 15 min before.`,
+      `Door Code for ${name} — ${date} at ${time}`,
+      bookingConfirmedHtml({ name, date, time, lane, pin, bookingId }),
+    );
+  }
 }
 
 // ── Booking cancelled ────────────────────────────────────────────────────────
@@ -101,6 +135,17 @@ export async function notifyBookingCancelled(bookingId: string) {
       email,
       `Booking Cancelled — ${date} at ${time}`,
       `<p>Your Rally's booking for ${date} at ${time} has been cancelled.</p><p>If a refund is due, it will appear on your statement within 5–10 business days.</p>`
+    );
+  }
+
+  if (booking.memberId) {
+    const cancelHtml = `<p>Rally's booking for ${date} at ${time} has been cancelled.</p>`;
+    await notifyContacts(
+      booking.memberId,
+      "sendBookings",
+      `Rally's: Booking for ${date} at ${time} has been cancelled.`,
+      `Booking Cancelled — ${date} at ${time}`,
+      cancelHtml,
     );
   }
 }
@@ -136,6 +181,14 @@ export async function notifyMemberWaiverNeeded(memberId: string) {
     "Sign Your Participation Waiver",
     signWaiverHtml(member.name)
   );
+
+  await notifyContacts(
+    memberId,
+    "sendBookings",
+    `Rally's: ${member.name} needs to sign a participation waiver before their next session.`,
+    `Waiver Needed — ${member.name}`,
+    `<p>${member.name} needs to sign a participation waiver at Rally's before their next cage session.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
+  );
 }
 
 // ── Subscription alerts ──────────────────────────────────────────────────────
@@ -159,6 +212,14 @@ export async function notifyPaymentFailed(memberId: string) {
       `<p>Hey ${member.name},</p><p>Your Rally's membership payment didn't go through. Please <a href="${APP_URL}/account/membership">update your payment method</a> to keep your membership active.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`
     );
   }
+
+  await notifyContacts(
+    memberId,
+    "sendBilling",
+    `Rally's: ${member.name}'s membership payment failed. They may need to update their payment method.`,
+    `Payment Failed — ${member.name}`,
+    `<p>${member.name}'s Rally's membership payment didn't go through.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
+  );
 }
 
 export async function notifySubscriptionCancelled(memberId: string) {
@@ -180,6 +241,47 @@ export async function notifySubscriptionCancelled(memberId: string) {
       `<p>Hey ${member.name},</p><p>Your Rally's membership has been cancelled. You can still book drop-in cage sessions anytime at <a href="${APP_URL}/book">rallysindoor.com/book</a>.</p><p>If you'd like to resubscribe, visit your <a href="${APP_URL}/account/membership">membership page</a>.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`
     );
   }
+
+  await notifyContacts(
+    memberId,
+    "sendBilling",
+    `Rally's: ${member.name}'s membership has been cancelled.`,
+    `Membership Cancelled — ${member.name}`,
+    `<p>${member.name}'s Rally's membership has been cancelled.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
+  );
+}
+
+// ── Contact welcome (sent when a NotificationContact is first added) ────────
+
+export async function notifyContactWelcome(contactId: string) {
+  const contact = await prisma.notificationContact.findUnique({
+    where: { id: contactId },
+    include: { member: true },
+  });
+  if (!contact) return;
+
+  const memberName = contact.member.name;
+  const sms = `Rally's: You've been added as a notification contact for ${memberName}. You'll receive door codes and booking updates via text. Reply STOP to opt out.`;
+  const subject = `You're a notification contact for ${memberName}`;
+  const html = `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="font-size: 24px; color: #1a1a1a;">Hey ${contact.firstName}!</h1>
+      <p>${memberName} added you as a notification contact at Rally's Indoor Training.</p>
+      <p>Depending on their settings, you may receive:</p>
+      <ul style="color: #444; line-height: 1.6;">
+        ${contact.sendCodes ? "<li>Door codes for their cage sessions</li>" : ""}
+        ${contact.sendBookings ? "<li>Booking confirmations and cancellations</li>" : ""}
+        ${contact.sendBilling ? "<li>Billing and membership alerts</li>" : ""}
+      </ul>
+      <p style="font-size: 13px; color: #888; margin-top: 24px;">
+        Rally's Indoor Training<br>
+        203 S Woodland Ave, Bay 5, Hastings, NE 68901
+      </p>
+    </div>
+  `;
+
+  if (contact.viaSms && contact.phone) await sendSms(contact.phone, sms);
+  if (contact.viaEmail && contact.email) await sendEmail(contact.email, subject, html);
 }
 
 // ── Waiver re-sign required (admin-triggered) ──────────────────────────────
@@ -203,6 +305,14 @@ export async function notifyWaiverResignRequired(memberId: string) {
       resignWaiverHtml(member.name)
     );
   }
+
+  await notifyContacts(
+    memberId,
+    "sendBookings",
+    `Rally's: ${member.name} needs to re-sign an updated participation waiver before their next session.`,
+    `Updated Waiver — ${member.name}`,
+    `<p>${member.name} needs to re-sign an updated participation waiver at Rally's before their next cage session.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
+  );
 }
 
 // ── Booking reminder (called by cron, e.g. 1 hour before) ───────────────────
@@ -224,6 +334,17 @@ export async function notifyBookingReminder(bookingId: string) {
     await sendSms(
       phone,
       `Rally's reminder: Your cage session is at ${time} today. Door code: ${pin}. See you soon!`
+    );
+  }
+
+  if (booking.memberId && pin) {
+    const name = booking.member?.name ?? "Member";
+    await notifyContacts(
+      booking.memberId,
+      "sendCodes",
+      `Rally's reminder: ${name}'s session is at ${time} today. Door code: ${pin}.`,
+      `Session Reminder — ${time} today`,
+      `<p>${name}'s Rally's session is at ${time} today. Door code: <strong>${pin}</strong></p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
     );
   }
 }
