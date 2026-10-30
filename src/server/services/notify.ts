@@ -181,14 +181,6 @@ export async function notifyMemberWaiverNeeded(memberId: string) {
     "Sign Your Participation Waiver",
     signWaiverHtml(member.name)
   );
-
-  await notifyContacts(
-    memberId,
-    "sendBookings",
-    `Rally's: ${member.name} needs to sign a participation waiver before their next session.`,
-    `Waiver Needed — ${member.name}`,
-    `<p>${member.name} needs to sign a participation waiver at Rally's before their next cage session.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
-  );
 }
 
 // ── Subscription alerts ──────────────────────────────────────────────────────
@@ -251,6 +243,43 @@ export async function notifySubscriptionCancelled(memberId: string) {
   );
 }
 
+// ── Waiver signed confirmation ──────────────────────────────────────────────
+
+export async function notifyWaiverSigned(memberId: string) {
+  const member = await prisma.member.findUnique({ where: { id: memberId } });
+  if (!member) return;
+
+  if (memberPhone(member)) {
+    await sendSms(
+      member.phone,
+      `Rally's: Your participation waiver is signed — you're all set! Book a session: ${APP_URL}/book`
+    );
+  }
+
+  if (member.email) {
+    await sendEmail(
+      member.email,
+      "Waiver Signed — You're All Set!",
+      `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h1 style="font-size: 24px; color: #1a1a1a;">You're All Set!</h1>
+          <p>Hey ${member.name},</p>
+          <p>Your participation waiver has been signed. You're ready to book cage sessions.</p>
+          <p>
+            <a href="${APP_URL}/book" style="display: inline-block; background: #1a56db; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">
+              Book a Session
+            </a>
+          </p>
+          <p style="font-size: 13px; color: #888; margin-top: 24px;">
+            Rally's Indoor Training<br>
+            203 S Woodland Ave, Bay 5, Hastings, NE 68901
+          </p>
+        </div>
+      `
+    );
+  }
+}
+
 // ── Contact welcome (sent when a NotificationContact is first added) ────────
 
 export async function notifyContactWelcome(contactId: string) {
@@ -305,17 +334,11 @@ export async function notifyWaiverResignRequired(memberId: string) {
       resignWaiverHtml(member.name)
     );
   }
-
-  await notifyContacts(
-    memberId,
-    "sendBookings",
-    `Rally's: ${member.name} needs to re-sign an updated participation waiver before their next session.`,
-    `Updated Waiver — ${member.name}`,
-    `<p>${member.name} needs to re-sign an updated participation waiver at Rally's before their next cage session.</p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
-  );
 }
 
-// ── Booking reminder (called by cron, e.g. 1 hour before) ───────────────────
+// ── Booking reminder (day before, only if booked 5+ days in advance) ────────
+
+const REMINDER_ADVANCE_DAYS = 5;
 
 export async function notifyBookingReminder(bookingId: string) {
   const booking = await prisma.booking.findUnique({
@@ -324,32 +347,76 @@ export async function notifyBookingReminder(bookingId: string) {
   });
   if (!booking || booking.status !== "CONFIRMED") return;
 
-  // Reminders are non-critical — respect opt-in
+  const bookedAt = booking.createdAt.getTime();
+  const sessionDate = new Date(booking.slotA.date).getTime();
+  const daysBetween = (sessionDate - bookedAt) / (1000 * 60 * 60 * 24);
+  if (daysBetween < REMINDER_ADVANCE_DAYS) return;
+
   const phone = booking.guestPhone
     ?? (booking.member ? memberPhoneIfOptedIn(booking.member) : null);
+  const date = formatDate(booking.slotA.date);
   const time = formatTime(booking.slotA.startTime);
   const pin = booking.accessCodePin;
 
-  if (phone && pin) {
-    await sendSms(
-      phone,
-      `Rally's reminder: Your cage session is at ${time} today. Door code: ${pin}. See you soon!`
+  const smsBody = pin
+    ? `Rally's reminder: Your cage session is tomorrow at ${time}. Door code: ${pin}. See you soon!`
+    : `Rally's reminder: Your cage session is tomorrow at ${time}. Sign your waiver to get your door code: ${APP_URL}/waiver/member`;
+
+  if (phone) {
+    await sendSms(phone, smsBody);
+  }
+
+  const email = booking.guestEmail ?? booking.member?.email;
+  if (email) {
+    await sendEmail(
+      email,
+      `Session Tomorrow — ${date} at ${time}`,
+      bookingReminderHtml({ name: booking.member?.name ?? booking.guestName ?? "there", date, time, pin }),
     );
   }
 
-  if (booking.memberId && pin) {
+  if (booking.memberId) {
     const name = booking.member?.name ?? "Member";
+    const contactSms = pin
+      ? `Rally's reminder: ${name}'s session is tomorrow at ${time}. Door code: ${pin}.`
+      : `Rally's reminder: ${name}'s session is tomorrow at ${time}. Waiver not yet signed.`;
     await notifyContacts(
       booking.memberId,
       "sendCodes",
-      `Rally's reminder: ${name}'s session is at ${time} today. Door code: ${pin}.`,
-      `Session Reminder — ${time} today`,
-      `<p>${name}'s Rally's session is at ${time} today. Door code: <strong>${pin}</strong></p><p style="font-size:13px;color:#888;">Rally's Indoor Training</p>`,
+      contactSms,
+      `Session Reminder — ${time} tomorrow`,
+      bookingReminderHtml({ name, date, time, pin }),
     );
   }
 }
 
 // ── Email HTML templates ─────────────────────────────────────────────────────
+
+function bookingReminderHtml(data: { name: string; date: string; time: string; pin: string | null }) {
+  const codeBlock = data.pin
+    ? `<div style="background: #f0f7ff; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+        <p style="margin: 0 0 8px; color: #666; font-size: 14px;">Your Door Code</p>
+        <p style="margin: 0; font-size: 36px; font-weight: bold; letter-spacing: 6px; color: #1a56db;">${data.pin}</p>
+      </div>`
+    : `<div style="background: #fff7ed; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+        <p style="margin: 0 0 8px; color: #92400e; font-weight: bold;">Waiver Required</p>
+        <p style="margin: 0; color: #78350f;">Sign your waiver to receive your door code.</p>
+        <a href="${APP_URL}/waiver/member" style="display: inline-block; margin-top: 12px; background: #1a56db; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold;">Sign Waiver</a>
+      </div>`;
+
+  return `
+    <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+      <h1 style="font-size: 24px; color: #1a1a1a;">Session Tomorrow!</h1>
+      <p>Hey ${data.name},</p>
+      <p>Your cage session is tomorrow, <strong>${data.date}</strong> at <strong>${data.time}</strong>.</p>
+      ${codeBlock}
+      <p style="font-size: 13px; color: #888; margin-top: 24px;">
+        Rally's Indoor Training<br>
+        203 S Woodland Ave, Bay 5, Hastings, NE 68901
+      </p>
+    </div>
+  `;
+}
 
 function bookingConfirmedHtml(data: {
   name: string;

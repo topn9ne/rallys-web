@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth";
 import { getWaiverTemplateWithMeta } from "./waiverTemplate";
+import { notifyWaiverSigned } from "@/server/services/notify";
 
 const ParticipantSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -135,6 +136,8 @@ export async function signMemberWaiver(input: z.infer<typeof MemberWaiverInput>)
       agreementTextSnapshot: template.body,
     },
   });
+
+  notifyWaiverSigned(user.id).catch(() => {});
 
   redirect("/waiver/member/complete");
 }
