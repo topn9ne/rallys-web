@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { FooterCta } from "@/components/landing/FooterCta";
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
